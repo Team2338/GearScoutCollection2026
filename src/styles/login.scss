@@ -161,9 +161,9 @@ body {
 
         &.has-value label,
         input:focus + span + label {
-            top: -8px !important;
+            top: -8px;
             left: 12px;
-            transform: translateY(0) !important;
+            transform: translateY(0);
             font-size: 12px;
             background-color: $blue;
             opacity: 1;
