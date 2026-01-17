@@ -1,16 +1,218 @@
 ---
-
+const version = import.meta.env.VITE_APP_VERSION || '2026.0';
 ---
 
+<style lang="scss">
+@import '../styles/login.scss';
+</style>
+
+<!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GearScout - Login</title>
+</head>
+<body>
+    <main class="page login-page">
+        <div class="title">
+            <div class="app-name">GearScout</div>
+            <div class="version">v{version}</div>
+        </div>
+        <form class="login-form" id="login-form" aria-labelledby="login-form-header">
+            <h1 id="login-form-header">Sign in</h1>
+            
+            <div class="form-field with-prefix">
+                <input
+                    id="team-number-input"
+                    name="teamNumber"
+                    type="number"
+                    min="0"
+                    max="99999"
+                    autocomplete="off"
+                    required
+                />
+                <span class="input-prefix">#</span>
+                <label for="team-number-input">Team number</label>
+            </div>
+
+            <div class="form-field">
+                <input
+                    id="scouter-name-input"
+                    name="scouterName"
+                    type="text"
+                    maxlength="32"
+                    autocomplete="off"
+                    required
+                />
+                <label for="scouter-name-input">Scouter name</label>
+            </div>
+
+            <div class="form-field">
+                <input
+                    id="event-code-input"
+                    name="eventCode"
+                    type="text"
+                    maxlength="32"
+                    autocomplete="off"
+                    required
+                />
+                <label for="event-code-input">Event code</label>
+            </div>
+
+            <div class="form-field">
+                <input
+                    id="secret-code-input"
+                    name="secretCode"
+                    type="text"
+                    maxlength="32"
+                    autocomplete="off"
+                    required
+                />
+                <label for="secret-code-input">Secret code</label>
+            </div>
+
+            <div class="form-field">
+                <input
+                    id="tba-code-input"
+                    name="tbaCode"
+                    type="text"
+                    maxlength="6"
+                    autocomplete="off"
+                />
+                <label for="tba-code-input">TBA code (optional)</label>
+                <div class="helper-text">The Blue Alliance event ID</div>
+            </div>
+
+            <button id="login-submit-button" type="submit">
+                Submit
+            </button>
+        </form>
+    </main>
+
+    <script>
+        interface IUser {
+            scouterName: string;
+            teamNumber: number;
+            eventCode: string;
+            secretCode: string;
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('login-form') as HTMLFormElement;
+            const teamNumberInput = document.getElementById('team-number-input') as HTMLInputElement;
+            const scouterNameInput = document.getElementById('scouter-name-input') as HTMLInputElement;
+            const eventCodeInput = document.getElementById('event-code-input') as HTMLInputElement;
+            const secretCodeInput = document.getElementById('secret-code-input') as HTMLInputElement;
+            const tbaCodeInput = document.getElementById('tba-code-input') as HTMLInputElement;
+            const submitButton = document.getElementById('login-submit-button') as HTMLButtonElement;
+
+            const query = new URLSearchParams(window.location.search);
+            const initialTeamNumber = query.get('team');
+            const initialEventCode = query.get('event');
+            const initialSecretCode = query.get('secret');
+            const initialTbaCode = query.get('tba');
+
+            if (initialTeamNumber || initialEventCode || initialSecretCode || initialTbaCode) {
+                if (initialTeamNumber) {
+                    localStorage.setItem('teamNumber', initialTeamNumber);
+                }
+                if (initialEventCode) {
+                    localStorage.setItem('eventCode', initialEventCode);
+                }
+                if (initialSecretCode) {
+                    localStorage.setItem('secretCode', initialSecretCode);
+                }
+                if (initialTbaCode) {
+                    localStorage.setItem('tbaCode', initialTbaCode);
+                }
+                const urlPieces = [location.protocol, '//', location.host, location.pathname];
+                const url = urlPieces.join('');
+                window.location.replace(url);
+            }
+
+            const updateFloatingLabel = (input: HTMLInputElement) => {
+                const formField = input.closest('.form-field');
+                if (input.value.trim()) {
+                    formField?.classList.add('has-value');
+                } else {
+                    formField?.classList.remove('has-value');
+                }
+            };
+
+            teamNumberInput.value = localStorage.getItem('teamNumber') || '';
+            scouterNameInput.value = localStorage.getItem('scouterName') || '';
+            eventCodeInput.value = localStorage.getItem('eventCode') || '';
+            secretCodeInput.value = localStorage.getItem('secretCode') || '';
+            tbaCodeInput.value = localStorage.getItem('tbaCode') || '';
+
+            [teamNumberInput, scouterNameInput, eventCodeInput, secretCodeInput, tbaCodeInput].forEach(input => {
+                updateFloatingLabel(input);
+                input.addEventListener('input', () => updateFloatingLabel(input));
+                input.addEventListener('blur', () => updateFloatingLabel(input));
+                input.addEventListener('focus', () => updateFloatingLabel(input));
+                input.addEventListener('change', () => updateFloatingLabel(input));
+            });
+
+            const validateForm = (): boolean => {
+                const isValid = Boolean(
+                    teamNumberInput.value.trim() &&
+                    scouterNameInput.value.trim() &&
+                    eventCodeInput.value.trim() &&
+                    secretCodeInput.value.trim()
+                );
+                submitButton.disabled = !isValid;
+                return isValid;
+            };
+
+            [teamNumberInput, scouterNameInput, eventCodeInput, secretCodeInput].forEach(input => {
+                input.addEventListener('input', validateForm);
+            });
+
+            validateForm();
+
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                
+                if (!validateForm()) {
+                    return;
+                }
+
+                const teamNumber = teamNumberInput.value.trim();
+                const scouterName = scouterNameInput.value.trim();
+                const eventCode = eventCodeInput.value.trim();
+                const secretCode = secretCodeInput.value.trim();
+                const tbaCode = tbaCodeInput.value.trim();
+
+                localStorage.setItem('teamNumber', teamNumber);
+                localStorage.setItem('scouterName', scouterName);
+                localStorage.setItem('eventCode', eventCode);
+                localStorage.setItem('secretCode', secretCode);
+                localStorage.setItem('tbaCode', tbaCode);
+
+                const user: IUser = {
+                    teamNumber: Number(teamNumber),
+                    scouterName: scouterName,
+                    eventCode: eventCode,
+                    secretCode: secretCode
+                };
+
+                sessionStorage.setItem('currentUser', JSON.stringify(user));
+                sessionStorage.setItem('tbaCode', tbaCode);
+
+                if (tbaCode.length > 0) {
+                    try {
+                        const response = await fetch(`/api/schedule?year=2025&tbaCode=${tbaCode}`);
+                        const schedule = await response.json();
+                        sessionStorage.setItem('schedule', JSON.stringify(schedule));
+                    } catch (error) {
+                        console.error('Failed to get schedule', error);
+                    }
+                }
+
+                window.location.href = '/data-collection';
+            });
+        });
+    </script>
+</body>
 </html>
