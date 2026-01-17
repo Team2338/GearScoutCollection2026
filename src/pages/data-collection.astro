@@ -1,0 +1,112 @@
+---
+// Data Collection Page
+import { Image } from 'astro:assets';
+---
+
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>GearScout</title>
+</head>
+<body>
+	<div class="header">
+		<div class="logo">
+			<Image src="/logo.png" alt="2338 logo" height={100} width={100} loading="eager" />
+		</div>
+		<div class="analytics">
+			<a href="https://data.gearitforward.com/" class="analytics-button">ANALYTICS</a>
+		</div>
+	</div>
+
+	<main class="page data-collection-page">
+		<form class="data-collection-form">
+			<div class="content-wrapper">
+
+				<div class="form-field">
+					<input 
+						id="match-number" 
+						name="matchNumber" 
+						type="number" 
+						min="0" 
+						max="999"
+						autocomplete="off"
+					/>
+					<label for="match-number">Match Number</label>
+				</div>
+
+				<div class="form-field">
+					<input 
+						id="team-number" 
+						name="teamNumber" 
+						type="number"
+						autocomplete="off"
+					/>
+					<label for="team-number">Team Number</label>
+				</div>
+
+				<div class="alliance-section">
+					<div class="toggle-button-group">
+						<button type="button" class="alliance-toggle red" data-value="red">
+							RED ALLIANCE
+						</button>
+						<button type="button" class="alliance-toggle blue" data-value="blue">
+							BLUE ALLIANCE
+						</button>
+					</div>
+				</div>
+			</div>
+		</form>
+	</main>
+</body>
+</html>
+
+<style lang="scss">
+@use '../styles/data-collection.scss';
+</style>
+
+<script>
+	// Floating label functionality for form fields
+	const formFields = document.querySelectorAll('.form-field');
+	
+	formFields.forEach(field => {
+		const input = field.querySelector('input');
+		if (!input) return;
+
+		// Check if input has value on load
+		if (input.value) {
+			field.classList.add('has-value');
+		}
+
+		// Update has-value class on input
+		input.addEventListener('input', () => {
+			if (input.value) {
+				field.classList.add('has-value');
+			} else {
+				field.classList.remove('has-value');
+			}
+		});
+
+		// Handle focus/blur for proper label animation
+		input.addEventListener('blur', () => {
+			if (!input.value) {
+				field.classList.remove('has-value');
+			}
+		});
+	});
+
+	// Alliance color toggle functionality
+	const allianceButtons = document.querySelectorAll('.alliance-toggle');
+	let selectedAlliance = '';
+
+	allianceButtons.forEach(button => {
+		button.addEventListener('click', () => {
+			// Remove selected class from all buttons
+			allianceButtons.forEach(btn => btn.classList.remove('selected'));
+			
+			// Add selected class to clicked button
+			button.classList.add('selected');
+			selectedAlliance = button.getAttribute('data-value') || '';
+		});
+	});
+</script>
