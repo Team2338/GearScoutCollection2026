@@ -92,12 +92,7 @@ const version = import.meta.env.VITE_APP_VERSION || '2026.0';
     </main>
 
     <script>
-        interface IUser {
-            scouterName: string;
-            teamNumber: number;
-            eventCode: string;
-            secretCode: string;
-        }
+        import type { IUser } from '../model/Models';
 
         window.addEventListener('DOMContentLoaded', () => {
             const form = document.getElementById('login-form') as HTMLFormElement;
@@ -192,7 +187,7 @@ const version = import.meta.env.VITE_APP_VERSION || '2026.0';
                 localStorage.setItem('tbaCode', tbaCode);
 
                 const user: IUser = {
-                    teamNumber: Number(teamNumber),
+                    teamNumber: teamNumber,
                     scouterName: scouterName,
                     eventCode: eventCode,
                     secretCode: secretCode
