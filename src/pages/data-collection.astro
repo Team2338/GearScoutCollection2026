@@ -1,5 +1,6 @@
 ---
-// Data Collection Page
+import { Image } from 'astro:assets';
+import logo from '../../public/logo.png';
 ---
 
 <html lang="en">
@@ -11,7 +12,7 @@
 <body>
 	<div class="header">
 		<div class="logo">
-			<img src="/logo.png" alt="2338 logo" height="100" width="100" loading="eager" fetchpriority="high"/>
+			<Image src={logo} alt="2338 logo" height={100} width={100} loading="eager" fetchpriority="high"/>
 		</div>
 		<div class="analytics">
 			<a href="https://data.gearitforward.com/" class="analytics-button">ANALYTICS</a>

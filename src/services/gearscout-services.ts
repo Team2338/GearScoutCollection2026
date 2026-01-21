@@ -18,7 +18,7 @@ const resolveApiBaseUrl = (): string => {
 			}
 		}
 	} catch {
-		// If import.meta or env access is not available, fall back to the default URL.
+		return DEFAULT_API_BASE_URL;
 	}
 
 	return DEFAULT_API_BASE_URL;
