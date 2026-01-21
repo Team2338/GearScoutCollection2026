@@ -4,9 +4,29 @@ import type { IMatch, IMatchLineup, IUser } from '../model/Models';
 
 type GearscoutResponse<T> = Promise<AxiosResponse<T>>;
 
+const DEFAULT_API_BASE_URL = 'https://gearitforward.com/api';
+
+const resolveApiBaseUrl = (): string => {
+	try {
+		// Prefer a specific Gearscout API env var, fall back to a generic one if present.
+		if (typeof import.meta !== 'undefined' && (import.meta as any).env) {
+			const env = (import.meta as any).env;
+			const envBaseUrl = env.VITE_GEARSCOUT_API_BASE_URL || env.VITE_API_BASE_URL;
+			
+			if (typeof envBaseUrl === 'string' && envBaseUrl.length > 0) {
+				return envBaseUrl;
+			}
+		}
+	} catch {
+		// If import.meta or env access is not available, fall back to the default URL.
+	}
+
+	return DEFAULT_API_BASE_URL;
+};
+
 class GearscoutService {
 	private service: AxiosInstance = axios.create({
-		baseURL: 'https://gearitforward.com/api'
+		baseURL: resolveApiBaseUrl()
 	});
 
 	submitMatch = (user: IUser, match: IMatch): GearscoutResponse<void> => {

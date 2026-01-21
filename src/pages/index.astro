@@ -117,10 +117,10 @@ const version = import.meta.env.VITE_APP_VERSION || '2026.0';
                     localStorage.setItem('eventCode', initialEventCode);
                 }
                 if (initialSecretCode) {
-                    localStorage.setItem('secretCode', initialSecretCode);
+                    sessionStorage.setItem('secretCode', initialSecretCode);
                 }
                 if (initialTbaCode) {
-                    localStorage.setItem('tbaCode', initialTbaCode);
+                    sessionStorage.setItem('tbaCode', initialTbaCode);
                 }
                 const urlPieces = [location.protocol, '//', location.host, location.pathname];
                 const url = urlPieces.join('');
@@ -139,8 +139,8 @@ const version = import.meta.env.VITE_APP_VERSION || '2026.0';
             teamNumberInput.value = localStorage.getItem('teamNumber') || '';
             scouterNameInput.value = localStorage.getItem('scouterName') || '';
             eventCodeInput.value = localStorage.getItem('eventCode') || '';
-            secretCodeInput.value = localStorage.getItem('secretCode') || '';
-            tbaCodeInput.value = localStorage.getItem('tbaCode') || '';
+            secretCodeInput.value = sessionStorage.getItem('secretCode') || '';
+            tbaCodeInput.value = sessionStorage.getItem('tbaCode') || '';
 
             [teamNumberInput, scouterNameInput, eventCodeInput, secretCodeInput, tbaCodeInput].forEach(input => {
                 updateFloatingLabel(input);
@@ -183,8 +183,8 @@ const version = import.meta.env.VITE_APP_VERSION || '2026.0';
                 localStorage.setItem('teamNumber', teamNumber);
                 localStorage.setItem('scouterName', scouterName);
                 localStorage.setItem('eventCode', eventCode);
-                localStorage.setItem('secretCode', secretCode);
-                localStorage.setItem('tbaCode', tbaCode);
+                sessionStorage.setItem('secretCode', secretCode);
+                sessionStorage.setItem('tbaCode', tbaCode);
 
                 const user: IUser = {
                     teamNumber: teamNumber,
@@ -198,7 +198,12 @@ const version = import.meta.env.VITE_APP_VERSION || '2026.0';
 
                 if (tbaCode.length > 0) {
                     try {
-                        const response = await fetch(`/api/schedule?year=2025&tbaCode=${tbaCode}`);
+                        const currentYear = new Date().getFullYear();
+                        const response = await fetch(`/api/schedule?year=${currentYear}&tbaCode=${encodeURIComponent(tbaCode)}`);
+                        if (!response.ok) {
+                            console.error('Failed to get schedule: HTTP status', response.status, response.statusText);
+                            return;
+                        }
                         const schedule = await response.json();
                         sessionStorage.setItem('schedule', JSON.stringify(schedule));
                     } catch (error) {

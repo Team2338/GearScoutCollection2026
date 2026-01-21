@@ -20,16 +20,18 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     background-color: $blue;
-    overflow: hidden;
+    overflow: auto;
 }
 
-/* Hide scrollbar for all elements */
-* {
+/* Hide scrollbar only within the login page container */
+.login-page,
+.login-page * {
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* IE and Edge */
 }
 
-*::-webkit-scrollbar {
+.login-page::-webkit-scrollbar,
+.login-page *::-webkit-scrollbar {
     display: none; /* Chrome, Safari, Opera */
 }
 
