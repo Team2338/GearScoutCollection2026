@@ -1,5 +1,6 @@
 ---
 // Data Collection Page
+import { Image } from 'astro:assets';
 ---
 
 <html lang="en">
@@ -7,12 +8,11 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>GearScout</title>
-	<link rel="preload" as="image" href="/logo.png">
 </head>
 <body>
 	<div class="header">
 		<div class="logo">
-			<img src="/logo.png" alt="2338 logo" height="100" width="100" loading="eager" fetchpriority="high" />
+			<Image src="/logo.png" alt="2338 logo" height={100} width={100} loading="eager" fetchpriority={"high"}/>
 		</div>
 		<div class="analytics">
 			<a href="https://data.gearitforward.com/" class="analytics-button">ANALYTICS</a>
@@ -54,6 +54,19 @@
 							BLUE ALLIANCE
 						</button>
 					</div>
+				</div>
+
+				<h2 class="section-title">Auto</h2>
+
+				<h2 class="section-title">Teleop</h2>
+
+				<div class="action-area">
+					<button type="button" class="back-button" onclick="window.location.href='/'">
+						Back
+					</button>
+					<button type="submit" class="submit-button">
+						Submit
+					</button>
 				</div>
 			</div>
 		</form>
@@ -97,7 +110,36 @@
 
 	// Alliance color toggle functionality
 	const allianceButtons = document.querySelectorAll('.alliance-toggle');
+	const submitButton = document.querySelector('.submit-button') as HTMLButtonElement;
+	const matchNumberInput = document.getElementById('match-number') as HTMLInputElement;
+	const teamNumberInput = document.getElementById('team-number') as HTMLInputElement;
 	let selectedAlliance = '';
+
+	// Function to validate form and update submit button state
+	function validateForm() {
+		const hasMatchNumber = matchNumberInput && matchNumberInput.value.trim() !== '';
+		const hasTeamNumber = teamNumberInput && teamNumberInput.value.trim() !== '';
+		const hasAlliance = selectedAlliance !== '';
+		
+		const isValid = hasMatchNumber && hasTeamNumber && hasAlliance;
+		
+		if (submitButton) {
+			submitButton.disabled = !isValid;
+		}
+	}
+
+	// Initialize submit button as disabled
+	if (submitButton) {
+		submitButton.disabled = true;
+	}
+
+	// Add input listeners to validate on change
+	if (matchNumberInput) {
+		matchNumberInput.addEventListener('input', validateForm);
+	}
+	if (teamNumberInput) {
+		teamNumberInput.addEventListener('input', validateForm);
+	}
 
 	allianceButtons.forEach(button => {
 		button.addEventListener('click', () => {
@@ -107,6 +149,9 @@
 			// Add selected class to clicked button
 			button.classList.add('selected');
 			selectedAlliance = button.getAttribute('data-value') || '';
+			
+			// Validate form after alliance selection
+			validateForm();
 		});
 	});
 </script>

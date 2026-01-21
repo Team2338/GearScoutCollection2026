@@ -7,7 +7,7 @@ $offwhite: #FAF9F6;
 $owHighlight: #ffffff;
 $tHighlight: #f2f2f2;
 $offBlack: #1D1C1B;
-$brightBlue: #1e90ff;
+$brightBlue: #1976d2;
 $cardBg: #0a3855;
 
 body {
@@ -26,7 +26,7 @@ html {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	padding: 20px 24px;
+	padding: 16px 12px;
 	width: 100%;
 	margin: 0 auto;
     background-color: $blue;
@@ -48,14 +48,14 @@ html {
 	.analytics {
 		display: flex;
 		align-items: center;
-        padding-right: 48px;
+        padding-right: 30px;
 
 		@media (max-width: 768px) {
 			display: none;
 		}
 
 		.analytics-button {
-			padding: 10px 24px;
+			padding: 9.5px 15px;
 			background-color: $brightBlue;
 			color: white;
 			text-decoration: none;
@@ -64,6 +64,7 @@ html {
 			font-size: 14px;
 			letter-spacing: 0.5px;
 			transition: background-color 0.2s;
+			box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 
 			&:hover {
 				background-color: #4da6ff;
@@ -79,7 +80,7 @@ html {
 	flex-direction: column;
 	width: 100%;
 	min-height: 100vh;
-	padding: 0;
+	padding: 15px 0px;
 	background-color: $blue;
 
 	.data-collection-form {
@@ -102,7 +103,8 @@ html {
 		.form-field {
 			margin-bottom: 30px;
 			position: relative;
-			width: 90%;
+			width: 12em;
+			max-width: 100%;
 
 			&:last-of-type {
 				margin-bottom: 30px;
@@ -166,6 +168,13 @@ html {
 			}
 		}
 
+		.section-title {
+			font-size: 40px;
+			margin-bottom: 20px;
+			margin-top: 40px;
+			color: $orange;
+		}
+
 		.alliance-section {
 			width: 100%;
 			display: flex;
@@ -212,6 +221,48 @@ html {
 							border-color: rgba(34, 85, 204);
 						}
 					}
+				}
+			}
+		}
+
+		.action-area {
+			display: flex;
+			column-gap: 12px;
+			margin-top: 40px;
+
+			button {
+				width: 4.5em;
+				height: 2.25em;
+				border-radius: 5px;
+				font-size: 1rem;
+				box-sizing: border-box;
+				cursor: pointer;
+				transition: all 0.2s;
+			}
+
+			.back-button {
+				color: $orange;
+				border: 1px solid $orange;
+				background-color: transparent;
+
+				&:hover {
+					background-color: rgba($orange, 0.1);
+				}
+			}
+
+			.submit-button {
+				color: #fff;
+				border: none;
+				background-color: $orange;
+
+				&:hover {
+					background-color: $offorange;
+				}
+
+				&:disabled {
+					background-color: #444;
+					opacity: 0.6;
+					cursor: not-allowed;
 				}
 			}
 		}
