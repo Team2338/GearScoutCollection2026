@@ -1,6 +1,5 @@
 ---
 // Data Collection Page
-import { Image } from 'astro:assets';
 ---
 
 <html lang="en">
@@ -12,7 +11,7 @@ import { Image } from 'astro:assets';
 <body>
 	<div class="header">
 		<div class="logo">
-			<Image src="/logo.png" alt="2338 logo" height={100} width={100} loading="eager" fetchpriority={"high"}/>
+			<img src="/logo.png" alt="2338 logo" height="100" width="100" loading="eager" fetchpriority="high"/>
 		</div>
 		<div class="analytics">
 			<a href="https://data.gearitforward.com/" class="analytics-button">ANALYTICS</a>
@@ -20,7 +19,7 @@ import { Image } from 'astro:assets';
 	</div>
 
 	<main class="page data-collection-page">
-		<form class="data-collection-form">
+		<form class="data-collection-form" id="data-collection-form">
 			<div class="content-wrapper">
 
 				<div class="form-field">
@@ -154,4 +153,19 @@ import { Image } from 'astro:assets';
 			validateForm();
 		});
 	});
+
+	// Add form submit handler to prevent page reload
+	const form = document.getElementById('data-collection-form') as HTMLFormElement;
+	if (form) {
+		form.addEventListener('submit', (event) => {
+			event.preventDefault();
+			
+			// TODO: Handle form submission (e.g., save data, submit to API)
+			console.log('Form submitted with data:', {
+				matchNumber: matchNumberInput?.value,
+				teamNumber: teamNumberInput?.value,
+				alliance: selectedAlliance
+			});
+		});
+	}
 </script>
