@@ -36,6 +36,7 @@ const version = "2026.0";
             display: flex;
             flex-direction: column;
             align-items: center;
+            
             padding: 16px 12px 24px;
             width: 100%;
             max-width: 100vw;
@@ -157,6 +158,72 @@ const version = "2026.0";
                 }
             }
 
+            .movement-buttons {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 24px;
+                margin-top: 24px;
+                justify-items: center;
+
+                .trench {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    background-color: rgba(0, 8, 125, 0.3);
+                    gap: 8px;
+                    padding: 12px;
+                    border-radius: 12px;
+                    box-shadow: 0 0 10px rgba(1, 24, 235, 0.4);
+                    width: 140px;
+
+                    .counter {
+                        font-size: 2rem;
+                        font-weight: 700;
+                        color: $orange;
+                        user-select: none;
+                    }
+
+                    .label {
+                        font-size: 0.9rem;
+                        color: $grey;
+                        margin-top: 4px;
+                    }
+
+                    .trench-btn {
+                        width: 48px;
+                        height: 100%;
+                        font-size: 1.4rem;
+                        font-weight: 700;
+                        border-radius: 8px;
+                        border: 2px solid $grey;
+                        background-color: transparent;
+                        color: $offwhite;
+                        cursor: pointer;
+                        transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+                        &:hover {
+                            transform: scale(1.05);
+                            box-shadow: 0 0 8px rgba(255, 255, 255, 0.25);
+                        }
+
+                        &:active {
+                            transform: scale(0.95);
+                        }
+
+                        &.plus {
+                            border-color: #3cb371;
+                            color: #3cb371;
+                        }
+
+                        &.minus {
+                            border-color: #cc4444;
+                            color: #cc4444;
+                        }
+                    }
+                }
+            }
+
+
             
         }
 
@@ -187,13 +254,66 @@ const version = "2026.0";
                 </div>
 
             </form>
+            <div class="movement-buttons">
+                <div class="trench">
+                    <button type="button" class="trench-btn minus" data-trench="trench-1">−</button>
+                    <div class="counter" id="trench-1-count">0</div>
+                    <button type="button" class="trench-btn plus" data-trench="trench-1">+</button>
+                    <div class="label">Trench 1</div>
+                </div>
+
+                <div class="trench">
+                    <button type="button" class="trench-btn minus" data-trench="trench-2">−</button>
+                    <div class="counter" id="trench-2-count">0</div>
+                    <button type="button" class="trench-btn plus" data-trench="trench-2">+</button>
+                    <div class="label">Trench 2</div>
+                </div>
+
+                <div class="trench">
+                    <button type="button" class="trench-btn minus" data-trench="bump-1">−</button>
+                    <div class="counter" id="bump-1-count">0</div>
+                    <button type="button" class="trench-btn plus" data-trench="bump-1">+</button>
+                    <div class="label">Bump 1</div>
+                </div>
+
+                <div class="trench">
+                    <button type="button" class="trench-btn minus" data-trench="bump-2">−</button>
+                    <div class="counter" id="bump-2-count">0</div>
+                    <button type="button" class="trench-btn plus" data-trench="bump-2">+</button>
+                    <div class="label">Bump 2</div>
+                </div>
+
+            </div>
 
         </div>
+        
 
 
     </main>
 
     <script type="module">
+        const counters = {};
+
+        document.querySelectorAll(".trench-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const key = btn.dataset.trench;
+                const isPlus = btn.classList.contains("plus");
+
+                if (!(key in counters)) {
+                    counters[key] = 0;
+                }
+
+                counters[key] += isPlus ? 1 : -1;
+
+                if (counters[key] < 0) {
+                    counters[key] = 0;
+                }
+
+                document.getElementById(`${key}-count`).textContent = counters[key];
+            });
+        });
+
+
         // js to handle alliance selection
         const selectAlliance = (team) => {
             // remove selected class from all buttons
