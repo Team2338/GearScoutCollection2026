@@ -175,6 +175,85 @@ html {
 			color: $orange;
 		}
 
+		.objective-label {
+			font-size: 25px;
+			margin-bottom: 12px;
+			margin-top: 30px;
+			color: $offwhite;
+			font-weight: 700;
+		}
+
+		.toggle-button-group {
+			display: flex;
+			flex-wrap: nowrap;
+			justify-content: center;
+			gap: 16px;
+			margin-bottom: 20px;
+
+			.toggle-button,
+			.toggle-button-teleop {
+				border-radius: 4px;
+				height: 40px;
+				min-width: 140px;
+				padding: 0 0px;
+				color: $grey;
+				border: 2px solid rgba($grey, 0.5);
+				background-color: transparent;
+				font-size: 15px;
+				font-weight: 500;
+				letter-spacing: 0.5px;
+				cursor: pointer;
+				transition: all 0.2s;
+
+				&:hover {
+					border-color: $offwhite;
+					background-color: rgba($offblue, 0.6);
+				}
+
+				&.selected {
+					color: #fff;
+					background-color: $orange;
+					border-color: $orange;
+					border: 1px solid transparent;
+				}
+			}
+		}
+
+		.accuracy-button-group {
+			display: flex;
+			flex-wrap: wrap;
+			justify-content: center;
+			gap: 16px;
+			margin-bottom: 20px;
+			max-width: 272px;
+
+			.accuracy-button,
+			.accuracy-button-teleop {
+				border-radius: 50%;
+				width: 80px;
+				height: 80px;
+				padding: 0;
+				color: $orange;
+				border: 3px solid $orange;
+				background-color: transparent;
+				font-size: 18px;
+				font-weight: 600;
+				cursor: pointer;
+				transition: all 0.2s;
+
+				&:hover {
+					background-color: rgba($orange, 0.1);
+					transform: scale(1.05);
+				}
+
+				&.selected {
+					color: #fff;
+					background-color: $orange;
+					border-color: $orange;
+				}
+			}
+		}
+
 		.alliance-section {
 			width: 100%;
 			display: flex;
@@ -221,6 +300,118 @@ html {
 							border-color: rgb(34, 85, 204);
 						}
 					}
+				}
+			}
+		}
+
+		.trench-container {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 12px;
+			margin-top: 20px;
+
+			@media (max-width: 768px) {
+				padding: 0 40px;
+			}
+		}
+
+		.trench-buttons {
+			display: flex;
+			flex-wrap: nowrap;
+			justify-content: center;
+			align-items: center;
+			gap: 16px;
+
+			@media (max-width: 768px) {
+				gap: 8px;
+				max-width: 340px;
+			}
+
+			.trench-button {
+				border-radius: 4px;
+				height: 40px;
+				min-width: 140px;
+				padding: 0 0px;
+				color: #fff;
+				border: 1px solid transparent;
+				font-size: 15px;
+				font-weight: 500;
+				letter-spacing: 0.5px;
+				cursor: pointer;
+				transition: all 0.2s;
+
+				@media (max-width: 768px) {
+					min-width: 110px;
+					font-size: 13px;
+				}
+
+				&.left-trench,
+				&.left-bump,
+				&.left-trench-teleop,
+				&.left-bump-teleop {
+					background-color: rgb(170, 51, 51);
+					border-color: rgb(170, 51, 51);
+				}
+
+				&.right-trench,
+				&.right-bump,
+				&.right-trench-teleop,
+				&.right-bump-teleop {
+					background-color: rgb(34, 85, 204);
+					border-color: rgb(34, 85, 204);
+				}
+			}
+
+			.counter {
+				color: white;
+				font-size: 18px;
+				font-weight: 500;
+				min-width: 30px;
+				text-align: center;
+
+				@media (max-width: 768px) {
+					min-width: 24px;
+					font-size: 16px;
+				}
+			}
+		}
+
+		.trench-decrements {
+			display: flex;
+			justify-content: center;
+			gap: 105px;
+
+			@media (max-width: 768px) {
+				gap: 63px;
+				max-width: 340px;
+			}
+
+			.trench-decrement {
+				border-radius: 4px;
+				height: 40px;
+				width: 140px;
+				min-width: 140px;
+				padding: 0;
+				color: $grey;
+				border: 2px solid rgba($grey, 0.5);
+				background-color: transparent;
+				font-size: 24px;
+				font-weight: 400;
+				cursor: pointer;
+				transition: all 0.2s;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+
+				@media (max-width: 768px) {
+					width: 110px;
+					min-width: 110px;
+				}
+
+				&:hover {
+					border-color: $offwhite;
+					background-color: rgba($offblue, 0.6);
 				}
 			}
 		}

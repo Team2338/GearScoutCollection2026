@@ -38,6 +38,7 @@ export enum AllianceColor {
 }
 
 export enum Gamemode {
+	allianceColor = 'alliance',
 	auto = 'auto',
 	teleop = 'teleop'
 }
