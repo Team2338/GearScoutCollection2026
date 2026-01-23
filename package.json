@@ -1,5 +1,5 @@
 {
-  "name": "",
+  "name": "gearscout-collection-2026",
   "type": "module",
   "version": "0.0.1",
   "scripts": {
@@ -9,6 +9,10 @@
     "astro": "astro"
   },
   "dependencies": {
-    "astro": "^5.16.11"
+    "astro": "^5.16.11",
+    "axios": "^1.13.2"
+  },
+  "devDependencies": {
+    "sass-embedded": "^1.97.2"
   }
 }
