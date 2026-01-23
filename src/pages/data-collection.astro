@@ -101,15 +101,6 @@ import logo from '../../public/logo.png';
 					</div>
 				</div>
 
-				<h3 class="objective-label">Climb</h3>
-				<div class="toggle-button-group">
-					<button type="button" class="toggle-button selected" data-value="no">
-						No
-					</button>
-					<button type="button" class="toggle-button" data-value="yes">
-						Yes
-					</button>
-				</div>
 				<h3 class="objective-label">Accuracy</h3>
 				<div class="accuracy-button-group">
 					<button type="button" class="accuracy-button" data-value="0">0%</button>
@@ -118,6 +109,15 @@ import logo from '../../public/logo.png';
 					<button type="button" class="accuracy-button" data-value="75">75%</button>
 					<button type="button" class="accuracy-button" data-value="95">95%</button>
 					<button type="button" class="accuracy-button" data-value="100">100%</button>
+				</div>
+				<h3 class="objective-label">Climb</h3>
+				<div class="toggle-button-group">
+					<button type="button" class="toggle-button selected" data-value="no">
+						No
+					</button>
+					<button type="button" class="toggle-button" data-value="yes">
+						Yes
+					</button>
 				</div>
 
 				<h2 class="section-title">Teleop</h2>
@@ -164,15 +164,6 @@ import logo from '../../public/logo.png';
 					</div>
 				</div>
 
-				<h3 class="objective-label">Climb</h3>
-				<div class="toggle-button-group">
-					<button type="button" class="toggle-button-teleop selected" data-value="no">
-						No
-					</button>
-					<button type="button" class="toggle-button-teleop" data-value="yes">
-						Yes
-					</button>
-				</div>
 				<h3 class="objective-label">Accuracy</h3>
 				<div class="accuracy-button-group">
 					<button type="button" class="accuracy-button-teleop" data-value="0">0%</button>
@@ -181,6 +172,21 @@ import logo from '../../public/logo.png';
 					<button type="button" class="accuracy-button-teleop" data-value="75">75%</button>
 					<button type="button" class="accuracy-button-teleop" data-value="95">95%</button>
 					<button type="button" class="accuracy-button-teleop" data-value="100">100%</button>
+				</div>
+			<div class="cycle-button-area">
+				<button type="button" class="cycle-button" id="cycle-button">
+					CYCLE
+				</button>
+				<div class="cycle-count" id="cycle-count">Cycles: 0</div>
+			</div>
+				<h3 class="objective-label">Climb</h3>
+				<div class="toggle-button-group">
+					<button type="button" class="toggle-button-teleop selected" data-value="no">
+						No
+					</button>
+					<button type="button" class="toggle-button-teleop" data-value="yes">
+						Yes
+					</button>
 				</div>
 
 				<div class="action-area">
@@ -432,6 +438,61 @@ import logo from '../../public/logo.png';
 		});
 	});
 
+	// Cycle tracking arrays
+	let cycles: Array<{
+		leftTrench: number;
+		rightTrench: number;
+		leftBump: number;
+		rightBump: number;
+		accuracy: number;
+	}> = [];
+
+	// Cycle button functionality
+	const cycleButton = document.getElementById('cycle-button');
+	const cycleCountEl = document.getElementById('cycle-count');
+
+	if (cycleButton) {
+		cycleButton.addEventListener('click', () => {
+			// Only allow cycling if there's data to record
+			if (leftCounterTeleop === 0 && rightCounterTeleop === 0 && 
+				leftBumpCounterTeleop === 0 && rightBumpCounterTeleop === 0 && 
+				!accuracyValueTeleop) {
+				alert('Please enter some teleop data before cycling.');
+				return;
+			}
+
+			// Store current cycle data
+			cycles.push({
+				leftTrench: leftCounterTeleop,
+				rightTrench: rightCounterTeleop,
+				leftBump: leftBumpCounterTeleop,
+				rightBump: rightBumpCounterTeleop,
+				accuracy: accuracyValueTeleop ? parseInt(accuracyValueTeleop) : 0
+			});
+
+			// Update cycle count display
+			if (cycleCountEl) {
+				cycleCountEl.textContent = `Cycles: ${cycles.length}`;
+			}
+
+			// Reset teleop counters for next cycle
+			leftCounterTeleop = 0;
+			rightCounterTeleop = 0;
+			leftBumpCounterTeleop = 0;
+			rightBumpCounterTeleop = 0;
+			if (leftCounterElTeleop) leftCounterElTeleop.textContent = '0';
+			if (rightCounterElTeleop) rightCounterElTeleop.textContent = '0';
+			if (leftBumpCounterElTeleop) leftBumpCounterElTeleop.textContent = '0';
+			if (rightBumpCounterElTeleop) rightBumpCounterElTeleop.textContent = '0';
+
+			// Reset accuracy buttons
+			accuracyButtonsTeleop.forEach(btn => btn.classList.remove('selected'));
+			accuracyValueTeleop = '';
+
+			alert(`Cycle ${cycles.length} recorded!`);
+		});
+	}
+
 	// Teleop Trench counter functionality
 	let leftCounterTeleop = 0;
 	let rightCounterTeleop = 0;
@@ -606,28 +667,59 @@ import logo from '../../public/logo.png';
 				}
 
 				// TELEOP objectives
-				// Add all trench objectives for teleop (both red and blue)
+				// Calculate totals from cycles and add current values
+				let totalLeftTrench = 0;
+				let totalRightTrench = 0;
+				let totalLeftBump = 0;
+				let totalRightBump = 0;
+				let totalAccuracy = 0;
+				let accuracyCount = 0;
+
+				if (cycles.length > 0) {
+					// Sum all cycle values
+					totalLeftTrench = cycles.reduce((sum, cycle) => sum + cycle.leftTrench, 0);
+					totalRightTrench = cycles.reduce((sum, cycle) => sum + cycle.rightTrench, 0);
+					totalLeftBump = cycles.reduce((sum, cycle) => sum + cycle.leftBump, 0);
+					totalRightBump = cycles.reduce((sum, cycle) => sum + cycle.rightBump, 0);
+					totalAccuracy = cycles.reduce((sum, cycle) => sum + cycle.accuracy, 0);
+					accuracyCount = cycles.filter(cycle => cycle.accuracy > 0).length;
+				}
+				
+				// Add current teleop values to the totals
+				totalLeftTrench += leftCounterTeleop;
+				totalRightTrench += rightCounterTeleop;
+				totalLeftBump += leftBumpCounterTeleop;
+				totalRightBump += rightBumpCounterTeleop;
+				if (accuracyValueTeleop) {
+					totalAccuracy += parseInt(accuracyValueTeleop);
+					accuracyCount++;
+				}
+
+				// Calculate average accuracy
+				const avgAccuracy = accuracyCount > 0 ? Math.round(totalAccuracy / accuracyCount) : 0;
+
+				// Add all trench objectives for teleop (both red and blue) using totals
 				objectives.push({
 					gamemode: Gamemode.teleop,
 					objective: 'red-trench',
-					count: leftCounterTeleop
+					count: totalLeftTrench
 				});
 				objectives.push({
 					gamemode: Gamemode.teleop,
 					objective: 'blue-trench',
-					count: rightCounterTeleop
+					count: totalRightTrench
 				});
 				
-				// Add all bump objectives for teleop (both red and blue)
+				// Add all bump objectives for teleop (both red and blue) using totals
 				objectives.push({
 					gamemode: Gamemode.teleop,
 					objective: 'red-bump',
-					count: leftBumpCounterTeleop
+					count: totalLeftBump
 				});
 				objectives.push({
 					gamemode: Gamemode.teleop,
 					objective: 'blue-bump',
-					count: rightBumpCounterTeleop
+					count: totalRightBump
 				});
 				
 				// Add climb objective for teleop with yes/no in the name
@@ -637,12 +729,12 @@ import logo from '../../public/logo.png';
 					count: 1
 				});
 				
-				// Add accuracy objective for teleop
-				if (accuracyValueTeleop) {
+				// Add accuracy objective for teleop using average
+				if (avgAccuracy > 0) {
 					objectives.push({
 						gamemode: Gamemode.teleop,
 						objective: 'accuracy',
-						count: parseInt(accuracyValueTeleop)
+						count: avgAccuracy
 					});
 				}
 				
@@ -703,6 +795,12 @@ import logo from '../../public/logo.png';
 				// Reset accuracy buttons (teleop)
 				accuracyButtonsTeleop.forEach(btn => btn.classList.remove('selected'));
 				accuracyValueTeleop = '';
+
+				// Reset cycles array and display
+				cycles = [];
+				if (cycleCountEl) {
+					cycleCountEl.textContent = 'Cycles: 0';
+				}
 				
 				// Clear form field classes
 				formFields.forEach(field => field.classList.remove('has-value'));

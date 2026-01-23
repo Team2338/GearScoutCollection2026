@@ -416,6 +416,47 @@ html {
 			}
 		}
 
+		.cycle-button-area {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 10px;
+			margin: 20px 0;
+			width: 100%;
+
+			.cycle-button {
+				border-radius: 4px;
+				height: 50px;
+				width: 200px;
+				padding: 0;
+				color: #fff;
+				border: 2px solid $orange;
+				background-color: $orange;
+				font-size: 18px;
+				font-weight: 600;
+				letter-spacing: 1px;
+				cursor: pointer;
+				transition: all 0.2s;
+
+				&:hover {
+					background-color: $offorange;
+					border-color: $offorange;
+					transform: scale(1.02);
+				}
+
+				&:active {
+					transform: scale(0.98);
+				}
+			}
+
+			.cycle-count {
+				color: $grey;
+				font-size: 14px;
+				font-weight: 500;
+				letter-spacing: 0.5px;
+			}
+		}
+
 		.action-area {
 			display: flex;
 			column-gap: 12px;
