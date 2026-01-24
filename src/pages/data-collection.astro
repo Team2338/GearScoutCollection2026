@@ -156,6 +156,47 @@ const version = "2026.0";
                         }
                     }
                 }
+                .climb-select {
+                    display: flex;
+                    gap: 16px;
+                    margin-top: 12px;
+
+                    .climb-btn {
+                        padding: 0.6rem 1.2rem;
+                        border-radius: 6px;
+                        font-size: 1rem;
+                        font-weight: 600;
+                        border: 2px solid $grey;
+                        background-color: transparent;
+                        color: $grey;
+                        cursor: pointer;
+                        transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+                        min-width: 140px;
+
+                        &:hover {
+                            transform: scale(1.05);
+                            box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+                        }
+
+                        &:active {
+                            transform: scale(0.97);
+                        }
+
+                        &.selected {
+                            color: #fff;
+                            border: none;
+                        }
+
+                        /* change color based on selected team */
+                        &.climb.selected {
+                            background-color: #aa3333;
+                        }
+
+                        &.no-climb.selected {
+                            background-color: #2255cc;
+                        }
+                    }
+                }
             }
 
             .movement-buttons {
@@ -252,6 +293,7 @@ const version = "2026.0";
                     <button type="button" class="team-btn red" onclick="selectAlliance('red')">RED ALLIANCE</button>
                     <button type="button" class="team-btn blue" onclick="selectAlliance('blue')">BLUE ALLIANCE</button>
                 </div>
+                
 
             </form>
             <div class="movement-buttons">
@@ -284,6 +326,13 @@ const version = "2026.0";
                 </div>
 
             </div>
+
+            <form class="data-collection-form" id="data-collection-form">
+                <div class="climb-select">
+                    <button type="button" class="climb-btn climb" onclick="selectClimb('climb')">climb</button>
+                    <button type="button" class="climb-btn no-climb" onclick="selectClimb('no-climb')">no climb</button>
+                </div>
+            </form>
 
         </div>
         
@@ -330,6 +379,24 @@ const version = "2026.0";
         };
         // tell it to be gobal
         window.selectAlliance = selectAlliance;
+
+
+        // js to handle alliance selection
+        const selectClimb = (yep) => {
+            // remove selected class from all buttons
+            document.querySelectorAll(".climb-btn").forEach(btn => btn.classList.remove("selected"));
+            // add selected class to cilcked button
+            document.querySelector(`.climb-btn.${yep}`)?.classList.add("selected");
+
+            // save the selected team 
+            if (yep === "climb") {
+                img.classList.add("climb");
+            } else if (team === "no-climb") {
+                img.classList.add("no-climb");
+            }
+        };
+        // tell it to be gobal
+        window.selectClimb = selectClimb;
     </script>
 </body>
 </html>
