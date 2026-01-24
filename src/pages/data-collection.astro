@@ -3,6 +3,7 @@ import { Image } from 'astro:assets';
 import logo from '../../public/logo.png';
 ---
 
+<!DOCTYPE html>
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
@@ -36,17 +37,31 @@ import logo from '../../public/logo.png';
 					<label for="match-number">Match Number</label>
 				</div>
 
-				<div class="form-field">
-					<input 
-						id="team-number" 
-						name="teamNumber" 
-						type="number"
-						autocomplete="off"
-					/>
-					<label for="team-number">Team Number</label>
+				<div id="team-number-container">
+					<div class="team-number-loader" id="schedule-loader" style="display: none;">
+						<div class="textbox-placeholder">Team Number</div>
+						<div class="spin-loader"></div>
+					</div>
+
+					<div class="form-field" id="team-number-dropdown-container" style="display: none;">
+						<select id="team-number-dropdown" name="teamNumberDropdown">
+							<option value="">Select Team</option>
+						</select>
+						<label for="team-number-dropdown">Team Number</label>
+					</div>
+
+					<div class="form-field" id="team-number-manual-container">
+						<input 
+							id="team-number" 
+							name="teamNumber" 
+							type="number"
+							autocomplete="off"
+						/>
+						<label for="team-number">Team Number</label>
+					</div>
 				</div>
 
-				<div class="alliance-section">
+				<div class="alliance-section" id="alliance-section">
 					<div class="toggle-button-group">
 						<button type="button" class="alliance-toggle red" data-value="red">
 							RED ALLIANCE
@@ -122,49 +137,34 @@ import logo from '../../public/logo.png';
 
 				<h2 class="section-title">Teleop</h2>
 
-				<div class="trench-container">
-					<div class="trench-buttons">
-						<button type="button" class="trench-button left-trench-teleop">
-							RED TRENCH
-						</button>
-						<span class="counter" id="left-counter-teleop">0</span>
-						<span class="counter" id="right-counter-teleop">0</span>
-						<button type="button" class="trench-button right-trench-teleop">
-							BLUE TRENCH
-						</button>
+				<div id="previous-cycle-section" class="previous-cycle-section" style="display: none;">
+					<h3 class="objective-label">Previous Cycle</h3>
+					
+					<h4 class="sub-label">Accuracy</h4>
+					<div class="accuracy-button-group">
+						<button type="button" class="accuracy-button-previous" data-value="0">0%</button>
+						<button type="button" class="accuracy-button-previous" data-value="25">25%</button>
+						<button type="button" class="accuracy-button-previous" data-value="50">50%</button>
+						<button type="button" class="accuracy-button-previous" data-value="75">75%</button>
+						<button type="button" class="accuracy-button-previous" data-value="95">95%</button>
+						<button type="button" class="accuracy-button-previous" data-value="100">100%</button>
 					</div>
-					<div class="trench-decrements">
-						<button type="button" class="trench-decrement left-decrement-teleop">
-							−
-						</button>
-						<button type="button" class="trench-decrement right-decrement-teleop">
-							−
-						</button>
-					</div>
-				</div>
-
-				<div class="trench-container">
-					<div class="trench-buttons">
-						<button type="button" class="trench-button left-bump-teleop">
-							RED BUMP
-						</button>
-						<span class="counter" id="left-bump-counter-teleop">0</span>
-						<span class="counter" id="right-bump-counter-teleop">0</span>
-						<button type="button" class="trench-button right-bump-teleop">
-							BLUE BUMP
-						</button>
-					</div>
-					<div class="trench-decrements">
-						<button type="button" class="trench-decrement left-bump-decrement-teleop">
-							−
-						</button>
-						<button type="button" class="trench-decrement right-bump-decrement-teleop">
-							−
-						</button>
+					
+					<h4 class="sub-label estimate-size-label">Estimated Size</h4>
+					<div class="form-field estimate-size-field">
+						<select id="estimate-size-previous" name="estimateSizePrevious">
+							<option value="">Select Range</option>
+							<option value="1-10">1-10</option>
+							<option value="11-25">11-25</option>
+							<option value="26+">26+</option>
+						</select>
+						<label for="estimate-size-previous">Estimate Size</label>
 					</div>
 				</div>
 
-				<h3 class="objective-label">Accuracy</h3>
+				<h3 class="objective-label" id="current-cycle-label">Current Cycle</h3>
+				
+				<h4 class="sub-label">Accuracy</h4>
 				<div class="accuracy-button-group">
 					<button type="button" class="accuracy-button-teleop" data-value="0">0%</button>
 					<button type="button" class="accuracy-button-teleop" data-value="25">25%</button>
@@ -172,6 +172,17 @@ import logo from '../../public/logo.png';
 					<button type="button" class="accuracy-button-teleop" data-value="75">75%</button>
 					<button type="button" class="accuracy-button-teleop" data-value="95">95%</button>
 					<button type="button" class="accuracy-button-teleop" data-value="100">100%</button>
+				</div>
+				
+				<h4 class="sub-label estimate-size-label">Estimated Size</h4>
+				<div class="form-field estimate-size-field">
+					<select id="estimate-size" name="estimateSize">
+						<option value="">Select Range</option>
+						<option value="1-10">1-10</option>
+						<option value="11-25">11-25</option>
+						<option value="26+">26+</option>
+					</select>
+					<label for="estimate-size">Estimate Size</label>
 				</div>
 			<div class="cycle-button-area">
 				<button type="button" class="cycle-button" id="cycle-button">
@@ -207,618 +218,67 @@ import logo from '../../public/logo.png';
 @use '../styles/data-collection.scss';
 </style>
 
+<style is:global>
+/* Toast Notifications */
+.error-notification,
+.success-notification {
+	position: fixed;
+	top: 20px;
+	left: 50%;
+	transform: translateX(-50%) translateY(0);
+	padding: 16px 24px;
+	border-radius: 8px;
+	color: white;
+	font-size: 15px;
+	font-weight: 500;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+	z-index: 9999;
+	max-width: 90%;
+	text-align: center;
+	opacity: 1;
+	animation: slideIn 0.3s ease-out forwards;
+}
+
+.error-notification.fade-out,
+.success-notification.fade-out {
+	animation: slideOut 0.3s ease-out forwards;
+}
+
+.error-notification {
+	background-color: #f44336;
+}
+
+.success-notification {
+	background-color: #4caf50;
+}
+
+@keyframes slideIn {
+	from {
+		transform: translateX(-50%) translateY(-80px);
+		opacity: 0;
+	}
+	to {
+		transform: translateX(-50%) translateY(0);
+		opacity: 1;
+	}
+}
+
+@keyframes slideOut {
+	from {
+		transform: translateX(-50%) translateY(0);
+		opacity: 1;
+	}
+	to {
+		transform: translateX(-50%) translateY(-80px);
+		opacity: 0;
+	}
+}
+</style>
+
 <script>
-	// Floating label functionality for form fields
-	const formFields = document.querySelectorAll('.form-field');
+	import { initializeDataCollection } from '../scripts/data-collection';
 	
-	formFields.forEach(field => {
-		const input = field.querySelector('input');
-		if (!input) return;
-
-		// Check if input has value on load
-		if (input.value) {
-			field.classList.add('has-value');
-		}
-
-		// Update has-value class on input
-		input.addEventListener('input', () => {
-			if (input.value) {
-				field.classList.add('has-value');
-			} else {
-				field.classList.remove('has-value');
-			}
-		});
-
-		// Handle focus/blur for proper label animation
-		input.addEventListener('blur', () => {
-			if (!input.value) {
-				field.classList.remove('has-value');
-			}
-		});
+	window.addEventListener('DOMContentLoaded', () => {
+		initializeDataCollection();
 	});
-
-	// Alliance color toggle functionality
-	const allianceButtons = document.querySelectorAll('.alliance-toggle');
-	const submitButton = document.querySelector('.submit-button') as HTMLButtonElement;
-	const matchNumberInput = document.getElementById('match-number') as HTMLInputElement;
-	const teamNumberInput = document.getElementById('team-number') as HTMLInputElement;
-	let selectedAlliance = '';
-
-	// Function to validate form and update submit button state
-	function validateForm() {
-		const hasMatchNumber = matchNumberInput && matchNumberInput.value.trim() !== '';
-		const hasTeamNumber = teamNumberInput && teamNumberInput.value.trim() !== '';
-		const hasAlliance = selectedAlliance !== '';
-		
-		const isValid = hasMatchNumber && hasTeamNumber && hasAlliance;
-		
-		if (submitButton) {
-			submitButton.disabled = !isValid;
-		}
-	}
-
-	// Initialize submit button as disabled
-	if (submitButton) {
-		submitButton.disabled = true;
-	}
-
-	// Add input listeners to validate on change
-	if (matchNumberInput) {
-		matchNumberInput.addEventListener('input', validateForm);
-	}
-	if (teamNumberInput) {
-		teamNumberInput.addEventListener('input', validateForm);
-	}
-
-	allianceButtons.forEach(button => {
-		button.addEventListener('click', () => {
-			// Remove selected class from all buttons
-			allianceButtons.forEach(btn => btn.classList.remove('selected'));
-			
-			// Add selected class to clicked button
-			button.classList.add('selected');
-			selectedAlliance = button.getAttribute('data-value') || '';
-			
-			// Validate form after alliance selection
-			validateForm();
-		});
-	});
-
-	// Leave toggle functionality
-	const leaveToggleButtons = document.querySelectorAll('.toggle-button-group .toggle-button');
-	let leaveValue = 'no';
-
-	leaveToggleButtons.forEach(button => {
-		button.addEventListener('click', () => {
-			// Remove selected class from all buttons
-			leaveToggleButtons.forEach(btn => btn.classList.remove('selected'));
-			
-			// Add selected class to clicked button
-			button.classList.add('selected');
-			leaveValue = button.getAttribute('data-value') || '';
-		});
-	});
-
-	// Accuracy toggle functionality
-	const accuracyButtons = document.querySelectorAll('.accuracy-button-group .accuracy-button');
-	let accuracyValue = '';
-
-	accuracyButtons.forEach(button => {
-		button.addEventListener('click', () => {
-			// Remove selected class from all buttons
-			accuracyButtons.forEach(btn => btn.classList.remove('selected'));
-			
-			// Add selected class to clicked button
-			button.classList.add('selected');
-			accuracyValue = button.getAttribute('data-value') || '';
-		});
-	});
-
-	// Trench counter functionality
-	let leftCounter = 0;
-	let rightCounter = 0;
-
-	const leftCounterEl = document.getElementById('left-counter');
-	const rightCounterEl = document.getElementById('right-counter');
-	const leftTrenchBtn = document.querySelector('.left-trench');
-	const rightTrenchBtn = document.querySelector('.right-trench');
-	const leftDecrementBtn = document.querySelector('.left-decrement');
-	const rightDecrementBtn = document.querySelector('.right-decrement');
-
-	// Increment left counter
-	if (leftTrenchBtn) {
-		leftTrenchBtn.addEventListener('click', () => {
-			leftCounter++;
-			if (leftCounterEl) leftCounterEl.textContent = leftCounter.toString();
-		});
-	}
-
-	// Increment right counter
-	if (rightTrenchBtn) {
-		rightTrenchBtn.addEventListener('click', () => {
-			rightCounter++;
-			if (rightCounterEl) rightCounterEl.textContent = rightCounter.toString();
-		});
-	}
-
-	// Decrement left counter
-	if (leftDecrementBtn) {
-		leftDecrementBtn.addEventListener('click', () => {
-			if (leftCounter > 0) {
-				leftCounter--;
-				if (leftCounterEl) leftCounterEl.textContent = leftCounter.toString();
-			}
-		});
-	}
-
-	// Decrement right counter
-	if (rightDecrementBtn) {
-		rightDecrementBtn.addEventListener('click', () => {
-			if (rightCounter > 0) {
-				rightCounter--;
-				if (rightCounterEl) rightCounterEl.textContent = rightCounter.toString();
-			}
-		});
-	}
-
-	// Bump counter functionality
-	let leftBumpCounter = 0;
-	let rightBumpCounter = 0;
-
-	const leftBumpCounterEl = document.getElementById('left-bump-counter');
-	const rightBumpCounterEl = document.getElementById('right-bump-counter');
-	const leftBumpBtn = document.querySelector('.left-bump');
-	const rightBumpBtn = document.querySelector('.right-bump');
-	const leftBumpDecrementBtn = document.querySelector('.left-bump-decrement');
-	const rightBumpDecrementBtn = document.querySelector('.right-bump-decrement');
-
-	// Increment left bump counter
-	if (leftBumpBtn) {
-		leftBumpBtn.addEventListener('click', () => {
-			leftBumpCounter++;
-			if (leftBumpCounterEl) leftBumpCounterEl.textContent = leftBumpCounter.toString();
-		});
-	}
-
-	// Increment right bump counter
-	if (rightBumpBtn) {
-		rightBumpBtn.addEventListener('click', () => {
-			rightBumpCounter++;
-			if (rightBumpCounterEl) rightBumpCounterEl.textContent = rightBumpCounter.toString();
-		});
-	}
-
-	// Decrement left bump counter
-	if (leftBumpDecrementBtn) {
-		leftBumpDecrementBtn.addEventListener('click', () => {
-			if (leftBumpCounter > 0) {
-				leftBumpCounter--;
-				if (leftBumpCounterEl) leftBumpCounterEl.textContent = leftBumpCounter.toString();
-			}
-		});
-	}
-
-	// Decrement right bump counter
-	if (rightBumpDecrementBtn) {
-		rightBumpDecrementBtn.addEventListener('click', () => {
-			if (rightBumpCounter > 0) {
-				rightBumpCounter--;
-				if (rightBumpCounterEl) rightBumpCounterEl.textContent = rightBumpCounter.toString();
-			}
-		});
-	}
-
-	// Teleop Climb toggle functionality
-	const leaveToggleButtonsTeleop = document.querySelectorAll('.toggle-button-group .toggle-button-teleop');
-	let leaveValueTeleop = 'no';
-
-	leaveToggleButtonsTeleop.forEach(button => {
-		button.addEventListener('click', () => {
-			// Remove selected class from all buttons
-			leaveToggleButtonsTeleop.forEach(btn => btn.classList.remove('selected'));
-			
-			// Add selected class to clicked button
-			button.classList.add('selected');
-			leaveValueTeleop = button.getAttribute('data-value') || '';
-		});
-	});
-
-	// Teleop Accuracy toggle functionality
-	const accuracyButtonsTeleop = document.querySelectorAll('.accuracy-button-group .accuracy-button-teleop');
-	let accuracyValueTeleop = '';
-
-	accuracyButtonsTeleop.forEach(button => {
-		button.addEventListener('click', () => {
-			// Remove selected class from all buttons
-			accuracyButtonsTeleop.forEach(btn => btn.classList.remove('selected'));
-			
-			// Add selected class to clicked button
-			button.classList.add('selected');
-			accuracyValueTeleop = button.getAttribute('data-value') || '';
-		});
-	});
-
-	// Cycle tracking arrays
-	let cycles: Array<{
-		leftTrench: number;
-		rightTrench: number;
-		leftBump: number;
-		rightBump: number;
-		accuracy: number;
-	}> = [];
-
-	// Cycle button functionality
-	const cycleButton = document.getElementById('cycle-button');
-	const cycleCountEl = document.getElementById('cycle-count');
-
-	if (cycleButton) {
-		cycleButton.addEventListener('click', () => {
-			// Only allow cycling if there's data to record
-			if (leftCounterTeleop === 0 && rightCounterTeleop === 0 && 
-				leftBumpCounterTeleop === 0 && rightBumpCounterTeleop === 0 && 
-				!accuracyValueTeleop) {
-				alert('Please enter some teleop data before cycling.');
-				return;
-			}
-
-			// Store current cycle data
-			cycles.push({
-				leftTrench: leftCounterTeleop,
-				rightTrench: rightCounterTeleop,
-				leftBump: leftBumpCounterTeleop,
-				rightBump: rightBumpCounterTeleop,
-				accuracy: accuracyValueTeleop ? parseInt(accuracyValueTeleop) : 0
-			});
-
-			// Update cycle count display
-			if (cycleCountEl) {
-				cycleCountEl.textContent = `Cycles: ${cycles.length}`;
-			}
-
-			// Reset teleop counters for next cycle
-			leftCounterTeleop = 0;
-			rightCounterTeleop = 0;
-			leftBumpCounterTeleop = 0;
-			rightBumpCounterTeleop = 0;
-			if (leftCounterElTeleop) leftCounterElTeleop.textContent = '0';
-			if (rightCounterElTeleop) rightCounterElTeleop.textContent = '0';
-			if (leftBumpCounterElTeleop) leftBumpCounterElTeleop.textContent = '0';
-			if (rightBumpCounterElTeleop) rightBumpCounterElTeleop.textContent = '0';
-
-			// Reset accuracy buttons
-			accuracyButtonsTeleop.forEach(btn => btn.classList.remove('selected'));
-			accuracyValueTeleop = '';
-
-			alert(`Cycle ${cycles.length} recorded!`);
-		});
-	}
-
-	// Teleop Trench counter functionality
-	let leftCounterTeleop = 0;
-	let rightCounterTeleop = 0;
-
-	const leftCounterElTeleop = document.getElementById('left-counter-teleop');
-	const rightCounterElTeleop = document.getElementById('right-counter-teleop');
-	const leftTrenchBtnTeleop = document.querySelector('.left-trench-teleop');
-	const rightTrenchBtnTeleop = document.querySelector('.right-trench-teleop');
-	const leftDecrementBtnTeleop = document.querySelector('.left-decrement-teleop');
-	const rightDecrementBtnTeleop = document.querySelector('.right-decrement-teleop');
-
-	// Increment left counter teleop
-	if (leftTrenchBtnTeleop) {
-		leftTrenchBtnTeleop.addEventListener('click', () => {
-			leftCounterTeleop++;
-			if (leftCounterElTeleop) leftCounterElTeleop.textContent = leftCounterTeleop.toString();
-		});
-	}
-
-	// Increment right counter teleop
-	if (rightTrenchBtnTeleop) {
-		rightTrenchBtnTeleop.addEventListener('click', () => {
-			rightCounterTeleop++;
-			if (rightCounterElTeleop) rightCounterElTeleop.textContent = rightCounterTeleop.toString();
-		});
-	}
-
-	// Decrement left counter teleop
-	if (leftDecrementBtnTeleop) {
-		leftDecrementBtnTeleop.addEventListener('click', () => {
-			if (leftCounterTeleop > 0) {
-				leftCounterTeleop--;
-				if (leftCounterElTeleop) leftCounterElTeleop.textContent = leftCounterTeleop.toString();
-			}
-		});
-	}
-
-	// Decrement right counter teleop
-	if (rightDecrementBtnTeleop) {
-		rightDecrementBtnTeleop.addEventListener('click', () => {
-			if (rightCounterTeleop > 0) {
-				rightCounterTeleop--;
-				if (rightCounterElTeleop) rightCounterElTeleop.textContent = rightCounterTeleop.toString();
-			}
-		});
-	}
-
-	// Teleop Bump counter functionality
-	let leftBumpCounterTeleop = 0;
-	let rightBumpCounterTeleop = 0;
-
-	const leftBumpCounterElTeleop = document.getElementById('left-bump-counter-teleop');
-	const rightBumpCounterElTeleop = document.getElementById('right-bump-counter-teleop');
-	const leftBumpBtnTeleop = document.querySelector('.left-bump-teleop');
-	const rightBumpBtnTeleop = document.querySelector('.right-bump-teleop');
-	const leftBumpDecrementBtnTeleop = document.querySelector('.left-bump-decrement-teleop');
-	const rightBumpDecrementBtnTeleop = document.querySelector('.right-bump-decrement-teleop');
-
-	// Increment left bump counter teleop
-	if (leftBumpBtnTeleop) {
-		leftBumpBtnTeleop.addEventListener('click', () => {
-			leftBumpCounterTeleop++;
-			if (leftBumpCounterElTeleop) leftBumpCounterElTeleop.textContent = leftBumpCounterTeleop.toString();
-		});
-	}
-
-	// Increment right bump counter teleop
-	if (rightBumpBtnTeleop) {
-		rightBumpBtnTeleop.addEventListener('click', () => {
-			rightBumpCounterTeleop++;
-			if (rightBumpCounterElTeleop) rightBumpCounterElTeleop.textContent = rightBumpCounterTeleop.toString();
-		});
-	}
-
-	// Decrement left bump counter teleop
-	if (leftBumpDecrementBtnTeleop) {
-		leftBumpDecrementBtnTeleop.addEventListener('click', () => {
-			if (leftBumpCounterTeleop > 0) {
-				leftBumpCounterTeleop--;
-				if (leftBumpCounterElTeleop) leftBumpCounterElTeleop.textContent = leftBumpCounterTeleop.toString();
-			}
-		});
-	}
-
-	// Decrement right bump counter teleop
-	if (rightBumpDecrementBtnTeleop) {
-		rightBumpDecrementBtnTeleop.addEventListener('click', () => {
-			if (rightBumpCounterTeleop > 0) {
-				rightBumpCounterTeleop--;
-				if (rightBumpCounterElTeleop) rightBumpCounterElTeleop.textContent = rightBumpCounterTeleop.toString();
-			}
-		});
-	}
-
-	// Add form submit handler to prevent page reload
-	const form = document.getElementById('data-collection-form') as HTMLFormElement;
-	if (form) {
-		form.addEventListener('submit', async (event) => {
-			event.preventDefault();
-			
-			// Disable submit button to prevent double submission
-			if (submitButton) {
-				submitButton.disabled = true;
-			}
-			
-			try {
-				// Get user data from sessionStorage
-				const userDataStr = sessionStorage.getItem('currentUser');
-				if (!userDataStr) {
-					alert('User data not found. Please log in again.');
-					window.location.href = '/';
-					return;
-				}
-				
-				const userData = JSON.parse(userDataStr);
-				
-				// Import types and service
-				const { default: gearscoutService } = await import('../services/gearscout-services');
-				const { AllianceColor, Gamemode } = await import('../model/Models');
-				type IObjective = import('../model/Models').IObjective;
-				type IMatch = import('../model/Models').IMatch;
-				
-				// Build objectives array with both auto and teleop
-				const objectives: IObjective[] = [];
-				
-				// ALLIANCE - separate from auto/teleop
-				objectives.push({
-					gamemode: Gamemode.alliance,
-					objective: `${selectedAlliance}`,
-					count: 0
-				});
-				
-				// AUTO objectives
-				// Add all trench objectives for auto (both red and blue)
-				objectives.push({
-					gamemode: Gamemode.auto,
-					objective: 'red-trench',
-					count: leftCounter
-				});
-				objectives.push({
-					gamemode: Gamemode.auto,
-					objective: 'blue-trench',
-					count: rightCounter
-				});
-				
-				// Add all bump objectives for auto (both red and blue)
-				objectives.push({
-					gamemode: Gamemode.auto,
-					objective: 'red-bump',
-					count: leftBumpCounter
-				});
-				objectives.push({
-					gamemode: Gamemode.auto,
-					objective: 'blue-bump',
-					count: rightBumpCounter
-				});
-				
-				// Add climb objective with yes/no in the name
-				objectives.push({
-					gamemode: Gamemode.auto,
-					objective: `climb-${leaveValue}`,
-					count: 1
-				});
-				
-				// Add accuracy objective - single category with percentage as count
-				if (accuracyValue) {
-					objectives.push({
-						gamemode: Gamemode.auto,
-						objective: 'accuracy',
-						count: parseInt(accuracyValue)
-					});
-				}
-
-				// TELEOP objectives
-				// Calculate totals from cycles and add current values
-				let totalLeftTrench = 0;
-				let totalRightTrench = 0;
-				let totalLeftBump = 0;
-				let totalRightBump = 0;
-				let totalAccuracy = 0;
-				let accuracyCount = 0;
-
-				if (cycles.length > 0) {
-					// Sum all cycle values
-					totalLeftTrench = cycles.reduce((sum, cycle) => sum + cycle.leftTrench, 0);
-					totalRightTrench = cycles.reduce((sum, cycle) => sum + cycle.rightTrench, 0);
-					totalLeftBump = cycles.reduce((sum, cycle) => sum + cycle.leftBump, 0);
-					totalRightBump = cycles.reduce((sum, cycle) => sum + cycle.rightBump, 0);
-					totalAccuracy = cycles.reduce((sum, cycle) => sum + cycle.accuracy, 0);
-					accuracyCount = cycles.filter(cycle => cycle.accuracy > 0).length;
-				}
-				
-				// Add current teleop values to the totals
-				totalLeftTrench += leftCounterTeleop;
-				totalRightTrench += rightCounterTeleop;
-				totalLeftBump += leftBumpCounterTeleop;
-				totalRightBump += rightBumpCounterTeleop;
-				if (accuracyValueTeleop) {
-					totalAccuracy += parseInt(accuracyValueTeleop);
-					accuracyCount++;
-				}
-
-				// Calculate average accuracy
-				const avgAccuracy = accuracyCount > 0 ? Math.round(totalAccuracy / accuracyCount) : 0;
-
-				// Add all trench objectives for teleop (both red and blue) using totals
-				objectives.push({
-					gamemode: Gamemode.teleop,
-					objective: 'red-trench',
-					count: totalLeftTrench
-				});
-				objectives.push({
-					gamemode: Gamemode.teleop,
-					objective: 'blue-trench',
-					count: totalRightTrench
-				});
-				
-				// Add all bump objectives for teleop (both red and blue) using totals
-				objectives.push({
-					gamemode: Gamemode.teleop,
-					objective: 'red-bump',
-					count: totalLeftBump
-				});
-				objectives.push({
-					gamemode: Gamemode.teleop,
-					objective: 'blue-bump',
-					count: totalRightBump
-				});
-				
-				// Add climb objective for teleop with yes/no in the name
-				objectives.push({
-					gamemode: Gamemode.teleop,
-					objective: `climb-${leaveValueTeleop}`,
-					count: 1
-				});
-				
-				// Add accuracy objective for teleop using average
-				if (avgAccuracy > 0) {
-					objectives.push({
-						gamemode: Gamemode.teleop,
-						objective: 'accuracy',
-						count: avgAccuracy
-					});
-				}
-				
-				// Build match data with proper types
-				const matchData: IMatch = {
-					gameYear: 2026,
-					eventCode: userData.eventCode,
-					matchNumber: matchNumberInput?.value || '',
-					robotNumber: teamNumberInput?.value || '',
-					creator: userData.scouterName,
-					allianceColor: selectedAlliance === 'red' ? AllianceColor.red : AllianceColor.blue,
-					objectives: objectives
-				};
-				
-				// Submit the match data
-				await gearscoutService.submitMatch(userData, matchData);
-				
-				// Success - show message and reset form
-				alert('Match data submitted successfully!');
-				
-				// Reset form
-				form.reset();
-				leftCounter = 0;
-				rightCounter = 0;
-				leftBumpCounter = 0;
-				rightBumpCounter = 0;
-				leftCounterTeleop = 0;
-				rightCounterTeleop = 0;
-				leftBumpCounterTeleop = 0;
-				rightBumpCounterTeleop = 0;
-				if (leftCounterEl) leftCounterEl.textContent = '0';
-				if (rightCounterEl) rightCounterEl.textContent = '0';
-				if (leftBumpCounterEl) leftBumpCounterEl.textContent = '0';
-				if (rightBumpCounterEl) rightBumpCounterEl.textContent = '0';
-				if (leftCounterElTeleop) leftCounterElTeleop.textContent = '0';
-				if (rightCounterElTeleop) rightCounterElTeleop.textContent = '0';
-				if (leftBumpCounterElTeleop) leftBumpCounterElTeleop.textContent = '0';
-				if (rightBumpCounterElTeleop) rightBumpCounterElTeleop.textContent = '0';
-				
-				// Reset alliance buttons
-				allianceButtons.forEach(btn => btn.classList.remove('selected'));
-				selectedAlliance = '';
-				
-				// Reset toggle buttons (auto)
-				leaveToggleButtons.forEach(btn => btn.classList.remove('selected'));
-				leaveToggleButtons[0]?.classList.add('selected');
-				leaveValue = 'no';
-				
-				// Reset toggle buttons (teleop)
-				leaveToggleButtonsTeleop.forEach(btn => btn.classList.remove('selected'));
-				leaveToggleButtonsTeleop[0]?.classList.add('selected');
-				leaveValueTeleop = 'no';
-				
-				// Reset accuracy buttons (auto)
-				accuracyButtons.forEach(btn => btn.classList.remove('selected'));
-				accuracyValue = '';
-				
-				// Reset accuracy buttons (teleop)
-				accuracyButtonsTeleop.forEach(btn => btn.classList.remove('selected'));
-				accuracyValueTeleop = '';
-
-				// Reset cycles array and display
-				cycles = [];
-				if (cycleCountEl) {
-					cycleCountEl.textContent = 'Cycles: 0';
-				}
-				
-				// Clear form field classes
-				formFields.forEach(field => field.classList.remove('has-value'));
-				
-			} catch (error) {
-				console.error('Error submitting match data:', error);
-				console.error('Error details:', error instanceof Error ? error.message : String(error));
-				if (error && typeof error === 'object' && 'response' in error) {
-					console.error('Response data:', (error as any).response?.data);
-					console.error('Response status:', (error as any).response?.status);
-				}
-				alert('Failed to submit match data. Please try again.');
-			} finally {
-				// Re-enable submit button
-				if (submitButton) {
-					validateForm();
-				}
-			}
-		});
-	}
 </script>
