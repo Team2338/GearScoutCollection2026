@@ -189,11 +189,11 @@ const version = "2026.0";
 
                         /* change color based on selected team */
                         &.climb.selected {
-                            background-color: #aa3333;
+                            background-color: #14a900;
                         }
 
                         &.no-climb.selected {
-                            background-color: #2255cc;
+                            background-color: #e20808;
                         }
                     }
                 }
@@ -381,14 +381,14 @@ const version = "2026.0";
         window.selectAlliance = selectAlliance;
 
 
-        // js to handle alliance selection
+        // js to handle climb selection
         const selectClimb = (yep) => {
             // remove selected class from all buttons
             document.querySelectorAll(".climb-btn").forEach(btn => btn.classList.remove("selected"));
             // add selected class to cilcked button
             document.querySelector(`.climb-btn.${yep}`)?.classList.add("selected");
 
-            // save the selected team 
+            // save the selected climb
             if (yep === "climb") {
                 img.classList.add("climb");
             } else if (team === "no-climb") {
