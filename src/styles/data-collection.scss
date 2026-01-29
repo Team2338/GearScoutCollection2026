@@ -254,6 +254,8 @@ html {
 				font-size: 12px;
 				background-color: $blue;
 				opacity: 1;
+				font-weight: 600;
+				color: $orange;
 			}
 
 			input,
@@ -293,24 +295,53 @@ html {
 			select {
 				cursor: pointer;
 				appearance: none;
-				background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='white' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+				background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='white' d='M8 11L3 6h10z'/%3E%3C/svg%3E");
 				background-repeat: no-repeat;
 				background-position: right 12px center;
-				padding-right: 36px;
+				background-size: 16px;
+				padding-right: 40px;
+				min-height: 51px;
+				font-weight: 500;
+				
+				// Better hover state
+				&:hover:not(:focus) {
+					border-color: #fe7755;
+					background-color: rgba(255, 255, 255, 0.05);
+				}
+				
+				// Enhanced focus state with animation
+				&:focus {
+					background-color: rgba(255, 255, 255, 0.08);
+					background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='%23fe5000' d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+				}
 
 				option {
 					background-color: $blue;
 					color: white;
-					padding: 8px;
+					padding: 12px;
+					font-size: 15px;
+					font-weight: 500;
 
 					&:disabled {
 						font-style: italic;
-						opacity: 0.8;
+						opacity: 0.6;
+						color: rgba(white, 0.6);
+					}
+					
+					&:hover,
+					&:focus {
+						background-color: rgba($orange, 0.2);
+					}
+					
+					&:checked {
+						background-color: $orange;
+						font-weight: 600;
 					}
 				}
 
 				&:invalid {
-					color: rgba(white, 0.6);
+					color: rgba(white, 0.5);
+					font-style: italic;
 				}
 			}
 		}
