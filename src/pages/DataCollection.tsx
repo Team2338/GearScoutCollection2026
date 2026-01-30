@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { initializeDataCollection } from '../scripts/data-collection';
-import logo from '../../public/logo.png';
 import '../styles/data-collection.scss';
 
 const DataCollection: React.FC = () => {
@@ -20,7 +19,13 @@ const DataCollection: React.FC = () => {
     <>
       <div className="header">
         <div className="logo">
-          <img src={logo} alt="2338 logo" height={100} width={100} loading="eager" />
+          <img src="/logo.png" alt="2338 logo" height={100} width={100} loading="eager" />
+        </div>
+        <div className="pending-matches-indicator" id="pending-matches-indicator" style={{ display: 'none' }}>
+          <span id="pending-matches-count">0</span> pending
+          <button type="button" className="retry-submit-button" id="retry-submit-button">
+            ↻
+          </button>
         </div>
         <div className="analytics">
           <a href="https://data.gearitforward.com/" className="analytics-button">ANALYTICS</a>

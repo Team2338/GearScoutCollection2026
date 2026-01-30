@@ -1,181 +1,23 @@
-import type { IMatchLineup, IMatch, IObjective, IUser } from '../model/Models';
-import gearscoutService from '../services/gearscout-services';
+/**
+ * Data collection form initialization and event handling
+ */
 
-// Schedule state
-let schedule: IMatchLineup[] | null = null;
-let scheduleIsLoading = false;
-let currentEventCode = '';
+import type { IUser } from '../model/Models';
+import { AllianceColor } from '../model/Models';
+import { showError, showSuccess } from '../utils/notifications';
+import { showValidationError, clearValidationError } from '../utils/validation';
+import { saveToLocalStorage, getFromLocalStorage, clearFormDataFromLocalStorage } from '../utils/localStorage';
+import { saveMatchToStorage, getPendingMatches, submitAllPendingMatches, cleanInvalidMatches } from '../services/matchStorage';
+import { fetchSchedule, getSchedule } from '../services/scheduleService';
 
-// Debounce utility
-function debounce<T extends (...args: any[]) => any>(
-	func: T,
-	wait: number
-): (...args: Parameters<T>) => void {
-	let timeout: ReturnType<typeof setTimeout> | null = null;
-	return (...args: Parameters<T>) => {
-		if (timeout) clearTimeout(timeout);
-		timeout = setTimeout(() => func(...args), wait);
-	};
-}
+// Initialization guard to prevent duplicate event listeners
+// Using a symbol to ensure uniqueness across HMR reloads
+const INIT_FLAG = Symbol.for('dataCollectionInitialized');
+let isInitialized = (globalThis as any)[INIT_FLAG] || false;
 
-// Error display utility
-function showError(message: string, duration: number = 5000): void {
-	const existingError = document.getElementById('error-notification');
-	if (existingError) {
-		existingError.remove();
-	}
-
-	const errorDiv = document.createElement('div');
-	errorDiv.id = 'error-notification';
-	errorDiv.className = 'error-notification';
-	errorDiv.textContent = message;
-	document.body.appendChild(errorDiv);
-
-	// Force reflow to ensure animation triggers
-	void errorDiv.offsetHeight;
-
-	setTimeout(() => {
-		errorDiv.classList.add('fade-out');
-		setTimeout(() => {
-			if (errorDiv.parentNode) {
-				errorDiv.remove();
-			}
-		}, 300);
-	}, duration);
-}
-
-// Success display utility
-function showSuccess(message: string, duration: number = 3000): void {
-	const existingSuccess = document.getElementById('success-notification');
-	if (existingSuccess) {
-		existingSuccess.remove();
-	}
-
-	const successDiv = document.createElement('div');
-	successDiv.id = 'success-notification';
-	successDiv.className = 'success-notification';
-	successDiv.textContent = message;
-	document.body.appendChild(successDiv);
-
-	// Force reflow to ensure animation triggers
-	void successDiv.offsetHeight;
-
-	setTimeout(() => {
-		successDiv.classList.add('fade-out');
-		setTimeout(() => {
-			if (successDiv.parentNode) {
-				successDiv.remove();
-			}
-		}, 300);
-	}, duration);
-}
-
-// Validation error display
-function showValidationError(fieldId: string, message: string): void {
-	const field = document.getElementById(fieldId);
-	if (!field) return;
-
-	const formField = field.closest('.form-field');
-	if (!formField) return;
-
-	// Remove existing error
-	const existingError = formField.querySelector('.field-error');
-	if (existingError) {
-		existingError.remove();
-	}
-
-	// Add error message
-	const errorSpan = document.createElement('span');
-	errorSpan.className = 'field-error';
-	errorSpan.textContent = message;
-	formField.appendChild(errorSpan);
-	formField.classList.add('has-error');
-}
-
-function clearValidationError(fieldId: string): void {
-	const field = document.getElementById(fieldId);
-	if (!field) return;
-
-	const formField = field.closest('.form-field');
-	if (!formField) return;
-
-	const errorSpan = formField.querySelector('.field-error');
-	if (errorSpan) {
-		errorSpan.remove();
-	}
-	formField.classList.remove('has-error');
-}
-
-// Local Storage Functions
-function saveToLocalStorage(key: string, value: string | number): void {
-	try {
-		localStorage.setItem(key, String(value));
-	} catch (error) {
-		console.error('Error saving to localStorage:', error);
-	}
-}
-
-function getFromLocalStorage(key: string, defaultValue: string | number = ''): string {
-	try {
-		return localStorage.getItem(key) ?? String(defaultValue);
-	} catch (error) {
-		console.error('Error reading from localStorage:', error);
-		return String(defaultValue);
-	}
-}
-
-function clearFormDataFromLocalStorage(): void {
-	try {
-		localStorage.removeItem('matchNumber');
-		localStorage.removeItem('scoutedTeamNumber');
-		localStorage.removeItem('allianceColor');
-		localStorage.removeItem('leaveValue');
-		localStorage.removeItem('leftCounter');
-		localStorage.removeItem('rightCounter');
-		localStorage.removeItem('leftBumpCounter');
-		localStorage.removeItem('rightBumpCounter');
-		localStorage.removeItem('accuracyValue');
-		localStorage.removeItem('estimateSizeAuto');
-		localStorage.removeItem('leaveValueTeleop');
-		localStorage.removeItem('accuracyValueTeleop');
-		localStorage.removeItem('cycles');
-		localStorage.removeItem('estimateSize');
-	} catch (error) {
-		console.error('Error clearing localStorage:', error);
-	}
-}
-
-// Fetch schedule from API with debouncing
-const fetchSchedule = debounce(async (eventCode: string): Promise<void> => {
-	if (!eventCode || eventCode.trim() === '') {
-		schedule = null;
-		return;
-	}
-
-	if (currentEventCode === eventCode && schedule !== null) {
-		return; // Already have this schedule
-	}
-
-	scheduleIsLoading = true;
-	showScheduleLoader();
-
-	try {
-		const response = await gearscoutService.getEventSchedule(2026, eventCode);
-		schedule = response.data;
-		currentEventCode = eventCode;
-		clearValidationError('match-number');
-	} catch (error) {
-		console.error('Failed to fetch schedule:', error);
-		schedule = null;
-		currentEventCode = '';
-		showError('Failed to load event schedule. Manual team entry will be used.');
-	} finally {
-		scheduleIsLoading = false;
-		updateTeamNumberUI();
-	}
-}, 500); // 500ms debounce
-
-// Show/hide appropriate team number input based on state
+/**
+ * Show/hide appropriate team number input based on schedule state
+ */
 function updateTeamNumberUI(): void {
 	const loader = document.getElementById('schedule-loader');
 	const dropdownContainer = document.getElementById('team-number-dropdown-container');
@@ -185,18 +27,10 @@ function updateTeamNumberUI(): void {
 
 	if (!loader || !dropdownContainer || !manualContainer || !allianceSection) return;
 
-	if (scheduleIsLoading) {
-		loader.style.display = 'block';
-		dropdownContainer.style.display = 'none';
-		manualContainer.style.display = 'none';
-		allianceSection.style.display = 'none';
-		return;
-	}
-
-	loader.style.display = 'none';
-
-	if (!schedule || schedule.length === 0) {
-		// No schedule - show manual input
+	const schedule = getSchedule();
+	
+	if (schedule === null) {
+		loader.style.display = 'none';
 		dropdownContainer.style.display = 'none';
 		manualContainer.style.display = 'block';
 		allianceSection.style.display = 'flex';
@@ -205,7 +39,6 @@ function updateTeamNumberUI(): void {
 
 	const matchNumber = matchNumberInput?.value;
 	if (!matchNumber || matchNumber.trim() === '') {
-		// No match number entered - hide everything
 		dropdownContainer.style.display = 'none';
 		manualContainer.style.display = 'none';
 		allianceSection.style.display = 'none';
@@ -214,7 +47,6 @@ function updateTeamNumberUI(): void {
 
 	const matchIndex = parseInt(matchNumber) - 1;
 	if (isNaN(matchIndex) || matchIndex < 0 || matchIndex >= schedule.length) {
-		// Invalid match number - show manual
 		dropdownContainer.style.display = 'none';
 		manualContainer.style.display = 'block';
 		allianceSection.style.display = 'flex';
@@ -228,19 +60,11 @@ function updateTeamNumberUI(): void {
 	allianceSection.style.display = 'none';
 }
 
-function showScheduleLoader(): void {
-	const loader = document.getElementById('schedule-loader');
-	const dropdownContainer = document.getElementById('team-number-dropdown-container');
-	const manualContainer = document.getElementById('team-number-manual-container');
-	const allianceSection = document.getElementById('alliance-section');
-
-	if (loader) loader.style.display = 'block';
-	if (dropdownContainer) dropdownContainer.style.display = 'none';
-	if (manualContainer) manualContainer.style.display = 'none';
-	if (allianceSection) allianceSection.style.display = 'none';
-}
-
+/**
+ * Populate team number dropdown from schedule
+ */
 function populateTeamDropdown(matchIndex: number): void {
+	const schedule = getSchedule();
 	if (!schedule) return;
 
 	const dropdown = document.getElementById('team-number-dropdown') as HTMLSelectElement;
@@ -294,8 +118,20 @@ function populateTeamDropdown(matchIndex: number): void {
 	}
 }
 
-// Initialize the data collection form
+/**
+ * Initialize the data collection form
+ */
 export function initializeDataCollection(): void {
+	// Prevent multiple initializations
+	if (isInitialized) {
+		console.log('[Init] Already initialized, skipping...');
+		return;
+	}
+	
+	console.log('[Init] Initializing data collection form...');
+	isInitialized = true;
+	(globalThis as any)[INIT_FLAG] = true;
+	
 	const form = document.getElementById('data-collection-form') as HTMLFormElement;
 	const submitButton = document.querySelector('.submit-button') as HTMLButtonElement;
 	const matchNumberInput = document.getElementById('match-number') as HTMLInputElement;
@@ -307,6 +143,9 @@ export function initializeDataCollection(): void {
 	const cycleButton = document.getElementById('cycle-button');
 	const cycleCountEl = document.getElementById('cycle-count');
 	const previousCycleSection = document.getElementById('previous-cycle-section');
+	const pendingMatchesIndicator = document.getElementById('pending-matches-indicator');
+	const pendingMatchesCount = document.getElementById('pending-matches-count');
+	const retrySubmitButton = document.getElementById('retry-submit-button');
 
 	let selectedAlliance = '';
 	let leaveValue = getFromLocalStorage('leaveValue', 'no');
@@ -349,9 +188,52 @@ export function initializeDataCollection(): void {
 	const userData = JSON.parse(userDataStr) as IUser;
 	const eventCode = userData.eventCode;
 
+	// Function to update pending matches indicator
+	function updatePendingMatchesIndicator(): void {
+		const pending = getPendingMatches(userData);
+		const count = pending.length;
+		
+		if (count > 0 && pendingMatchesIndicator && pendingMatchesCount) {
+			pendingMatchesCount.textContent = String(count);
+			pendingMatchesIndicator.style.display = 'flex';
+		} else if (pendingMatchesIndicator) {
+			pendingMatchesIndicator.style.display = 'none';
+		}
+	}
+
+	// Retry submit button handler
+	if (retrySubmitButton) {
+		retrySubmitButton.addEventListener('click', async () => {
+			(retrySubmitButton as HTMLButtonElement).disabled = true;
+			retrySubmitButton.style.opacity = '0.5';
+			
+			try {
+				await submitAllPendingMatches(userData);
+				updatePendingMatchesIndicator();
+			} catch (error) {
+				console.error('Error retrying submission:', error);
+			} finally {
+				(retrySubmitButton as HTMLButtonElement).disabled = false;
+				retrySubmitButton.style.opacity = '1';
+			}
+		});
+	}
+
+	// Update indicator on load
+	updatePendingMatchesIndicator();
+	
+	// Clean invalid matches on load
+	const cleaned = cleanInvalidMatches(userData);
+	if (cleaned > 0) {
+		showError(`Removed ${cleaned} invalid match(es) from storage. Please re-enter the data correctly.`, 5000);
+		updatePendingMatchesIndicator();
+	}
+
 	// Fetch schedule on load
 	if (eventCode) {
 		fetchSchedule(eventCode);
+		// Give schedule time to load, then update UI
+		setTimeout(() => updateTeamNumberUI(), 600);
 	}
 
 	// Function to validate form and update submit button state
@@ -796,158 +678,99 @@ export function initializeDataCollection(): void {
 		});
 	}
 
+	// Submission state guard
+	let isSubmitting = false;
+	
 	// Form submit handler
 	if (form) {
 		form.addEventListener('submit', async (event) => {
 			event.preventDefault();
+			
+			// Prevent concurrent submissions
+			if (isSubmitting) {
+				console.log('[Form] Submission already in progress, ignoring...');
+				return;
+			}
 			
 			if (!validateForm()) {
 				showError('Please fill in all required fields');
 				return;
 			}
 
-			// Disable submit button to prevent double submission
+			// Mark as submitting and disable submit button
+			isSubmitting = true;
+			console.log('[Form] Starting submission...');
+			
 			if (submitButton) {
 				submitButton.disabled = true;
-				submitButton.textContent = 'Submitting...';
+				submitButton.textContent = 'Saving...';
 			}
 			
 			try {
-				const { AllianceColor, Gamemode } = await import('../model/Models');
-				
-				const objectives: IObjective[] = [];
-				
-				// ALLIANCE
-				objectives.push({
-					gamemode: Gamemode.alliance,
-					objective: `${selectedAlliance}`,
-					count: 0
-				});
-				
-				// AUTO objectives
-				objectives.push({
-					gamemode: Gamemode.auto,
-					objective: 'red-trench',
-					count: leftCounter
-				});
-				objectives.push({
-					gamemode: Gamemode.auto,
-					objective: 'blue-trench',
-					count: rightCounter
-				});
-				objectives.push({
-					gamemode: Gamemode.auto,
-					objective: 'red-bump',
-					count: leftBumpCounter
-				});
-				objectives.push({
-					gamemode: Gamemode.auto,
-					objective: 'blue-bump',
-					count: rightBumpCounter
-				});
-				objectives.push({
-					gamemode: Gamemode.auto,
-					objective: `climb-${leaveValue}`,
-					count: 1
-				});
-				
-				objectives.push({
-					gamemode: Gamemode.auto,
-					objective: 'accuracy',
-					count: accuracyValue ? parseInt(accuracyValue) : 0
-				});
-
-				// Auto estimate size
-				const autoEstimateSizeCounts: { [key: string]: number } = {
-					'1-10': 0,
-					'11-25': 0,
-					'26+': 0
-				};
-				
-				if (estimateSizeAutoValue) {
-					autoEstimateSizeCounts[estimateSizeAutoValue] = 1;
-				}
-				
-				Object.entries(autoEstimateSizeCounts).forEach(([size, count]) => {
-					objectives.push({
-						gamemode: Gamemode.auto,
-						objective: `estimate-size-${size}`,
-						count: count
-					});
-				});
-
-				// TELEOP objectives
-				let totalAccuracy = 0;
-				let accuracyCount = 0;
-
-				if (cycles.length > 0) {
-					totalAccuracy = cycles.reduce((sum, cycle) => sum + cycle.accuracy, 0);
-					accuracyCount = cycles.filter(cycle => cycle.accuracy > 0).length;
-				}
-				
-				if (accuracyValueTeleop) {
-					totalAccuracy += parseInt(accuracyValueTeleop);
-					accuracyCount++;
-				}
-
-				const avgAccuracy = accuracyCount > 0 ? Math.round(totalAccuracy / accuracyCount) : 0;
-				
-				objectives.push({
-					gamemode: Gamemode.teleop,
-					objective: `climb-${leaveValueTeleop}`,
-					count: 1
-				});
-				
-				objectives.push({
-					gamemode: Gamemode.teleop,
-					objective: 'accuracy',
-					count: avgAccuracy
-				});
-
-				const estimateSizeCounts: { [key: string]: number } = {
-					'1-10': 0,
-					'11-25': 0,
-					'26+': 0
-				};
-				
-				cycles.forEach(cycle => {
-					if (cycle.estimateSize) {
-						estimateSizeCounts[cycle.estimateSize] = (estimateSizeCounts[cycle.estimateSize] || 0) + 1;
-					}
-				});
-				
-				const currentEstimateSize = estimateSizeSelect?.value;
-				if (currentEstimateSize) {
-					estimateSizeCounts[currentEstimateSize] = (estimateSizeCounts[currentEstimateSize] || 0) + 1;
-				}
-				
-				Object.entries(estimateSizeCounts).forEach(([size, count]) => {
-					objectives.push({
-						gamemode: Gamemode.teleop,
-						objective: `estimate-size-${size}`,
-						count: count
-					});
-				});
-				
 				const isDropdownMode = teamNumberDropdown && teamNumberDropdown.parentElement?.style.display !== 'none';
 				const robotNumber = isDropdownMode ? teamNumberDropdown.value : (teamNumberInput?.value || '');
+				const matchNumber = parseInt(matchNumberInput?.value || '0');
 
-				const matchData: IMatch = {
-					gameYear: 2026,
-					eventCode: userData.eventCode,
-					matchNumber: matchNumberInput?.value || '',
-					robotNumber: robotNumber,
-					creator: userData.scouterName,
-					allianceColor: selectedAlliance === 'red' ? AllianceColor.red : AllianceColor.blue,
-					objectives: objectives
-				};
+				// Validate match number
+				if (matchNumber <= 0 || isNaN(matchNumber)) {
+					showError('Invalid match number. Please enter a valid match number.');
+					throw new Error('Invalid match number');
+				}
+
+				// Validate robot number
+				if (!robotNumber || robotNumber.trim() === '') {
+					showError('Invalid team number. Please enter a valid team number.');
+					throw new Error('Invalid team number');
+				}
+
+				// Determine alliance color - get from dropdown if in dropdown mode
+				let allianceColor: AllianceColor;
+				if (isDropdownMode && teamNumberDropdown) {
+					const selectedOption = teamNumberDropdown.options[teamNumberDropdown.selectedIndex];
+					const alliance = selectedOption?.dataset.alliance;
+					if (alliance === 'red') {
+						allianceColor = AllianceColor.red;
+					} else if (alliance === 'blue') {
+						allianceColor = AllianceColor.blue;
+					} else {
+						showError('Unable to determine alliance color. Please try again.');
+						throw new Error('Invalid alliance color');
+					}
+				} else {
+					// Manual mode - use selectedAlliance
+					if (selectedAlliance === 'red') {
+						allianceColor = AllianceColor.red;
+					} else if (selectedAlliance === 'blue') {
+						allianceColor = AllianceColor.blue;
+					} else {
+						showError('Please select an alliance color.');
+						throw new Error('Alliance color not selected');
+					}
+				}
+
+				// Save match data to local storage first
+				saveMatchToStorage(userData, {
+					matchNumber,
+					robotNumber,
+					allianceColor,
+					leftCounter,
+					rightCounter,
+					leftBumpCounter,
+					rightBumpCounter,
+					leaveValue,
+					accuracyValue: accuracyValue ? parseInt(accuracyValue) : 0,
+					estimateSizeAuto: estimateSizeAutoValue,
+					leaveValueTeleop,
+					accuracyValueTeleop: accuracyValueTeleop ? parseInt(accuracyValueTeleop) : 0,
+					cycles: [...cycles] // Deep copy
+				});
 				
-				await gearscoutService.submitMatch(userData, matchData);
+				showSuccess('Match data saved locally!');
 				
+				// Clear current form state
 				clearFormDataFromLocalStorage();
-				showSuccess('Match data submitted successfully!');
 				
-				// Reset form
+				// Reset form UI
 				form.reset();
 				leftCounter = 0;
 				rightCounter = 0;
@@ -994,28 +817,23 @@ export function initializeDataCollection(): void {
 				updatePreviousCycleDisplay();
 				formFields.forEach(field => field.classList.remove('has-value'));
 				
-			} catch (error) {
-				console.error('Error submitting match data:', error);
-				
-				let errorMessage = 'Failed to submit match data. Please try again.';
-				if (error && typeof error === 'object' && 'response' in error) {
-					const response = (error as any).response;
-					if (response?.status === 401) {
-						errorMessage = 'Authentication failed. Please log in again.';
-						setTimeout(() => {
-							window.location.href = '/';
-						}, 2000);
-					} else if (response?.status === 400) {
-						errorMessage = 'Invalid data. Please check your inputs.';
-					} else if (response?.status >= 500) {
-						errorMessage = 'Server error. Please try again later.';
-					}
-				} else if (error instanceof Error) {
-					console.error('Error message:', error.message);
+				// Now try to submit all pending matches
+				if (submitButton) {
+					submitButton.textContent = 'Submitting...';
 				}
 				
-				showError(errorMessage);
+				await submitAllPendingMatches(userData);
+				
+				// Update pending matches indicator
+				updatePendingMatchesIndicator();
+				
+			} catch (error) {
+				console.error('[Form] Error processing match data:', error);
+				showError('Failed to save match data. Please try again.');
 			} finally {
+				isSubmitting = false;
+				console.log('[Form] Submission complete, ready for next submission');
+				
 				if (submitButton) {
 					submitButton.textContent = 'Submit';
 					validateForm();
@@ -1023,4 +841,6 @@ export function initializeDataCollection(): void {
 			}
 		});
 	}
+	
+	console.log('[Init] Data collection form initialized successfully');
 }

@@ -9,6 +9,14 @@ export default defineConfig({
       '@': '/src'
     }
   },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        api: 'modern-compiler',
+        silenceDeprecations: ['legacy-js-api']
+      }
+    }
+  },
   define: {
     'import.meta.env.VITE_APP_VERSION': JSON.stringify('2026.0')
   }

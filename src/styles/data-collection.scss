@@ -86,6 +86,7 @@ html {
 	width: 100%;
 	margin: 0 auto;
     background-color: $blue;
+	position: relative;
 
 	@media (max-width: 768px) {
 		justify-content: center;
@@ -98,6 +99,72 @@ html {
 
 		img {
 			height: 100px;
+		}
+	}
+
+	.pending-matches-indicator {
+		position: absolute;
+		left: 50%;
+		transform: translateX(-50%);
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		padding: 8px 12px;
+		background-color: rgba(255, 152, 0, 0.2);
+		border: 1px solid #ff9800;
+		border-radius: 4px;
+		color: #ff9800;
+		font-size: 13px;
+		font-weight: 500;
+
+		@media (max-width: 768px) {
+			position: absolute;
+			top: 10px;
+			right: 10px;
+			left: auto;
+			transform: none;
+			font-size: 11px;
+			padding: 6px 8px;
+		}
+
+		#pending-matches-count {
+			font-weight: 700;
+			font-size: 16px;
+			
+			@media (max-width: 768px) {
+				font-size: 14px;
+			}
+		}
+
+		.retry-submit-button {
+			background-color: #ff9800;
+			color: white;
+			border: none;
+			border-radius: 50%;
+			width: 28px;
+			height: 28px;
+			font-size: 18px;
+			cursor: pointer;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			transition: all 0.2s;
+			padding: 0;
+			
+			&:hover {
+				background-color: #f57c00;
+				transform: rotate(90deg);
+			}
+			
+			&:active {
+				transform: scale(0.95) rotate(90deg);
+			}
+
+			@media (max-width: 768px) {
+				width: 24px;
+				height: 24px;
+				font-size: 16px;
+			}
 		}
 	}
 

@@ -38,7 +38,22 @@ class GearscoutService {
 			}
 		};
 
-		return this.service.post(url, match, config);
+		console.log(`[API] POST ${this.service.defaults.baseURL}${url}`);
+		console.log(`[API] Headers:`, { 'Content-Type': 'application/json', 'secretCode': '***' });
+		
+		return this.service.post(url, match, config).catch(error => {
+			console.error('[API] Submit match failed:', error);
+			if (error.response) {
+				console.error('[API] Response status:', error.response.status);
+				console.error('[API] Response data:', error.response.data);
+				console.error('[API] Response headers:', error.response.headers);
+			} else if (error.request) {
+				console.error('[API] No response received. Request:', error.request);
+			} else {
+				console.error('[API] Error message:', error.message);
+			}
+			throw error;
+		});
 	};
 
 	getEventSchedule = (gameYear: number, tbaCode: string): GearscoutResponse<IMatchLineup[]> => {

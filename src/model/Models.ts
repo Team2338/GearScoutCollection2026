@@ -42,3 +42,32 @@ export enum Gamemode {
 	auto = 'auto',
 	teleop = 'teleop'
 }
+
+// Multi-match storage structure for offline support
+export interface IMultiMatchStorage {
+	scouterName: string;
+	teamNumber: string;
+	eventCode: string;
+	matches: IStoredMatch[];
+}
+
+export interface IStoredMatch {
+	matchNumber: number;
+	robotNumber: string;
+	allianceColor: AllianceColor;
+	leftCounter: number;
+	rightCounter: number;
+	leftBumpCounter: number;
+	rightBumpCounter: number;
+	leaveValue: string;
+	accuracyValue: number;
+	estimateSizeAuto: string;
+	leaveValueTeleop: string;
+	accuracyValueTeleop: number;
+	cycles: Array<{
+		accuracy: number;
+		estimateSize: string;
+	}>;
+	timestamp: number; // When this match data was recorded
+	submitted?: boolean; // Track if this match has been submitted
+}
