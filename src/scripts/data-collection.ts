@@ -1,4 +1,4 @@
-import type { IMatchLineup, IMatch, IObjective, IUser, AllianceColor, Gamemode } from '../model/Models';
+import type { IMatchLineup, IMatch, IObjective, IUser } from '../model/Models';
 import gearscoutService from '../services/gearscout-services';
 
 // Schedule state
@@ -127,7 +127,7 @@ function getFromLocalStorage(key: string, defaultValue: string | number = ''): s
 function clearFormDataFromLocalStorage(): void {
 	try {
 		localStorage.removeItem('matchNumber');
-		localStorage.removeItem('teamNumber');
+		localStorage.removeItem('scoutedTeamNumber');
 		localStorage.removeItem('allianceColor');
 		localStorage.removeItem('leaveValue');
 		localStorage.removeItem('leftCounter');
@@ -135,6 +135,7 @@ function clearFormDataFromLocalStorage(): void {
 		localStorage.removeItem('leftBumpCounter');
 		localStorage.removeItem('rightBumpCounter');
 		localStorage.removeItem('accuracyValue');
+		localStorage.removeItem('estimateSizeAuto');
 		localStorage.removeItem('leaveValueTeleop');
 		localStorage.removeItem('accuracyValueTeleop');
 		localStorage.removeItem('cycles');
@@ -287,7 +288,7 @@ function populateTeamDropdown(matchIndex: number): void {
 	});
 
 	// Restore saved selection if applicable
-	const savedTeamNumber = getFromLocalStorage('teamNumber');
+	const savedTeamNumber = getFromLocalStorage('scoutedTeamNumber');
 	if (savedTeamNumber && (redRobots.includes(savedTeamNumber) || blueRobots.includes(savedTeamNumber))) {
 		dropdown.value = savedTeamNumber;
 	}
@@ -300,6 +301,7 @@ export function initializeDataCollection(): void {
 	const matchNumberInput = document.getElementById('match-number') as HTMLInputElement;
 	const teamNumberInput = document.getElementById('team-number') as HTMLInputElement;
 	const teamNumberDropdown = document.getElementById('team-number-dropdown') as HTMLSelectElement;
+	const estimateSizeAuto = document.getElementById('estimate-size-auto') as HTMLSelectElement;
 	const estimateSizeSelect = document.getElementById('estimate-size') as HTMLSelectElement;
 	const estimateSizePrevious = document.getElementById('estimate-size-previous') as HTMLSelectElement;
 	const cycleButton = document.getElementById('cycle-button');
@@ -311,6 +313,7 @@ export function initializeDataCollection(): void {
 	let leaveValueTeleop = getFromLocalStorage('leaveValueTeleop', 'no');
 	let accuracyValue = getFromLocalStorage('accuracyValue', '');
 	let accuracyValueTeleop = getFromLocalStorage('accuracyValueTeleop', '');
+	let estimateSizeAutoValue = getFromLocalStorage('estimateSizeAuto', '');
 	let leftCounter = Number(getFromLocalStorage('leftCounter', 0));
 	let rightCounter = Number(getFromLocalStorage('rightCounter', 0));
 	let leftBumpCounter = Number(getFromLocalStorage('leftBumpCounter', 0));
@@ -445,7 +448,7 @@ export function initializeDataCollection(): void {
 			if (teamNumber && selectedOption?.dataset.alliance) {
 				// Auto-set alliance based on selection
 				selectedAlliance = selectedOption.dataset.alliance;
-				saveToLocalStorage('teamNumber', teamNumber);
+				saveToLocalStorage('scoutedTeamNumber', teamNumber);
 				saveToLocalStorage('allianceColor', selectedAlliance);
 			} else {
 				selectedAlliance = '';
@@ -471,13 +474,13 @@ export function initializeDataCollection(): void {
 	}
 
 	if (teamNumberInput) {
-		const savedTeamNumber = getFromLocalStorage('teamNumber');
+		const savedTeamNumber = getFromLocalStorage('scoutedTeamNumber');
 		if (savedTeamNumber) {
 			teamNumberInput.value = savedTeamNumber;
 			teamNumberInput.dispatchEvent(new Event('input'));
 		}
 		teamNumberInput.addEventListener('input', () => {
-			saveToLocalStorage('teamNumber', teamNumberInput.value);
+			saveToLocalStorage('scoutedTeamNumber', teamNumberInput.value);
 			clearValidationError('team-number');
 			validateForm();
 		});
@@ -549,6 +552,24 @@ export function initializeDataCollection(): void {
 			saveToLocalStorage('accuracyValue', accuracyValue);
 		});
 	});
+
+	// Auto estimate size functionality
+	if (estimateSizeAuto) {
+		if (estimateSizeAutoValue) {
+			estimateSizeAuto.value = estimateSizeAutoValue;
+			estimateSizeAuto.parentElement?.classList.add('has-value');
+		}
+		
+		estimateSizeAuto.addEventListener('change', () => {
+			estimateSizeAutoValue = estimateSizeAuto.value;
+			saveToLocalStorage('estimateSizeAuto', estimateSizeAutoValue);
+			if (estimateSizeAutoValue) {
+				estimateSizeAuto.parentElement?.classList.add('has-value');
+			} else {
+				estimateSizeAuto.parentElement?.classList.remove('has-value');
+			}
+		});
+	}
 
 	// Trench counter functionality
 	const leftCounterEl = document.getElementById('left-counter');
@@ -830,13 +851,30 @@ export function initializeDataCollection(): void {
 					count: 1
 				});
 				
-				if (accuracyValue) {
+				objectives.push({
+					gamemode: Gamemode.auto,
+					objective: 'accuracy',
+					count: accuracyValue ? parseInt(accuracyValue) : 0
+				});
+
+				// Auto estimate size
+				const autoEstimateSizeCounts: { [key: string]: number } = {
+					'1-10': 0,
+					'11-25': 0,
+					'26+': 0
+				};
+				
+				if (estimateSizeAutoValue) {
+					autoEstimateSizeCounts[estimateSizeAutoValue] = 1;
+				}
+				
+				Object.entries(autoEstimateSizeCounts).forEach(([size, count]) => {
 					objectives.push({
 						gamemode: Gamemode.auto,
-						objective: 'accuracy',
-						count: parseInt(accuracyValue)
+						objective: `estimate-size-${size}`,
+						count: count
 					});
-				}
+				});
 
 				// TELEOP objectives
 				let totalAccuracy = 0;
@@ -860,15 +898,17 @@ export function initializeDataCollection(): void {
 					count: 1
 				});
 				
-				if (avgAccuracy > 0) {
-					objectives.push({
-						gamemode: Gamemode.teleop,
-						objective: 'accuracy',
-						count: avgAccuracy
-					});
-				}
+				objectives.push({
+					gamemode: Gamemode.teleop,
+					objective: 'accuracy',
+					count: avgAccuracy
+				});
 
-				const estimateSizeCounts: { [key: string]: number } = {};
+				const estimateSizeCounts: { [key: string]: number } = {
+					'1-10': 0,
+					'11-25': 0,
+					'26+': 0
+				};
 				
 				cycles.forEach(cycle => {
 					if (cycle.estimateSize) {
@@ -931,6 +971,12 @@ export function initializeDataCollection(): void {
 				
 				accuracyButtons.forEach(btn => btn.classList.remove('selected'));
 				accuracyValue = '';
+
+				if (estimateSizeAuto) {
+					estimateSizeAuto.value = '';
+					estimateSizeAuto.parentElement?.classList.remove('has-value');
+				}
+				estimateSizeAutoValue = '';
 				
 				accuracyButtonsTeleop.forEach(btn => btn.classList.remove('selected'));
 				accuracyValueTeleop = '';
