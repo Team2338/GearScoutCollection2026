@@ -234,63 +234,6 @@ const DataCollection: React.FC = () => {
           </div>
         </form>
       </main>
-
-      <style>{`
-        /* Toast Notifications */
-        .error-notification,
-        .success-notification {
-          position: fixed;
-          top: 20px;
-          left: 50%;
-          transform: translateX(-50%) translateY(0);
-          padding: 16px 24px;
-          border-radius: 8px;
-          color: white;
-          font-size: 15px;
-          font-weight: 500;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-          z-index: 9999;
-          max-width: 90%;
-          text-align: center;
-          opacity: 1;
-          animation: slideIn 0.3s ease-out forwards;
-        }
-
-        .error-notification.fade-out,
-        .success-notification.fade-out {
-          animation: slideOut 0.3s ease-out forwards;
-        }
-
-        .error-notification {
-          background-color: #f44336;
-        }
-
-        .success-notification {
-          background-color: #4caf50;
-        }
-
-        @keyframes slideIn {
-          from {
-            transform: translateX(-50%) translateY(-80px);
-            opacity: 0;
-          }
-          to {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-          }
-        }
-
-        @keyframes slideOut {
-          from {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-          }
-          to {
-            transform: translateX(-50%) translateY(-80px);
-            opacity: 0;
-          }
-        }
-      `}</style>
     </>
   );
 };
