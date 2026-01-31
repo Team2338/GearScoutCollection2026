@@ -1,7 +1,6 @@
 {
   "name": "gearscout-collection-2026",
   "type": "module",
-  "version": "0.0.1",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
@@ -22,3 +21,4 @@
     "vite": "^6.4.1"
   }
 }
+
