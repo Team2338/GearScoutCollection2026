@@ -21,12 +21,6 @@ const DataCollection: React.FC = () => {
         <div className="logo">
           <img src="/logo.png" alt="2338 logo" height={100} width={100} loading="eager" />
         </div>
-        <div className="pending-matches-indicator" id="pending-matches-indicator" style={{ display: 'none' }}>
-          <span id="pending-matches-count">0</span> pending
-          <button type="button" className="retry-submit-button" id="retry-submit-button">
-            ↻
-          </button>
-        </div>
         <div className="analytics">
           <a href="https://data.gearitforward.com/" className="analytics-button">ANALYTICS</a>
         </div>

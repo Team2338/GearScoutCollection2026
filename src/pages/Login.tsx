@@ -1,6 +1,7 @@
 import React, { useState, useEffect, FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import type { IUser } from '../model/Models';
+import { getPendingMatches, submitAllPendingMatches } from '../services/matchStorage';
 import '../styles/login.scss';
 
 const Login: React.FC = () => {
@@ -14,6 +15,8 @@ const Login: React.FC = () => {
   const [secretCode, setSecretCode] = useState('');
   const [tbaCode, setTbaCode] = useState('');
   const [isValid, setIsValid] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [isRetrying, setIsRetrying] = useState(false);
 
   useEffect(() => {
     // Handle URL parameters
@@ -56,6 +59,44 @@ const Login: React.FC = () => {
     );
     setIsValid(valid);
   }, [teamNumber, scouterName, eventCode, secretCode]);
+
+  useEffect(() => {
+    // Update pending matches count
+    const updatePendingCount = () => {
+      const userDataStr = sessionStorage.getItem('currentUser');
+      if (userDataStr) {
+        try {
+          const userData = JSON.parse(userDataStr) as IUser;
+          const pending = getPendingMatches(userData);
+          setPendingCount(pending.length);
+        } catch (error) {
+          console.error('Error reading pending matches:', error);
+        }
+      }
+    };
+
+    updatePendingCount();
+    // Check periodically for updates
+    const interval = setInterval(updatePendingCount, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleRetryFailedMatches = async () => {
+    const userDataStr = sessionStorage.getItem('currentUser');
+    if (!userDataStr) return;
+
+    setIsRetrying(true);
+    try {
+      const userData = JSON.parse(userDataStr) as IUser;
+      await submitAllPendingMatches(userData);
+      const pending = getPendingMatches(userData);
+      setPendingCount(pending.length);
+    } catch (error) {
+      console.error('Error retrying submission:', error);
+    } finally {
+      setIsRetrying(false);
+    }
+  };
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -103,6 +144,20 @@ const Login: React.FC = () => {
         <div className="app-name">GearScout</div>
         <div className="version">v{version}</div>
       </div>
+      {pendingCount > 0 && (
+        <div className="pending-matches-indicator">
+          <span className="pending-matches-count">{pendingCount}</span> pending
+          <button 
+            type="button" 
+            className="retry-submit-button" 
+            onClick={handleRetryFailedMatches}
+            disabled={isRetrying}
+            style={{ opacity: isRetrying ? 0.5 : 1 }}
+          >
+            ↻
+          </button>
+        </div>
+      )}
       <form className="login-form" id="login-form" aria-labelledby="login-form-header" onSubmit={handleSubmit}>
         <h1 id="login-form-header">Sign in</h1>
         

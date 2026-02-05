@@ -7,7 +7,7 @@ import { AllianceColor } from '../model/Models';
 import { showError, showSuccess } from '../utils/notifications';
 import { showValidationError, clearValidationError } from '../utils/validation';
 import { saveToLocalStorage, getFromLocalStorage, clearFormDataFromLocalStorage } from '../utils/localStorage';
-import { saveMatchToStorage, getPendingMatches, submitAllPendingMatches, cleanInvalidMatches } from '../services/matchStorage';
+import { saveMatchToStorage, submitAllPendingMatches, cleanInvalidMatches } from '../services/matchStorage';
 import { fetchSchedule, getSchedule } from '../services/scheduleService';
 
 // Initialization guard to prevent duplicate event listeners
@@ -143,9 +143,6 @@ export function initializeDataCollection(): void {
 	const cycleButton = document.getElementById('cycle-button');
 	const cycleCountEl = document.getElementById('cycle-count');
 	const previousCycleSection = document.getElementById('previous-cycle-section');
-	const pendingMatchesIndicator = document.getElementById('pending-matches-indicator');
-	const pendingMatchesCount = document.getElementById('pending-matches-count');
-	const retrySubmitButton = document.getElementById('retry-submit-button');
 
 	let selectedAlliance = '';
 	let leaveValue = getFromLocalStorage('leaveValue', 'no');
@@ -188,45 +185,10 @@ export function initializeDataCollection(): void {
 	const userData = JSON.parse(userDataStr) as IUser;
 	const eventCode = userData.eventCode;
 
-	// Function to update pending matches indicator
-	function updatePendingMatchesIndicator(): void {
-		const pending = getPendingMatches(userData);
-		const count = pending.length;
-		
-		if (count > 0 && pendingMatchesIndicator && pendingMatchesCount) {
-			pendingMatchesCount.textContent = String(count);
-			pendingMatchesIndicator.style.display = 'flex';
-		} else if (pendingMatchesIndicator) {
-			pendingMatchesIndicator.style.display = 'none';
-		}
-	}
-
-	// Retry submit button handler
-	if (retrySubmitButton) {
-		retrySubmitButton.addEventListener('click', async () => {
-			(retrySubmitButton as HTMLButtonElement).disabled = true;
-			retrySubmitButton.style.opacity = '0.5';
-			
-			try {
-				await submitAllPendingMatches(userData);
-				updatePendingMatchesIndicator();
-			} catch (error) {
-				console.error('Error retrying submission:', error);
-			} finally {
-				(retrySubmitButton as HTMLButtonElement).disabled = false;
-				retrySubmitButton.style.opacity = '1';
-			}
-		});
-	}
-
-	// Update indicator on load
-	updatePendingMatchesIndicator();
-	
 	// Clean invalid matches on load
 	const cleaned = cleanInvalidMatches(userData);
 	if (cleaned > 0) {
 		showError(`Removed ${cleaned} invalid match(es) from storage. Please re-enter the data correctly.`, 5000);
-		updatePendingMatchesIndicator();
 	}
 
 	// Fetch schedule on load
@@ -823,9 +785,6 @@ export function initializeDataCollection(): void {
 				}
 				
 				await submitAllPendingMatches(userData);
-				
-				// Update pending matches indicator
-				updatePendingMatchesIndicator();
 				
 			} catch (error) {
 				console.error('[Form] Error processing match data:', error);
