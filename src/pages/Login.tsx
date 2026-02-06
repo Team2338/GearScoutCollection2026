@@ -1,8 +1,8 @@
 import React, { useState, useEffect, FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import type { IUser } from '../model/Models';
-import { getPendingMatches, submitAllPendingMatches } from '../services/matchStorage';
-import '../styles/login.scss';
+import type { IUser } from '@/model/Models';
+import { getPendingMatches, submitAllPendingMatches } from '@/services/matchStorage';
+import '@/styles/login.scss';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -51,6 +51,7 @@ const Login: React.FC = () => {
   }, [searchParams]);
 
   useEffect(() => {
+    // Validate form whenever required fields change
     const valid = Boolean(
       teamNumber.trim() &&
       scouterName.trim() &&
@@ -61,21 +62,26 @@ const Login: React.FC = () => {
   }, [teamNumber, scouterName, eventCode, secretCode]);
 
   useEffect(() => {
-    // Update pending matches count
+    // Update pending matches count periodically
     const updatePendingCount = () => {
       const userDataStr = sessionStorage.getItem('currentUser');
-      if (userDataStr) {
-        try {
-          const userData = JSON.parse(userDataStr) as IUser;
-          const pending = getPendingMatches(userData);
-          setPendingCount(pending.length);
-        } catch (error) {
-          console.error('Error reading pending matches:', error);
+      if (!userDataStr) {
+        return;
+      }
+
+      try {
+        const userData = JSON.parse(userDataStr) as IUser;
+        const pending = getPendingMatches(userData);
+        setPendingCount(pending.length);
+      } catch (error) {
+        if (error instanceof Error) {
+          console.warn('[Pending Matches] Error reading:', error.message);
         }
       }
     };
 
     updatePendingCount();
+
     // Check periodically for updates
     const interval = setInterval(updatePendingCount, 5000);
     return () => clearInterval(interval);
@@ -83,12 +89,16 @@ const Login: React.FC = () => {
 
   const handleRetryFailedMatches = async () => {
     const userDataStr = sessionStorage.getItem('currentUser');
-    if (!userDataStr) return;
+    if (!userDataStr) {
+      return;
+    }
 
     setIsRetrying(true);
+
     try {
       const userData = JSON.parse(userDataStr) as IUser;
       await submitAllPendingMatches(userData);
+      
       const pending = getPendingMatches(userData);
       setPendingCount(pending.length);
     } catch (error) {
@@ -100,17 +110,19 @@ const Login: React.FC = () => {
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    
+
     if (!isValid) {
       return;
     }
 
+    // Save form data to storage
     localStorage.setItem('teamNumber', teamNumber.trim());
     localStorage.setItem('scouterName', scouterName.trim());
     localStorage.setItem('eventCode', eventCode.trim());
     sessionStorage.setItem('secretCode', secretCode.trim());
     sessionStorage.setItem('tbaCode', tbaCode.trim());
 
+    // Create user object
     const user: IUser = {
       teamNumber: teamNumber.trim(),
       scouterName: scouterName.trim(),
@@ -120,12 +132,20 @@ const Login: React.FC = () => {
 
     sessionStorage.setItem('currentUser', JSON.stringify(user));
 
+    // Fetch schedule if TBA code is provided
     if (tbaCode.trim().length > 0) {
       try {
         const currentYear = new Date().getFullYear();
-        const response = await fetch(`/api/schedule?year=${currentYear}&tbaCode=${encodeURIComponent(tbaCode.trim())}`);
+        const response = await fetch(
+          `/api/schedule?year=${currentYear}&tbaCode=${encodeURIComponent(tbaCode.trim())}`
+        );
+
         if (!response.ok) {
-          console.error('Failed to get schedule: HTTP status', response.status, response.statusText);
+          console.error(
+            'Failed to get schedule: HTTP status',
+            response.status,
+            response.statusText
+          );
         } else {
           const schedule = await response.json();
           sessionStorage.setItem('schedule', JSON.stringify(schedule));

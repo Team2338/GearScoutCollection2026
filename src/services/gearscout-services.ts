@@ -1,18 +1,19 @@
 import axios from 'axios';
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
-import type { IMatch, IMatchLineup, IUser } from '../model/Models';
+import type { IMatch, IMatchLineup, IUser } from '@/model/Models';
+
+// Constants
+const DEFAULT_API_BASE_URL = 'https://gearitforward.com/api';
+const API_TIMEOUT_MS = 10000;
 
 type GearscoutResponse<T> = Promise<AxiosResponse<T>>;
 
-const DEFAULT_API_BASE_URL = 'https://gearitforward.com/api';
-
 const resolveApiBaseUrl = (): string => {
 	try {
-		// Prefer a specific Gearscout API env var, fall back to a generic one if present.
-		if (typeof import.meta !== 'undefined' && (import.meta as any).env) {
-			const env = (import.meta as any).env;
+		if (typeof import.meta !== 'undefined' && import.meta.env) {
+			const env = import.meta.env;
 			const envBaseUrl = env.VITE_GEARSCOUT_API_BASE_URL || env.VITE_API_BASE_URL;
-			
+
 			if (typeof envBaseUrl === 'string' && envBaseUrl.length > 0) {
 				return envBaseUrl;
 			}
@@ -29,8 +30,11 @@ class GearscoutService {
 		baseURL: resolveApiBaseUrl()
 	});
 
+	/**
+	 * Submit a match to the API
+	 */
 	submitMatch = (user: IUser, match: IMatch): GearscoutResponse<void> => {
-		const url: string = `/v1/team/${user.teamNumber}`;
+		const url = `/v1/team/${user.teamNumber}`;
 		const config: AxiosRequestConfig = {
 			headers: {
 				'Content-Type': 'application/json',
@@ -38,34 +42,31 @@ class GearscoutService {
 			}
 		};
 
-		console.log(`[API] POST ${this.service.defaults.baseURL}${url}`);
-		console.log(`[API] Headers:`, { 'Content-Type': 'application/json', 'secretCode': '***' });
-		
 		return this.service.post(url, match, config).catch(error => {
-			console.error('[API] Submit match failed:', error);
-			if (error.response) {
-				console.error('[API] Response status:', error.response.status);
-				console.error('[API] Response data:', error.response.data);
-				console.error('[API] Response headers:', error.response.headers);
-			} else if (error.request) {
-				console.error('[API] No response received. Request:', error.request);
-			} else {
-				console.error('[API] Error message:', error.message);
+			if (error instanceof Error) {
+				console.warn('[API] Submit match failed:', error.message);
+			}
+			if (error?.response) {
+				console.warn('[API] Response status:', error.response.status);
 			}
 			throw error;
 		});
 	};
 
+	/**
+	 * Get event schedule from The Blue Alliance
+	 */
 	getEventSchedule = (gameYear: number, tbaCode: string): GearscoutResponse<IMatchLineup[]> => {
-		const url: string = `/v2/schedule/gameYear/${gameYear}/event/${tbaCode}`;
-		const timeout: number = 10_000;
+		const url = `/v2/schedule/gameYear/${gameYear}/event/${tbaCode}`;
 		const config: AxiosRequestConfig = {
-			timeout: timeout,
-			signal: AbortSignal.timeout(timeout)
+			timeout: API_TIMEOUT_MS,
+			signal: AbortSignal.timeout(API_TIMEOUT_MS)
 		};
+
 		return this.service.get(url, config);
 	};
 }
 
-const service: GearscoutService = new GearscoutService();
+// Export singleton instance
+const service = new GearscoutService();
 export default service;

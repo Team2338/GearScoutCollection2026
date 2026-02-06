@@ -2,10 +2,14 @@
  * Schedule management service
  */
 
-import type { IMatchLineup } from '../model/Models';
-import gearscoutService from './gearscout-services';
-import { showError } from '../utils/notifications';
-import { debounce } from '../utils/debounce';
+import type { IMatchLineup } from '@/model/Models';
+import gearscoutService from '@/services/gearscout-services';
+import { showError } from '@/utils/notifications';
+import { debounce } from '@/utils/debounce';
+
+// Constants
+const SCHEDULE_FETCH_DEBOUNCE_MS = 500;
+const CURRENT_GAME_YEAR = 2026;
 
 // Schedule state
 let schedule: IMatchLineup[] | null = null;
@@ -27,7 +31,7 @@ export function isScheduleLoading(): boolean {
 }
 
 /**
- * Fetch schedule from API with debouncing (internal)
+ * Fetch schedule from API (internal implementation)
  */
 async function fetchScheduleInternal(eventCode: string): Promise<void> {
 	if (!eventCode || eventCode.trim() === '') {
@@ -35,18 +39,21 @@ async function fetchScheduleInternal(eventCode: string): Promise<void> {
 		return;
 	}
 
+	// Already have this schedule
 	if (currentEventCode === eventCode && schedule !== null) {
-		return; // Already have this schedule
+		return;
 	}
 
 	scheduleIsLoading = true;
 
 	try {
-		const response = await gearscoutService.getEventSchedule(2026, eventCode);
+		const response = await gearscoutService.getEventSchedule(CURRENT_GAME_YEAR, eventCode);
 		schedule = response.data;
 		currentEventCode = eventCode;
 	} catch (error) {
-		console.error('Failed to fetch schedule:', error);
+		if (error instanceof Error) {
+			console.warn('[Schedule Service] Failed to fetch schedule:', error.message);
+		}
 		schedule = null;
 		currentEventCode = '';
 		showError('Failed to load event schedule. Manual team entry will be used.');
@@ -56,9 +63,9 @@ async function fetchScheduleInternal(eventCode: string): Promise<void> {
 }
 
 /**
- * Fetch schedule from API with debouncing (500ms)
+ * Fetch schedule from API with debouncing
  */
-export const fetchSchedule = debounce(fetchScheduleInternal, 500);
+export const fetchSchedule = debounce(fetchScheduleInternal, SCHEDULE_FETCH_DEBOUNCE_MS);
 
 /**
  * Get match lineup by match number (1-indexed)

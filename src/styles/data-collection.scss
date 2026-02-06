@@ -1,9 +1,12 @@
-$grey: #babfb7;
-$orange: #fe5000;
-$offorange: #ff6f00;
-$blue: #00243e;
-$offblue: #02355b;
-$offwhite: #FAF9F6;
+// Official Team 2338 Brand Colors (Branding Document Revised 23-24)
+$blue: #02243e;     // Pantone 5395c "Tangaroa" - RGB: 2, 36, 62
+$orange: #fe5000;   // Pantone 021c "Orange" - RGB: 254, 80, 0
+$grey: #babfb7;     // Pumice (verify hex value against official branding)
+$offwhite: #FAF9F6; // Auxiliary color for backgrounds
+
+// Extended Colors (Approved by mentors/media team)
+$offorange: #ff6f00; // Approved extended orange for hover states
+$offblue: #02355b;   // Approved extended blue for hover states
 $owHighlight: #ffffff;
 $tHighlight: #f2f2f2;
 $offBlack: #1D1C1B;
@@ -16,7 +19,7 @@ body {
     width: 100%;
 	margin: 0;
 	padding: 0;
-	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+	font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 	overflow-x: hidden;
 }
 
@@ -458,6 +461,7 @@ html {
 			flex-direction: column;
 			align-items: center;
 			width: 100%;
+			width: 270px;
 			
 			.sub-label {
 				text-align: center;

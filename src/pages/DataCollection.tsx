@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { initializeDataCollection } from '../scripts/data-collection';
-import { getPendingMatches, submitAllPendingMatches } from '../services/matchStorage';
-import type { IUser } from '../model/Models';
-import '../styles/data-collection.scss';
+import { initializeDataCollection } from '@/scripts/data-collection';
+import { getPendingMatches, submitAllPendingMatches } from '@/services/matchStorage';
+import type { IUser } from '@/model/Models';
+import '@/styles/data-collection.scss';
 
 const DataCollection: React.FC = () => {
   const navigate = useNavigate();
@@ -16,21 +16,26 @@ const DataCollection: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // Update pending matches count
+    // Update pending matches count periodically
     const updatePendingCount = () => {
       const userDataStr = sessionStorage.getItem('currentUser');
-      if (userDataStr) {
-        try {
-          const userData = JSON.parse(userDataStr) as IUser;
-          const pending = getPendingMatches(userData);
-          setPendingCount(pending.length);
-        } catch (error) {
-          console.error('Error reading pending matches:', error);
+      if (!userDataStr) {
+        return;
+      }
+
+      try {
+        const userData = JSON.parse(userDataStr) as IUser;
+        const pending = getPendingMatches(userData);
+        setPendingCount(pending.length);
+      } catch (error) {
+        if (error instanceof Error) {
+          console.warn('[Pending Matches] Error reading:', error.message);
         }
       }
     };
 
     updatePendingCount();
+
     // Check periodically for updates
     const interval = setInterval(updatePendingCount, 5000);
     return () => clearInterval(interval);
@@ -38,12 +43,16 @@ const DataCollection: React.FC = () => {
 
   const handleRetryFailedMatches = async () => {
     const userDataStr = sessionStorage.getItem('currentUser');
-    if (!userDataStr) return;
+    if (!userDataStr) {
+      return;
+    }
 
     setIsRetrying(true);
+
     try {
       const userData = JSON.parse(userDataStr) as IUser;
       await submitAllPendingMatches(userData);
+      
       const pending = getPendingMatches(userData);
       setPendingCount(pending.length);
     } catch (error) {

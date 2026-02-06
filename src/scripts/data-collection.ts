@@ -2,13 +2,17 @@
  * Data collection form initialization and event handling
  */
 
-import type { IUser } from '../model/Models';
-import { AllianceColor } from '../model/Models';
-import { showError, showSuccess } from '../utils/notifications';
-import { showValidationError, clearValidationError } from '../utils/validation';
-import { saveToLocalStorage, getFromLocalStorage, clearFormDataFromLocalStorage } from '../utils/localStorage';
-import { saveMatchToStorage, submitAllPendingMatches, cleanInvalidMatches } from '../services/matchStorage';
-import { fetchSchedule, getSchedule } from '../services/scheduleService';
+import type { IUser } from '@/model/Models';
+import { AllianceColor } from '@/model/Models';
+import { showError, showSuccess } from '@/utils/notifications';
+import { showValidationError, clearValidationError } from '@/utils/validation';
+import { saveToLocalStorage, getFromLocalStorage, clearFormDataFromLocalStorage } from '@/utils/localStorage';
+import { saveMatchToStorage, submitAllPendingMatches, cleanInvalidMatches } from '@/services/matchStorage';
+import { fetchSchedule, getSchedule } from '@/services/scheduleService';
+
+// Constants
+const SCHEDULE_LOAD_DELAY_MS = 600;
+const AUTH_ERROR_REDIRECT_DELAY_MS = 2000;
 
 // Initialization guard to prevent duplicate event listeners
 // Using a symbol to ensure uniqueness across HMR reloads
@@ -124,11 +128,9 @@ function populateTeamDropdown(matchIndex: number): void {
 export function initializeDataCollection(): void {
 	// Prevent multiple initializations
 	if (isInitialized) {
-		console.log('[Init] Already initialized, skipping...');
 		return;
 	}
 	
-	console.log('[Init] Initializing data collection form...');
 	isInitialized = true;
 	(globalThis as any)[INIT_FLAG] = true;
 	
@@ -169,7 +171,9 @@ export function initializeDataCollection(): void {
 			cycles = JSON.parse(savedCycles);
 		}
 	} catch (error) {
-		console.error('Error restoring cycles:', error);
+		if (error instanceof Error) {
+			console.warn('[Data Collection] Error restoring cycles:', error.message);
+		}
 		cycles = [];
 	}
 
@@ -179,28 +183,25 @@ export function initializeDataCollection(): void {
 		showError('User data not found. Redirecting to login...');
 		setTimeout(() => {
 			window.location.href = '/';
-		}, 2000);
+		}, AUTH_ERROR_REDIRECT_DELAY_MS);
 		return;
 	}
 
 	const userData = JSON.parse(userDataStr) as IUser;
 	const eventCode = userData.eventCode;
 
-	// Clean invalid matches on load
-	const cleaned = cleanInvalidMatches(userData);
-	if (cleaned > 0) {
-		showError(`Removed ${cleaned} invalid match(es) from storage. Please re-enter the data correctly.`, 5000);
-	}
+	// Clean invalid matches on load (just log, don't show error toast)
+	cleanInvalidMatches(userData);
 
 	// Fetch schedule on load
 	if (eventCode) {
 		fetchSchedule(eventCode);
 		// Give schedule time to load, then update UI
-		setTimeout(() => updateTeamNumberUI(), 600);
+		setTimeout(() => updateTeamNumberUI(), SCHEDULE_LOAD_DELAY_MS);
 	}
 
 	// Function to validate form and update submit button state
-	function validateForm(): boolean {
+	function validateForm(showErrors = true): boolean {
 		let isValid = true;
 		
 		// Clear previous errors
@@ -210,7 +211,9 @@ export function initializeDataCollection(): void {
 
 		const hasMatchNumber = matchNumberInput && matchNumberInput.value.trim() !== '';
 		if (!hasMatchNumber) {
-			showValidationError('match-number', 'Match number is required');
+			if (showErrors) {
+				showValidationError('match-number', 'Match number is required');
+			}
 			isValid = false;
 		}
 
@@ -221,14 +224,16 @@ export function initializeDataCollection(): void {
 			: (teamNumberInput && teamNumberInput.value.trim() !== '');
 
 		if (!hasTeamNumber) {
-			const fieldId = isDropdownMode ? 'team-number-dropdown' : 'team-number';
-			showValidationError(fieldId, 'Team number is required');
+			if (showErrors) {
+				const fieldId = isDropdownMode ? 'team-number-dropdown' : 'team-number';
+				showValidationError(fieldId, 'Team number is required');
+			}
 			isValid = false;
 		}
 
 		const hasAlliance = selectedAlliance !== '';
 		if (!hasAlliance && !isDropdownMode) {
-			showError('Please select an alliance color');
+			// Don't show error toast during real-time validation, only disable submit button
 			isValid = false;
 		}
 
@@ -308,7 +313,8 @@ export function initializeDataCollection(): void {
 		const savedMatchNumber = getFromLocalStorage('matchNumber');
 		if (savedMatchNumber) {
 			matchNumberInput.value = savedMatchNumber;
-			matchNumberInput.dispatchEvent(new Event('input'));
+			// Update UI for team number dropdown if applicable
+			updateTeamNumberUI();
 		}
 		matchNumberInput.addEventListener('input', () => {
 			saveToLocalStorage('matchNumber', matchNumberInput.value);
@@ -322,7 +328,7 @@ export function initializeDataCollection(): void {
 		const savedTeamNumber = getFromLocalStorage('scoutedTeamNumber');
 		if (savedTeamNumber) {
 			teamNumberInput.value = savedTeamNumber;
-			teamNumberInput.dispatchEvent(new Event('input'));
+			// Don't trigger input event during initialization - we'll validate at the end
 		}
 		teamNumberInput.addEventListener('input', () => {
 			saveToLocalStorage('scoutedTeamNumber', teamNumberInput.value);
@@ -644,6 +650,9 @@ export function initializeDataCollection(): void {
 	// Submission state guard
 	let isSubmitting = false;
 	
+	// Validate form state after all initialization is complete (without showing errors)
+	validateForm(false);
+	
 	// Form submit handler
 	if (form) {
 		form.addEventListener('submit', async (event) => {
@@ -651,7 +660,6 @@ export function initializeDataCollection(): void {
 			
 			// Prevent concurrent submissions
 			if (isSubmitting) {
-				console.log('[Form] Submission already in progress, ignoring...');
 				return;
 			}
 			
@@ -662,7 +670,6 @@ export function initializeDataCollection(): void {
 
 			// Mark as submitting and disable submit button
 			isSubmitting = true;
-			console.log('[Form] Starting submission...');
 			
 			if (submitButton) {
 				submitButton.disabled = true;
@@ -787,11 +794,12 @@ export function initializeDataCollection(): void {
 				await submitAllPendingMatches(userData);
 				
 			} catch (error) {
-				console.error('[Form] Error processing match data:', error);
+			if (error instanceof Error) {
+				console.warn('[Data Collection] Error processing match data:', error.message);
+			}
 				showError('Failed to save match data. Please try again.');
 			} finally {
 				isSubmitting = false;
-				console.log('[Form] Submission complete, ready for next submission');
 				
 				if (submitButton) {
 					submitButton.textContent = 'Submit';
@@ -800,6 +808,4 @@ export function initializeDataCollection(): void {
 			}
 		});
 	}
-	
-	console.log('[Init] Data collection form initialized successfully');
 }

@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Login from './pages/Login';
-import DataCollection from './pages/DataCollection';
+import Login from '@/pages/Login';
+import DataCollection from '@/pages/DataCollection';
 
 const App: React.FC = () => {
   return (

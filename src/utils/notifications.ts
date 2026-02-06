@@ -7,10 +7,16 @@ export type NotificationType = 'error' | 'success';
 /**
  * Display a notification to the user
  */
-export function showNotification(message: string, type: NotificationType, duration: number = 3000): void {
+export function showNotification(
+	message: string,
+	type: NotificationType,
+	duration = 3000
+): void {
 	const id = `${type}-notification`;
 	const existing = document.getElementById(id);
-	if (existing) existing.remove();
+	if (existing) {
+		existing.remove();
+	}
 
 	const notificationDiv = document.createElement('div');
 	notificationDiv.id = id;
@@ -30,13 +36,13 @@ export function showNotification(message: string, type: NotificationType, durati
 /**
  * Display an error notification
  */
-export function showError(message: string, duration: number = 5000): void {
+export function showError(message: string, duration = 5000): void {
 	showNotification(message, 'error', duration);
 }
 
 /**
  * Display a success notification
  */
-export function showSuccess(message: string, duration: number = 3000): void {
+export function showSuccess(message: string, duration = 3000): void {
 	showNotification(message, 'success', duration);
 }

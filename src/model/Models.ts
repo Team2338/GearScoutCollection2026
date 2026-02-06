@@ -1,9 +1,21 @@
+/**
+ * Core data models for the GearScout application
+ */
+
+// ============================================================================
+// User & Authentication
+// ============================================================================
+
 export interface IUser {
 	teamNumber: string;
 	scouterName: string;
 	secretCode: string;
 	eventCode: string;
 }
+
+// ============================================================================
+// Match Data
+// ============================================================================
 
 export interface IMatch {
 	gameYear: number;
@@ -31,6 +43,10 @@ export interface IMatchLineup {
 	blue3: number;
 }
 
+// ============================================================================
+// Enums
+// ============================================================================
+
 export enum AllianceColor {
 	red = 'red',
 	blue = 'blue',
@@ -43,7 +59,13 @@ export enum Gamemode {
 	teleop = 'teleop'
 }
 
-// Multi-match storage structure for offline support
+// ============================================================================
+// Local Storage Models
+// ============================================================================
+
+/**
+ * Multi-match storage structure for offline support
+ */
 export interface IMultiMatchStorage {
 	scouterName: string;
 	teamNumber: string;
@@ -51,6 +73,9 @@ export interface IMultiMatchStorage {
 	matches: IStoredMatch[];
 }
 
+/**
+ * Stored match data with submission tracking
+ */
 export interface IStoredMatch {
 	matchNumber: number;
 	robotNumber: string;
@@ -68,6 +93,6 @@ export interface IStoredMatch {
 		accuracy: number;
 		estimateSize: string;
 	}>;
-	timestamp: number; // When this match data was recorded
-	submitted?: boolean; // Track if this match has been submitted
+	timestamp: number;
+	submitted?: boolean;
 }
