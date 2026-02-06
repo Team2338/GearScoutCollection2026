@@ -140,10 +140,6 @@ const Login: React.FC = () => {
 
   return (
     <main className="page login-page">
-      <div className="title">
-        <div className="app-name">GearScout</div>
-        <div className="version">v{version}</div>
-      </div>
       {pendingCount > 0 && (
         <div className="pending-matches-indicator">
           <span className="pending-matches-count">{pendingCount}</span> pending
@@ -158,6 +154,10 @@ const Login: React.FC = () => {
           </button>
         </div>
       )}
+      <div className="title">
+        <div className="app-name">GearScout</div>
+        <div className="version">v{version}</div>
+      </div>
       <form className="login-form" id="login-form" aria-labelledby="login-form-header" onSubmit={handleSubmit}>
         <h1 id="login-form-header">Sign in</h1>
         

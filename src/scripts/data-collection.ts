@@ -142,6 +142,7 @@ export function initializeDataCollection(): void {
 	const estimateSizePrevious = document.getElementById('estimate-size-previous') as HTMLSelectElement;
 	const cycleButton = document.getElementById('cycle-button');
 	const cycleCountEl = document.getElementById('cycle-count');
+	const previousCycleCountEl = document.getElementById('previous-cycle-count');
 	const previousCycleSection = document.getElementById('previous-cycle-section');
 
 	let selectedAlliance = '';
@@ -597,8 +598,9 @@ export function initializeDataCollection(): void {
 	}
 
 	// Update cycle count display on load
-	if (cycleCountEl && cycles.length > 0) {
-		cycleCountEl.textContent = `Cycles: ${cycles.length}`;
+	if (cycles.length > 0) {
+		if (cycleCountEl) cycleCountEl.textContent = `Cycles: ${cycles.length}`;
+		if (previousCycleCountEl) previousCycleCountEl.textContent = `Cycle: ${cycles.length}`;
 	}
 
 	// Initialize previous cycle display on load
@@ -621,9 +623,8 @@ export function initializeDataCollection(): void {
 
 			saveToLocalStorage('cycles', JSON.stringify(cycles));
 
-			if (cycleCountEl) {
-				cycleCountEl.textContent = `Cycles: ${cycles.length}`;
-			}
+			if (cycleCountEl) cycleCountEl.textContent = `Cycles: ${cycles.length}`;
+			if (previousCycleCountEl) previousCycleCountEl.textContent = `Cycle: ${cycles.length}`;
 
 			updatePreviousCycleDisplay();
 
@@ -772,9 +773,8 @@ export function initializeDataCollection(): void {
 				}
 
 				cycles = [];
-				if (cycleCountEl) {
-					cycleCountEl.textContent = 'Cycles: 0';
-				}
+				if (cycleCountEl) cycleCountEl.textContent = 'Cycles: 0';
+				if (previousCycleCountEl) previousCycleCountEl.textContent = 'Cycle: 0';
 				
 				updatePreviousCycleDisplay();
 				formFields.forEach(field => field.classList.remove('has-value'));

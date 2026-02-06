@@ -1,15 +1,57 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { initializeDataCollection } from '../scripts/data-collection';
+import { getPendingMatches, submitAllPendingMatches } from '../services/matchStorage';
+import type { IUser } from '../model/Models';
 import '../styles/data-collection.scss';
 
 const DataCollection: React.FC = () => {
   const navigate = useNavigate();
+  const [pendingCount, setPendingCount] = useState(0);
+  const [isRetrying, setIsRetrying] = useState(false);
 
   useEffect(() => {
     // Initialize the data collection logic
     initializeDataCollection();
   }, []);
+
+  useEffect(() => {
+    // Update pending matches count
+    const updatePendingCount = () => {
+      const userDataStr = sessionStorage.getItem('currentUser');
+      if (userDataStr) {
+        try {
+          const userData = JSON.parse(userDataStr) as IUser;
+          const pending = getPendingMatches(userData);
+          setPendingCount(pending.length);
+        } catch (error) {
+          console.error('Error reading pending matches:', error);
+        }
+      }
+    };
+
+    updatePendingCount();
+    // Check periodically for updates
+    const interval = setInterval(updatePendingCount, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleRetryFailedMatches = async () => {
+    const userDataStr = sessionStorage.getItem('currentUser');
+    if (!userDataStr) return;
+
+    setIsRetrying(true);
+    try {
+      const userData = JSON.parse(userDataStr) as IUser;
+      await submitAllPendingMatches(userData);
+      const pending = getPendingMatches(userData);
+      setPendingCount(pending.length);
+    } catch (error) {
+      console.error('Error retrying submission:', error);
+    } finally {
+      setIsRetrying(false);
+    }
+  };
 
   const handleBack = () => {
     navigate('/');
@@ -18,11 +60,27 @@ const DataCollection: React.FC = () => {
   return (
     <>
       <div className="header">
-        <div className="logo">
-          <img src="/logo.png" alt="2338 logo" height={100} width={100} loading="eager" />
-        </div>
-        <div className="analytics">
-          <a href="https://data.gearitforward.com/" className="analytics-button">ANALYTICS</a>
+        {pendingCount > 0 && (
+          <div className="pending-matches-indicator">
+            <span className="pending-matches-count">{pendingCount}</span> pending
+            <button 
+              type="button" 
+              className="retry-submit-button" 
+              onClick={handleRetryFailedMatches}
+              disabled={isRetrying}
+              style={{ opacity: isRetrying ? 0.5 : 1 }}
+            >
+              ↻
+            </button>
+          </div>
+        )}
+        <div className="header-main">
+          <div className="logo">
+            <img src="/logo.png" alt="2338 logo" height={100} width={100} loading="eager" />
+          </div>
+          <div className="analytics">
+            <a href="https://data.gearitforward.com/" className="analytics-button">ANALYTICS</a>
+          </div>
         </div>
       </div>
 
@@ -154,8 +212,9 @@ const DataCollection: React.FC = () => {
 
             <h2 className="section-title">Teleop</h2>
 
-            <div id="previous-cycle-section" className="previous-cycle-section" style={{ display: 'none' }}>
+            <div id="previous-cycle-section" className="previous-cycle-section" style={{ display: 'none', backgroundColor: '#001b2f', borderRadius: '8px'}}>
               <h3 className="objective-label">Previous Cycle</h3>
+                <div className="cycle-count" id="previous-cycle-count">Cycle: 0</div>
               
               <h4 className="sub-label">Accuracy</h4>
               <div className="accuracy-button-group">
@@ -175,7 +234,7 @@ const DataCollection: React.FC = () => {
                   <option value="11-25">11-25</option>
                   <option value="26+">26+</option>
                 </select>
-                <label htmlFor="estimate-size-previous">Estimate Size</label>
+                <label htmlFor="estimate-size-previous" style={{ backgroundColor: '#001b2f'}}>Estimate Size</label>
               </div>
             </div>
 
