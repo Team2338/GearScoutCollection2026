@@ -1,24 +1,33 @@
 # GearScout Collection 2026
 
-A modern FRC (FIRST Robotics Competition) scouting application for collecting and submitting match data during competitions.
+A modern, accessible FRC (FIRST Robotics Competition) scouting application for collecting and submitting match data during competitions. Built with React, TypeScript, and offline-first architecture.
 
 **Access the application at: [www.gearitforward.com](https://www.gearitforward.com)**
 
 ## 📋 Table of Contents
 
 - [Overview](#overview)
+- [Key Features](#key-features)
 - [How to Use](#how-to-use)
   - [Initial Setup](#initial-setup)
   - [Data Collection](#data-collection)
   - [Offline Mode & Pending Matches](#offline-mode--pending-matches)
-- [Features](#features)
+- [Accessibility](#accessibility)
 - [For Developers](#for-developers)
 
 ## Overview
 
-GearScout Collection 2026 is a web-based scouting application designed to help FRC teams track and analyze robot performance during competitions. The app supports offline data collection, automatic retry of failed submissions, and real-time match schedule integration via The Blue Alliance API.
+GearScout Collection 2026 is a Progressive Web App (PWA) designed to help FRC teams track and analyze robot performance during competitions. The app supports offline data collection, automatic retry of failed submissions, real-time match schedule integration via The Blue Alliance API, and comprehensive accessibility features.
 
-Simply visit **www.gearitforward.com** on any device with a web browser to start scouting!
+## Key Features
+
+✅ **Offline-First Architecture** - Works without internet, syncs when online  
+✅ **Progressive Web App** - Installable on any device  
+✅ **Automatic Match Retry** - Failed submissions automatically retry  
+✅ **The Blue Alliance Integration** - Auto-load team schedules  
+✅ **Fully Accessible** - WCAG 2.1 compliant with ARIA labels and keyboard navigation  
+✅ **Type-Safe** - Built with TypeScript for reliability  
+✅ **Secure** - Input sanitization and route protection
 
 ## How to Use
 

@@ -707,7 +707,7 @@ html {
 		.trench-decrements {
 			display: flex;
 			justify-content: center;
-			gap: 105px;
+			gap: 108px;
 
 			@media (max-width: 768px) {
 				gap: 63px;
@@ -725,11 +725,13 @@ html {
 				background-color: transparent;
 				font-size: 24px;
 				font-weight: 400;
+				line-height: 1;
 				cursor: pointer;
 				transition: all 0.2s;
 				display: flex;
 				align-items: center;
 				justify-content: center;
+				position: relative;
 
 				@media (max-width: 768px) {
 					width: 110px;

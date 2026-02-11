@@ -4,6 +4,8 @@
 
 /**
  * Save a value to sessionStorage
+ * @param key - The storage key
+ * @param value - The value to store (string or object)
  */
 export function saveToSessionStorage(
 	key: string,
@@ -21,6 +23,9 @@ export function saveToSessionStorage(
 
 /**
  * Get a string value from sessionStorage
+ * @param key - The storage key
+ * @param defaultValue - The default value if key not found
+ * @returns The stored value or default value
  */
 export function getFromSessionStorage(
 	key: string,
@@ -38,6 +43,9 @@ export function getFromSessionStorage(
 
 /**
  * Get a parsed JSON value from sessionStorage
+ * @param key - The storage key
+ * @param defaultValue - The default value if key not found
+ * @returns The parsed value or default value
  */
 export function getJsonFromSessionStorage<T>(
 	key: string,
@@ -59,6 +67,7 @@ export function getJsonFromSessionStorage<T>(
 
 /**
  * Remove a value from sessionStorage
+ * @param key - The storage key to remove
  */
 export function removeFromSessionStorage(key: string): void {
 	try {

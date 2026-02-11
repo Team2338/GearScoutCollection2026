@@ -3,21 +3,18 @@
  */
 
 import type { IUser } from '@/model/Models';
-import { AllianceColor } from '@/model/Models';
+import { AllianceColor, isValidUser } from '@/model/Models';
 import { showError, showSuccess } from '@/utils/notifications';
 import { showValidationError, clearValidationError } from '@/utils/validation';
 import { saveToLocalStorage, getFromLocalStorage, clearFormDataFromLocalStorage } from '@/utils/localStorage';
 import { saveMatchToStorage, submitAllPendingMatches, cleanInvalidMatches } from '@/services/matchStorage';
 import { fetchSchedule, getSchedule } from '@/services/scheduleService';
+import { setupKeyboardNavigation } from '@/utils/keyboardNav';
+import { TIMING, STORAGE_KEYS } from '@/constants';
 
 // Constants
-const SCHEDULE_LOAD_DELAY_MS = 600;
-const AUTH_ERROR_REDIRECT_DELAY_MS = 2000;
-
-// Initialization guard to prevent duplicate event listeners
-// Using a symbol to ensure uniqueness across HMR reloads
-const INIT_FLAG = Symbol.for('dataCollectionInitialized');
-let isInitialized = (globalThis as any)[INIT_FLAG] || false;
+const SCHEDULE_LOAD_DELAY_MS = TIMING.SCHEDULE_LOAD_DELAY;
+const AUTH_ERROR_REDIRECT_DELAY_MS = TIMING.AUTH_ERROR_REDIRECT_DELAY;
 
 /**
  * Show/hide appropriate team number input based on schedule state
@@ -124,17 +121,17 @@ function populateTeamDropdown(matchIndex: number): void {
 
 /**
  * Initialize the data collection form
+ * @returns Cleanup function to remove event listeners
  */
 export function initializeDataCollection(): void {
-	// Prevent multiple initializations
-	if (isInitialized) {
+	console.log('[Data Collection] Initializing...');
+	
+	const form = document.getElementById('data-collection-form') as HTMLFormElement;
+	if (!form) {
+		console.error('[Data Collection] Form element not found');
 		return;
 	}
 	
-	isInitialized = true;
-	(globalThis as any)[INIT_FLAG] = true;
-	
-	const form = document.getElementById('data-collection-form') as HTMLFormElement;
 	const submitButton = document.querySelector('.submit-button') as HTMLButtonElement;
 	const matchNumberInput = document.getElementById('match-number') as HTMLInputElement;
 	const teamNumberInput = document.getElementById('team-number') as HTMLInputElement;
@@ -146,8 +143,15 @@ export function initializeDataCollection(): void {
 	const cycleCountEl = document.getElementById('cycle-count');
 	const previousCycleCountEl = document.getElementById('previous-cycle-count');
 	const previousCycleSection = document.getElementById('previous-cycle-section');
+	
+	// Verify critical elements exist
+	if (!matchNumberInput || !teamNumberInput) {
+		console.error('[Data Collection] Critical form elements not found');
+		return;
+	}
 
 	let selectedAlliance = '';
+	let hasUserInteracted = false;
 	let leaveValue = getFromLocalStorage('leaveValue', 'no');
 	let leaveValueTeleop = getFromLocalStorage('leaveValueTeleop', 'no');
 	let accuracyValue = getFromLocalStorage('accuracyValue', '');
@@ -178,7 +182,7 @@ export function initializeDataCollection(): void {
 	}
 
 	// Get user data and event code
-	const userDataStr = sessionStorage.getItem('currentUser');
+	const userDataStr = sessionStorage.getItem(STORAGE_KEYS.CURRENT_USER);
 	if (!userDataStr) {
 		showError('User data not found. Redirecting to login...');
 		setTimeout(() => {
@@ -187,7 +191,21 @@ export function initializeDataCollection(): void {
 		return;
 	}
 
-	const userData = JSON.parse(userDataStr) as IUser;
+	let userData: IUser;
+	try {
+		const parsed = JSON.parse(userDataStr);
+		if (!isValidUser(parsed)) {
+			throw new Error('Invalid user data format');
+		}
+		userData = parsed;
+	} catch (error) {
+		showError('Invalid user data. Redirecting to login...');
+		setTimeout(() => {
+			window.location.href = '/';
+		}, AUTH_ERROR_REDIRECT_DELAY_MS);
+		return;
+	}
+
 	const eventCode = userData.eventCode;
 
 	// Clean invalid matches on load (just log, don't show error toast)
@@ -231,14 +249,16 @@ export function initializeDataCollection(): void {
 			isValid = false;
 		}
 
+		// Alliance selection is ALWAYS required
 		const hasAlliance = selectedAlliance !== '';
-		if (!hasAlliance && !isDropdownMode) {
+		if (!hasAlliance) {
 			// Don't show error toast during real-time validation, only disable submit button
 			isValid = false;
 		}
 
 		if (submitButton) {
-			submitButton.disabled = !isValid;
+			// Only enable if ALL required fields are filled AND user has interacted with the form
+			submitButton.disabled = !isValid || !hasUserInteracted;
 		}
 
 		return isValid;
@@ -290,6 +310,7 @@ export function initializeDataCollection(): void {
 	// Team number dropdown handler
 	if (teamNumberDropdown) {
 		teamNumberDropdown.addEventListener('change', () => {
+			hasUserInteracted = true;
 			const selectedOption = teamNumberDropdown.options[teamNumberDropdown.selectedIndex];
 			const teamNumber = teamNumberDropdown.value;
 
@@ -317,6 +338,7 @@ export function initializeDataCollection(): void {
 			updateTeamNumberUI();
 		}
 		matchNumberInput.addEventListener('input', () => {
+			hasUserInteracted = true;
 			saveToLocalStorage('matchNumber', matchNumberInput.value);
 			clearValidationError('match-number');
 			updateTeamNumberUI();
@@ -331,6 +353,7 @@ export function initializeDataCollection(): void {
 			// Don't trigger input event during initialization - we'll validate at the end
 		}
 		teamNumberInput.addEventListener('input', () => {
+			hasUserInteracted = true;
 			saveToLocalStorage('scoutedTeamNumber', teamNumberInput.value);
 			clearValidationError('team-number');
 			validateForm();
@@ -349,18 +372,27 @@ export function initializeDataCollection(): void {
 		allianceButtons.forEach(btn => {
 			if (btn.getAttribute('data-value') === savedAlliance) {
 				btn.classList.add('selected');
+				btn.setAttribute('aria-checked', 'true');
+			} else {
+				btn.setAttribute('aria-checked', 'false');
 			}
 		});
 	}
 
 	allianceButtons.forEach(button => {
 		button.addEventListener('click', () => {
-			// Remove selected class from all buttons
-			allianceButtons.forEach(btn => btn.classList.remove('selected'));
+			hasUserInteracted = true;
+			// Remove selected class and update ARIA from all buttons
+			allianceButtons.forEach(btn => {
+				btn.classList.remove('selected');
+				btn.setAttribute('aria-checked', 'false');
+			});
 			
-			// Add selected class to clicked button
+			// Add selected class and update ARIA to clicked button
 			button.classList.add('selected');
-			selectedAlliance = button.getAttribute('data-value') || '';
+			button.setAttribute('aria-checked', 'true');
+			const dataValue = button.getAttribute('data-value');
+			selectedAlliance = dataValue ?? '';
 			
 			// Save to localStorage
 			saveToLocalStorage('allianceColor', selectedAlliance);
@@ -375,14 +407,22 @@ export function initializeDataCollection(): void {
 	leaveToggleButtons.forEach(button => {
 		if (button.getAttribute('data-value') === leaveValue) {
 			button.classList.add('selected');
+			button.setAttribute('aria-checked', 'true');
+		} else {
+			button.setAttribute('aria-checked', 'false');
 		}
 	});
 
 	leaveToggleButtons.forEach(button => {
 		button.addEventListener('click', () => {
-			leaveToggleButtons.forEach(btn => btn.classList.remove('selected'));
+			leaveToggleButtons.forEach(btn => {
+				btn.classList.remove('selected');
+				btn.setAttribute('aria-checked', 'false');
+			});
 			button.classList.add('selected');
-			leaveValue = button.getAttribute('data-value') || '';
+			button.setAttribute('aria-checked', 'true');
+			const dataValue = button.getAttribute('data-value');
+			leaveValue = dataValue ?? 'no';
 			saveToLocalStorage('leaveValue', leaveValue);
 		});
 	});
@@ -392,17 +432,28 @@ export function initializeDataCollection(): void {
 	accuracyButtons.forEach(button => {
 		if (button.getAttribute('data-value') === accuracyValue) {
 			button.classList.add('selected');
+			button.setAttribute('aria-pressed', 'true');
+		} else {
+			button.setAttribute('aria-pressed', 'false');
 		}
 	});
 
 	accuracyButtons.forEach(button => {
 		button.addEventListener('click', () => {
-			accuracyButtons.forEach(btn => btn.classList.remove('selected'));
+			accuracyButtons.forEach(btn => {
+				btn.classList.remove('selected');
+				btn.setAttribute('aria-pressed', 'false');
+			});
 			button.classList.add('selected');
-			accuracyValue = button.getAttribute('data-value') || '';
+			button.setAttribute('aria-pressed', 'true');
+			const dataValue = button.getAttribute('data-value');
+			accuracyValue = dataValue ?? '0';
 			saveToLocalStorage('accuracyValue', accuracyValue);
 		});
 	});
+
+	// Setup keyboard navigation for accuracy buttons
+	setupKeyboardNavigation('.accuracy-button-group', '.accuracy-button');
 
 	// Auto estimate size functionality
 	if (estimateSizeAuto) {
@@ -521,14 +572,22 @@ export function initializeDataCollection(): void {
 	leaveToggleButtonsTeleop.forEach(button => {
 		if (button.getAttribute('data-value') === leaveValueTeleop) {
 			button.classList.add('selected');
+			button.setAttribute('aria-checked', 'true');
+		} else {
+			button.setAttribute('aria-checked', 'false');
 		}
 	});
 
 	leaveToggleButtonsTeleop.forEach(button => {
 		button.addEventListener('click', () => {
-			leaveToggleButtonsTeleop.forEach(btn => btn.classList.remove('selected'));
+			leaveToggleButtonsTeleop.forEach(btn => {
+				btn.classList.remove('selected');
+				btn.setAttribute('aria-checked', 'false');
+			});
 			button.classList.add('selected');
-			leaveValueTeleop = button.getAttribute('data-value') || '';
+			button.setAttribute('aria-checked', 'true');
+			const dataValue = button.getAttribute('data-value');
+			leaveValueTeleop = dataValue ?? 'no';
 			saveToLocalStorage('leaveValueTeleop', leaveValueTeleop);
 		});
 	});
@@ -538,14 +597,22 @@ export function initializeDataCollection(): void {
 	accuracyButtonsTeleop.forEach(button => {
 		if (button.getAttribute('data-value') === accuracyValueTeleop) {
 			button.classList.add('selected');
+			button.setAttribute('aria-pressed', 'true');
+		} else {
+			button.setAttribute('aria-pressed', 'false');
 		}
 	});
 
 	accuracyButtonsTeleop.forEach(button => {
 		button.addEventListener('click', () => {
-			accuracyButtonsTeleop.forEach(btn => btn.classList.remove('selected'));
+			accuracyButtonsTeleop.forEach(btn => {
+				btn.classList.remove('selected');
+				btn.setAttribute('aria-pressed', 'false');
+			});
 			button.classList.add('selected');
-			accuracyValueTeleop = button.getAttribute('data-value') || '';
+			button.setAttribute('aria-pressed', 'true');
+			const dataValue = button.getAttribute('data-value');
+			accuracyValueTeleop = dataValue ?? '0';
 			saveToLocalStorage('accuracyValueTeleop', accuracyValueTeleop);
 		});
 	});
@@ -557,11 +624,16 @@ export function initializeDataCollection(): void {
 		button.addEventListener('click', () => {
 			if (cycles.length === 0) return;
 			
-			accuracyButtonsPrevious.forEach(btn => btn.classList.remove('selected'));
+			accuracyButtonsPrevious.forEach(btn => {
+				btn.classList.remove('selected');
+				btn.setAttribute('aria-pressed', 'false');
+			});
 			button.classList.add('selected');
-			const newValue = button.getAttribute('data-value') || '0';
+			button.setAttribute('aria-pressed', 'true');
+			const dataValue = button.getAttribute('data-value');
+			const newValue = dataValue ?? '0';
 			
-			cycles[cycles.length - 1].accuracy = parseInt(newValue);
+			cycles[cycles.length - 1].accuracy = parseInt(newValue, 10);
 			saveToLocalStorage('cycles', JSON.stringify(cycles));
 		});
 	});
@@ -613,7 +685,7 @@ export function initializeDataCollection(): void {
 	updatePreviousCycleDisplay();
 
 	// Cycle button functionality
-	if (cycleButton) {
+	if (cycleButton && cycleCountEl && previousCycleCountEl) {
 		cycleButton.addEventListener('click', () => {
 			const currentEstimateSize = estimateSizeSelect?.value || '';
 			
@@ -623,14 +695,14 @@ export function initializeDataCollection(): void {
 			}
 
 			cycles.push({
-				accuracy: accuracyValueTeleop ? parseInt(accuracyValueTeleop) : 0,
+				accuracy: accuracyValueTeleop ? parseInt(accuracyValueTeleop, 10) : 0,
 				estimateSize: currentEstimateSize
 			});
 
 			saveToLocalStorage('cycles', JSON.stringify(cycles));
 
-			if (cycleCountEl) cycleCountEl.textContent = `Cycles: ${cycles.length}`;
-			if (previousCycleCountEl) previousCycleCountEl.textContent = `Cycle: ${cycles.length}`;
+			cycleCountEl.textContent = `Cycles: ${cycles.length}`;
+			previousCycleCountEl.textContent = `Cycle: ${cycles.length}`;
 
 			updatePreviousCycleDisplay();
 
@@ -647,11 +719,25 @@ export function initializeDataCollection(): void {
 		});
 	}
 
+	// Check if form is pre-filled with valid data on initialization
+	// If all required fields have values, enable the submit button
+	const hasPrefilledMatch = matchNumberInput && matchNumberInput.value.trim() !== '';
+	
+	// Check team number based on which mode is active
+	const isDropdownMode = teamNumberDropdown && teamNumberDropdown.parentElement?.style.display !== 'none';
+	const hasPrefilledTeam = isDropdownMode 
+		? (teamNumberDropdown && teamNumberDropdown.value.trim() !== '')
+		: (teamNumberInput && teamNumberInput.value.trim() !== '');
+	
+	const hasPrefilledAlliance = selectedAlliance !== '';
+	
+	if (hasPrefilledMatch && hasPrefilledTeam && hasPrefilledAlliance) {
+		hasUserInteracted = true;
+		validateForm(false); // Validate without showing errors
+	}
+
 	// Submission state guard
 	let isSubmitting = false;
-	
-	// Validate form state after all initialization is complete (without showing errors)
-	validateForm(false);
 	
 	// Form submit handler
 	if (form) {
@@ -737,8 +823,9 @@ export function initializeDataCollection(): void {
 				
 				showSuccess('Match data saved locally!');
 				
-				// Clear current form state
+				// Clear current form state including cycles
 				clearFormDataFromLocalStorage();
+				localStorage.removeItem('cycles');
 				
 				// Reset form UI
 				form.reset();
@@ -803,7 +890,7 @@ export function initializeDataCollection(): void {
 				
 				if (submitButton) {
 					submitButton.textContent = 'Submit';
-					validateForm();
+					submitButton.disabled = true;
 				}
 			}
 		});

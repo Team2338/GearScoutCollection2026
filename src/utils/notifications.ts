@@ -2,15 +2,20 @@
  * Notification utilities for displaying user feedback
  */
 
+import { TIMING } from '@/constants';
+
 export type NotificationType = 'error' | 'success';
 
 /**
  * Display a notification to the user
+ * @param message - The message to display
+ * @param type - The notification type (error or success)
+ * @param duration - How long to show the notification in milliseconds
  */
 export function showNotification(
 	message: string,
 	type: NotificationType,
-	duration = 3000
+	duration = TIMING.NOTIFICATION_DURATION_DEFAULT
 ): void {
 	const id = `${type}-notification`;
 	const existing = document.getElementById(id);
@@ -29,20 +34,24 @@ export function showNotification(
 
 	setTimeout(() => {
 		notificationDiv.classList.add('fade-out');
-		setTimeout(() => notificationDiv.remove(), 300);
+		setTimeout(() => notificationDiv.remove(), TIMING.NOTIFICATION_FADE_OUT);
 	}, duration);
 }
 
 /**
  * Display an error notification
+ * @param message - The error message to display
+ * @param duration - How long to show the notification in milliseconds
  */
-export function showError(message: string, duration = 5000): void {
+export function showError(message: string, duration = TIMING.NOTIFICATION_DURATION_ERROR): void {
 	showNotification(message, 'error', duration);
 }
 
 /**
  * Display a success notification
+ * @param message - The success message to display
+ * @param duration - How long to show the notification in milliseconds
  */
-export function showSuccess(message: string, duration = 3000): void {
+export function showSuccess(message: string, duration = TIMING.NOTIFICATION_DURATION_DEFAULT): void {
 	showNotification(message, 'success', duration);
 }

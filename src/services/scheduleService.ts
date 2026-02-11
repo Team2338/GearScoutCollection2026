@@ -6,10 +6,11 @@ import type { IMatchLineup } from '@/model/Models';
 import gearscoutService from '@/services/gearscout-services';
 import { showError } from '@/utils/notifications';
 import { debounce } from '@/utils/debounce';
+import { TIMING, API } from '@/constants';
 
 // Constants
-const SCHEDULE_FETCH_DEBOUNCE_MS = 500;
-const CURRENT_GAME_YEAR = 2026;
+const SCHEDULE_FETCH_DEBOUNCE_MS = TIMING.SCHEDULE_FETCH_DEBOUNCE;
+const CURRENT_GAME_YEAR = API.CURRENT_GAME_YEAR;
 
 // Schedule state
 let schedule: IMatchLineup[] | null = null;
@@ -18,6 +19,7 @@ let currentEventCode = '';
 
 /**
  * Get current schedule
+ * @returns The current schedule or null if not loaded
  */
 export function getSchedule(): IMatchLineup[] | null {
 	return schedule;
@@ -25,6 +27,7 @@ export function getSchedule(): IMatchLineup[] | null {
 
 /**
  * Check if schedule is currently loading
+ * @returns True if schedule is being fetched
  */
 export function isScheduleLoading(): boolean {
 	return scheduleIsLoading;
@@ -32,6 +35,7 @@ export function isScheduleLoading(): boolean {
 
 /**
  * Fetch schedule from API (internal implementation)
+ * @param eventCode - The event code to fetch schedule for
  */
 async function fetchScheduleInternal(eventCode: string): Promise<void> {
 	if (!eventCode || eventCode.trim() === '') {
@@ -64,11 +68,14 @@ async function fetchScheduleInternal(eventCode: string): Promise<void> {
 
 /**
  * Fetch schedule from API with debouncing
+ * @param eventCode - The event code to fetch schedule for
  */
 export const fetchSchedule = debounce(fetchScheduleInternal, SCHEDULE_FETCH_DEBOUNCE_MS);
 
 /**
  * Get match lineup by match number (1-indexed)
+ * @param matchNumber - The match number (starting from 1)
+ * @returns The match lineup or null if not found
  */
 export function getMatchLineup(matchNumber: number): IMatchLineup | null {
 	if (!schedule || schedule.length === 0) return null;
@@ -79,6 +86,8 @@ export function getMatchLineup(matchNumber: number): IMatchLineup | null {
 
 /**
  * Get all teams in a match by match number
+ * @param matchNumber - The match number (starting from 1)
+ * @returns Object with red and blue alliance teams or null if not found
  */
 export function getTeamsInMatch(matchNumber: number): {
 	red: string[];

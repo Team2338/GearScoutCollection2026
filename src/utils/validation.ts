@@ -4,6 +4,8 @@
 
 /**
  * Display a validation error for a specific form field
+ * @param fieldId - The ID of the form field
+ * @param message - The error message to display
  */
 export function showValidationError(
 	fieldId: string,
@@ -27,6 +29,7 @@ export function showValidationError(
 
 /**
  * Clear validation error for a specific form field
+ * @param fieldId - The ID of the form field
  */
 export function clearValidationError(fieldId: string): void {
 	const formField = document.getElementById(fieldId)?.closest('.form-field');

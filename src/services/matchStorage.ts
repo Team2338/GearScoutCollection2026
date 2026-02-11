@@ -4,19 +4,22 @@
 
 import type { IUser, IStoredMatch, IMultiMatchStorage, IMatch, IObjective, AllianceColor } from '../model/Models';
 import { Gamemode } from '../model/Models';
-import gearscoutService from './gearscout-services';
+import gearscoutService, { isAxiosError } from './gearscout-services';
 import { showError, showSuccess } from '../utils/notifications';
+import { STORAGE_KEYS } from '@/constants';
 
-const MULTI_MATCH_STORAGE_KEY = 'multiMatchData';
+const MULTI_MATCH_STORAGE_KEY = STORAGE_KEYS.MULTI_MATCH_DATA;
 
 /**
  * Get multi-match storage for the current user
+ * @param userData - Current user data
+ * @returns Multi-match storage structure for the user
  */
 export function getMultiMatchStorage(userData: IUser): IMultiMatchStorage {
 	try {
 		const stored = localStorage.getItem(MULTI_MATCH_STORAGE_KEY);
 		if (stored) {
-			const data = JSON.parse(stored);
+			const data = JSON.parse(stored) as IMultiMatchStorage;
 			// Verify the stored data matches current user
 			if (
 				data.scouterName === userData.scouterName &&
@@ -27,7 +30,9 @@ export function getMultiMatchStorage(userData: IUser): IMultiMatchStorage {
 			}
 		}
 	} catch (error) {
-		console.error('Error reading multi-match storage:', error);
+		if (error instanceof Error) {
+			console.error('Error reading multi-match storage:', error.message);
+		}
 	}
 	
 	// Return new structure if nothing valid exists
@@ -60,6 +65,9 @@ export interface MatchDataToSave {
 
 /**
  * Save match data to local storage
+ * @param userData - Current user data
+ * @param matchData - Match data to save
+ * @throws Error if storage operation fails
  */
 export function saveMatchToStorage(userData: IUser, matchData: MatchDataToSave): void {
 	try {
@@ -69,8 +77,9 @@ export function saveMatchToStorage(userData: IUser, matchData: MatchDataToSave):
 		const matchNum = Number(matchData.matchNumber);
 		const robotNum = String(matchData.robotNumber);
 		
-		const existingIndex = storage.matches.findIndex(
-			m => Number(m.matchNumber) === matchNum && String(m.robotNumber) === robotNum
+		// Remove any existing entries for this match/robot combination to prevent duplicates
+		storage.matches = storage.matches.filter(
+			m => !(Number(m.matchNumber) === matchNum && String(m.robotNumber) === robotNum)
 		);
 		
 		const newMatch: IStoredMatch = {
@@ -81,24 +90,30 @@ export function saveMatchToStorage(userData: IUser, matchData: MatchDataToSave):
 			submitted: false
 		};
 		
-		if (existingIndex >= 0) {
-			storage.matches[existingIndex] = newMatch;
-			console.log(`📝 Updated Match #${matchNum} for Team ${robotNum}`);
-		} else {
-			storage.matches.push(newMatch);
-			console.log(`➕ Added Match #${matchNum} for Team ${robotNum}`);
-		}
+		// Always add as new entry (we've already removed any existing ones)
+		storage.matches.push(newMatch);
+		console.log(`[Match Storage] Saved Match #${matchNum} for Team ${robotNum}`);
 		
 		localStorage.setItem(MULTI_MATCH_STORAGE_KEY, JSON.stringify(storage));
-		console.log(`💾 Storage: ${storage.matches.length} total match(es)`);
+		console.log(`[Match Storage] Total: ${storage.matches.length} match(es)`);
 	} catch (error) {
-		console.error('❌ Error saving match to storage:', error);
+		if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+			console.error('[Match Storage] Storage quota exceeded');
+			showError('Storage full. Please submit pending matches to free up space.');
+			throw new Error('Storage quota exceeded');
+		} else if (error instanceof Error) {
+			console.error('[Match Storage] Error saving match:', error.message);
+		} else {
+			console.error('[Match Storage] Error saving match:', error);
+		}
 		throw error;
 	}
 }
 
 /**
  * Remove invalid matches from storage (match number 0 or empty robot number)
+ * @param userData - Current user data
+ * @returns Number of invalid matches removed
  */
 export function cleanInvalidMatches(userData: IUser): number {
 	try {
@@ -114,18 +129,22 @@ export function cleanInvalidMatches(userData: IUser): number {
 		
 		if (removedCount > 0) {
 			localStorage.setItem(MULTI_MATCH_STORAGE_KEY, JSON.stringify(storage));
-			console.log(`🧹 Cleaned ${removedCount} invalid match(es) from storage`);
+			console.log(`[Match Storage] Cleaned ${removedCount} invalid match(es) from storage`);
 		}
 		
 		return removedCount;
 	} catch (error) {
-		console.error('❌ Error cleaning invalid matches:', error);
+		if (error instanceof Error) {
+			console.error('[Match Storage] Error cleaning invalid matches:', error.message);
+		}
 		return 0;
 	}
 }
 
 /**
  * Get all pending (unsubmitted) matches
+ * @param userData - Current user data
+ * @returns Array of unsubmitted stored matches
  */
 export function getPendingMatches(userData: IUser): IStoredMatch[] {
 	const storage = getMultiMatchStorage(userData);
@@ -134,6 +153,8 @@ export function getPendingMatches(userData: IUser): IStoredMatch[] {
 
 /**
  * Mark matches as submitted
+ * @param userData - Current user data
+ * @param successfulMatches - Array of successfully submitted match identifiers
  */
 function markMatchesAsSubmitted(
 	userData: IUser, 
@@ -151,12 +172,15 @@ function markMatchesAsSubmitted(
 		});
 		localStorage.setItem(MULTI_MATCH_STORAGE_KEY, JSON.stringify(storage));
 	} catch (error) {
-		console.error('Error marking matches as submitted:', error);
+		if (error instanceof Error) {
+			console.error('Error marking matches as submitted:', error.message);
+		}
 	}
 }
 
 /**
  * Clear submitted matches from storage
+ * @param userData - Current user data
  */
 function clearSubmittedMatches(userData: IUser): void {
 	try {
@@ -164,12 +188,17 @@ function clearSubmittedMatches(userData: IUser): void {
 		storage.matches = storage.matches.filter(m => !m.submitted);
 		localStorage.setItem(MULTI_MATCH_STORAGE_KEY, JSON.stringify(storage));
 	} catch (error) {
-		console.error('Error clearing submitted matches:', error);
+		if (error instanceof Error) {
+			console.error('Error clearing submitted matches:', error.message);
+		}
 	}
 }
 
 /**
  * Convert stored match data to API format
+ * @param userData - Current user data
+ * @param storedMatch - Stored match data to convert
+ * @returns Match data formatted for API submission
  */
 function convertStoredMatchToAPIFormat(userData: IUser, storedMatch: IStoredMatch): IMatch {
 	const objectives: IObjective[] = [];
@@ -255,6 +284,8 @@ function convertStoredMatchToAPIFormat(userData: IUser, storedMatch: IStoredMatc
 
 /**
  * Submit all pending matches to the API
+ * @param userData - Current user data
+ * @throws Error if authentication fails
  */
 export async function submitAllPendingMatches(userData: IUser): Promise<void> {
 	// Clean up any invalid matches first (silently - don't confuse user with error toast)
@@ -262,10 +293,10 @@ export async function submitAllPendingMatches(userData: IUser): Promise<void> {
 	
 	const pendingMatches = getPendingMatches(userData);
 	
-	console.log(`📤 Starting submission: ${pendingMatches.length} pending match(es)`);
+	console.log(`[Match Submission] Starting submission: ${pendingMatches.length} pending match(es)`);
 	
 	if (pendingMatches.length === 0) {
-		console.log('✅ No pending matches to submit');
+		console.log('[Match Submission] No pending matches to submit');
 		return;
 	}
 	
@@ -273,29 +304,33 @@ export async function submitAllPendingMatches(userData: IUser): Promise<void> {
 	const validMatches = pendingMatches.filter(m => {
 		const isValid = m.matchNumber > 0 && m.robotNumber && m.robotNumber.trim() !== '';
 		if (!isValid) {
-			console.warn(`⚠️  Skipping invalid match: Match #${m.matchNumber}, Team ${m.robotNumber}`);
+			console.warn(`[Match Submission] Skipping invalid match: Match #${m.matchNumber}, Team ${m.robotNumber}`);
 		}
 		return isValid;
 	});
 	
 	if (validMatches.length === 0) {
-		console.error('❌ No valid matches to submit (all have invalid data)');
+		console.error('[Match Submission] No valid matches to submit (all have invalid data)');
 		showError('No valid matches found. Please check your data and try again.');
 		return;
 	}
 	
 	if (validMatches.length < pendingMatches.length) {
-		console.warn(`⚠️  Filtered out ${pendingMatches.length - validMatches.length} invalid match(es)`);
+		console.warn(`[Match Submission] Filtered out ${pendingMatches.length - validMatches.length} invalid match(es)`);
 	}
 	
-	console.log(`📊 Attempting to submit ${validMatches.length} valid match(es)`);
+	console.log(`[Match Submission] Attempting to submit ${validMatches.length} valid match(es)`);
 	
-	// Deduplicate matches before submitting
+	// Deduplicate matches before submitting (keep most recent based on timestamp)
 	const uniqueMatches = new Map<string, IStoredMatch>();
 	validMatches.forEach(match => {
 		const key = `${match.matchNumber}-${match.robotNumber}`;
-		if (uniqueMatches.has(key)) {
-			console.warn(`⚠️  Duplicate detected: Match #${match.matchNumber}, Team ${match.robotNumber}`);
+		const existing = uniqueMatches.get(key);
+		if (existing) {
+			console.warn(`[Match Submission] Duplicate detected: Match #${match.matchNumber}, Team ${match.robotNumber} (keeping most recent)`);
+			if (match.timestamp > existing.timestamp) {
+				uniqueMatches.set(key, match);
+			}
 		} else {
 			uniqueMatches.set(key, match);
 		}
@@ -303,7 +338,7 @@ export async function submitAllPendingMatches(userData: IUser): Promise<void> {
 	
 	const matchesToSubmit = Array.from(uniqueMatches.values());
 	if (matchesToSubmit.length < validMatches.length) {
-		console.warn(`🔄 Removed ${validMatches.length - matchesToSubmit.length} duplicate(s)`);
+		console.warn(`[Match Submission] Removed ${validMatches.length - matchesToSubmit.length} duplicate(s)`);
 	}
 	
 	let successCount = 0;
@@ -312,7 +347,7 @@ export async function submitAllPendingMatches(userData: IUser): Promise<void> {
 	
 	for (const storedMatch of matchesToSubmit) {
 		try {
-			console.log(`📡 Submitting Match #${storedMatch.matchNumber}, Team ${storedMatch.robotNumber}...`);
+			console.log(`[Match Submission] Submitting Match #${storedMatch.matchNumber}, Team ${storedMatch.robotNumber}...`);
 			const matchData = convertStoredMatchToAPIFormat(userData, storedMatch);
 			await gearscoutService.submitMatch(userData, matchData);
 			successCount++;
@@ -320,21 +355,18 @@ export async function submitAllPendingMatches(userData: IUser): Promise<void> {
 				matchNumber: storedMatch.matchNumber, 
 				robotNumber: storedMatch.robotNumber 
 			});
-			console.log(`✅ Successfully submitted Match #${storedMatch.matchNumber}`);
+			console.log(`[Match Submission] Successfully submitted Match #${storedMatch.matchNumber}`);
 		} catch (error) {
 			failCount++;
-			console.error(`❌ Failed to submit Match #${storedMatch.matchNumber}:`, error);
+			console.error(`[Match Submission] Failed to submit Match #${storedMatch.matchNumber}:`, error);
 			
 			// Check for authentication errors
-			if (error && typeof error === 'object' && 'response' in error) {
-				const response = (error as any).response;
-				if (response?.status === 401) {
-					showError('Authentication failed. Please log in again.');
-					setTimeout(() => {
-						window.location.href = '/';
-					}, 2000);
-					return;
-				}
+			if (isAxiosError(error) && error.response?.status === 401) {
+				showError('Authentication failed. Please log in again.');
+				setTimeout(() => {
+					window.location.href = '/';
+				}, 2000);
+				return;
 			}
 		}
 	}
@@ -354,7 +386,7 @@ export async function submitAllPendingMatches(userData: IUser): Promise<void> {
 	
 	if (failCount > 0) {
 		const remainingCount = getPendingMatches(userData).length;
-		showError(`Failed to submit ${failCount} match(es). ${remainingCount} match(es) remain in local storage and will be submitted later.`, 8000);
+		showError(`Failed to submit ${failCount} match(es). ${remainingCount} match(es) remain in local storage and will be submitted later.`);
 	}
 	
 	// Log final submission summary

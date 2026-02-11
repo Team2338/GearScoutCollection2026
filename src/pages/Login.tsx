@@ -1,12 +1,20 @@
-import React, { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import type { IUser } from '@/model/Models';
-import { getPendingMatches, submitAllPendingMatches } from '@/services/matchStorage';
+import { useUser } from '@/context/UserContext';
+import { usePendingMatches } from '@/hooks/usePendingMatches';
+import { PendingMatchesIndicator } from '@/components/PendingMatchesIndicator';
+import { STORAGE_KEYS, VALIDATION, API } from '@/constants';
+import { sanitizeInput, sanitizeEventCode } from '@/utils/sanitization';
+import { saveToLocalStorage } from '@/utils/localStorage';
+import { saveToSessionStorage } from '@/utils/sessionStorage';
+import gearscoutService from '@/services/gearscout-services';
 import '@/styles/login.scss';
 
-const Login: React.FC = () => {
+const Login = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { setUser } = useUser();
   const version = import.meta.env.VITE_APP_VERSION || '2026.0.1';
 
   const [teamNumber, setTeamNumber] = useState('');
@@ -15,8 +23,9 @@ const Login: React.FC = () => {
   const [secretCode, setSecretCode] = useState('');
   const [tbaCode, setTbaCode] = useState('');
   const [isValid, setIsValid] = useState(false);
-  const [pendingCount, setPendingCount] = useState(0);
-  const [isRetrying, setIsRetrying] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+  const { pendingCount, isRetrying, handleRetry } = usePendingMatches();
 
   useEffect(() => {
     // Handle URL parameters
@@ -27,31 +36,41 @@ const Login: React.FC = () => {
 
     if (initialTeamNumber || initialEventCode || initialSecretCode || initialTbaCode) {
       if (initialTeamNumber) {
-        localStorage.setItem('teamNumber', initialTeamNumber);
+        const teamNum = parseInt(initialTeamNumber, 10);
+        if (!isNaN(teamNum) && teamNum >= VALIDATION.MIN_TEAM_NUMBER && teamNum <= VALIDATION.MAX_TEAM_NUMBER) {
+          saveToLocalStorage(STORAGE_KEYS.TEAM_NUMBER, initialTeamNumber);
+        }
       }
-      if (initialEventCode) {
-        localStorage.setItem('eventCode', initialEventCode);
+      if (initialEventCode && initialEventCode.length <= VALIDATION.MAX_EVENT_CODE_LENGTH) {
+        saveToLocalStorage(STORAGE_KEYS.EVENT_CODE, initialEventCode);
       }
-      if (initialSecretCode) {
-        sessionStorage.setItem('secretCode', initialSecretCode);
+      if (initialSecretCode && initialSecretCode.length <= VALIDATION.MAX_SECRET_CODE_LENGTH) {
+        saveToSessionStorage(STORAGE_KEYS.SECRET_CODE, initialSecretCode);
       }
-      if (initialTbaCode) {
-        sessionStorage.setItem('tbaCode', initialTbaCode);
+      if (initialTbaCode && initialTbaCode.length <= VALIDATION.MAX_TBA_CODE_LENGTH) {
+        saveToSessionStorage(STORAGE_KEYS.TBA_CODE, initialTbaCode);
       }
       window.location.replace('/');
       return;
     }
 
-    // Load from storage
-    setTeamNumber(localStorage.getItem('teamNumber') || '');
-    setScouterName(localStorage.getItem('scouterName') || '');
-    setEventCode(localStorage.getItem('eventCode') || '');
-    setSecretCode(sessionStorage.getItem('secretCode') || '');
-    setTbaCode(sessionStorage.getItem('tbaCode') || '');
+    // Load only team number and scouter name from storage
+    // Note: eventCode is saved to localStorage for app functionality but is not auto-filled
+    // per user requirements to keep the login form clean and require explicit entry each time
+    setTeamNumber(localStorage.getItem(STORAGE_KEYS.TEAM_NUMBER) || '');
+    setScouterName(localStorage.getItem(STORAGE_KEYS.SCOUTER_NAME) || '');
+    // Don't auto-fill eventCode, secretCode, or tbaCode
+    // Keep isInitialLoad true until user interacts with form
   }, [searchParams]);
 
   useEffect(() => {
     // Validate form whenever required fields change
+    // Ensure button stays disabled during initial load
+    if (isInitialLoad) {
+      setIsValid(false);
+      return;
+    }
+    
     const valid = Boolean(
       teamNumber.trim() &&
       scouterName.trim() &&
@@ -59,121 +78,64 @@ const Login: React.FC = () => {
       secretCode.trim()
     );
     setIsValid(valid);
-  }, [teamNumber, scouterName, eventCode, secretCode]);
+  }, [teamNumber, scouterName, eventCode, secretCode, isInitialLoad]);
 
-  useEffect(() => {
-    // Update pending matches count periodically
-    const updatePendingCount = () => {
-      const userDataStr = sessionStorage.getItem('currentUser');
-      if (!userDataStr) {
-        return;
-      }
-
-      try {
-        const userData = JSON.parse(userDataStr) as IUser;
-        const pending = getPendingMatches(userData);
-        setPendingCount(pending.length);
-      } catch (error) {
-        if (error instanceof Error) {
-          console.warn('[Pending Matches] Error reading:', error.message);
-        }
-      }
-    };
-
-    updatePendingCount();
-
-    // Check periodically for updates
-    const interval = setInterval(updatePendingCount, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const handleRetryFailedMatches = async () => {
-    const userDataStr = sessionStorage.getItem('currentUser');
-    if (!userDataStr) {
-      return;
-    }
-
-    setIsRetrying(true);
-
-    try {
-      const userData = JSON.parse(userDataStr) as IUser;
-      await submitAllPendingMatches(userData);
-      
-      const pending = getPendingMatches(userData);
-      setPendingCount(pending.length);
-    } catch (error) {
-      console.error('Error retrying submission:', error);
-    } finally {
-      setIsRetrying(false);
-    }
-  };
-
-  const handleSubmit = async (event: FormEvent) => {
+  const handleSubmit = useCallback(async (event: React.FormEvent) => {
     event.preventDefault();
 
     if (!isValid) {
       return;
     }
 
+    // Sanitize inputs before saving
+    const sanitizedTeamNumber = sanitizeInput(teamNumber);
+    const sanitizedScouterName = sanitizeInput(scouterName);
+    const sanitizedEventCode = sanitizeEventCode(eventCode);
+    const sanitizedSecretCode = sanitizeInput(secretCode);
+    const sanitizedTbaCode = sanitizeInput(tbaCode);
+
     // Save form data to storage
-    localStorage.setItem('teamNumber', teamNumber.trim());
-    localStorage.setItem('scouterName', scouterName.trim());
-    localStorage.setItem('eventCode', eventCode.trim());
-    sessionStorage.setItem('secretCode', secretCode.trim());
-    sessionStorage.setItem('tbaCode', tbaCode.trim());
+    saveToLocalStorage(STORAGE_KEYS.TEAM_NUMBER, sanitizedTeamNumber);
+    saveToLocalStorage(STORAGE_KEYS.SCOUTER_NAME, sanitizedScouterName);
+    saveToLocalStorage(STORAGE_KEYS.EVENT_CODE, sanitizedEventCode);
+    saveToSessionStorage(STORAGE_KEYS.SECRET_CODE, sanitizedSecretCode);
+    saveToSessionStorage(STORAGE_KEYS.TBA_CODE, sanitizedTbaCode);
 
     // Create user object
     const user: IUser = {
-      teamNumber: teamNumber.trim(),
-      scouterName: scouterName.trim(),
-      eventCode: eventCode.trim(),
-      secretCode: secretCode.trim()
+      teamNumber: sanitizedTeamNumber,
+      scouterName: sanitizedScouterName,
+      eventCode: sanitizedEventCode,
+      secretCode: sanitizedSecretCode
     };
 
-    sessionStorage.setItem('currentUser', JSON.stringify(user));
+    saveToSessionStorage(STORAGE_KEYS.CURRENT_USER, user);
+    
+    // Update user context to mark as authenticated
+    setUser(user);
 
     // Fetch schedule if TBA code is provided
-    if (tbaCode.trim().length > 0) {
+    if (sanitizedTbaCode.length > 0) {
       try {
-        const currentYear = new Date().getFullYear();
-        const response = await fetch(
-          `/api/schedule?year=${currentYear}&tbaCode=${encodeURIComponent(tbaCode.trim())}`
-        );
-
-        if (!response.ok) {
-          console.error(
-            'Failed to get schedule: HTTP status',
-            response.status,
-            response.statusText
-          );
-        } else {
-          const schedule = await response.json();
-          sessionStorage.setItem('schedule', JSON.stringify(schedule));
-        }
+        const response = await gearscoutService.getEventSchedule(API.CURRENT_GAME_YEAR, sanitizedTbaCode);
+        saveToSessionStorage(STORAGE_KEYS.SCHEDULE, response.data);
       } catch (error) {
-        console.error('Failed to get schedule', error);
+        if (error instanceof Error) {
+          console.error('[Login] Failed to get schedule:', error.message);
+        }
       }
     }
 
     navigate('/data-collection');
-  };
+  }, [isValid, teamNumber, scouterName, eventCode, secretCode, tbaCode, navigate, setUser]);
 
   return (
     <main className="page login-page">
-      {pendingCount > 0 && (
-        <div className="pending-matches-indicator">
-          <span className="pending-matches-count">{pendingCount}</span> pending
-          <button 
-            type="button" 
-            className="retry-submit-button" 
-            onClick={handleRetryFailedMatches}
-            disabled={isRetrying}
-            style={{ opacity: isRetrying ? 0.5 : 1 }}
-          >
-            ↻
-          </button>
-        </div>
-      )}
+      <PendingMatchesIndicator
+        pendingCount={pendingCount}
+        isRetrying={isRetrying}
+        onRetry={handleRetry}
+      />
       <div className="title">
         <div className="app-name">GearScout</div>
         <div className="version">v{version}</div>
@@ -186,14 +148,17 @@ const Login: React.FC = () => {
             id="team-number-input"
             name="teamNumber"
             type="number"
-            min="0"
-            max="99999"
+            min={VALIDATION.MIN_TEAM_NUMBER}
+            max={VALIDATION.MAX_TEAM_NUMBER}
             autoComplete="off"
             required
             value={teamNumber}
-            onChange={(e) => setTeamNumber(e.target.value)}
+            onChange={(e) => { setIsInitialLoad(false); setTeamNumber(e.target.value); }}
+            aria-label="Team number"
+            aria-required="true"
+            aria-invalid={!teamNumber && isValid === false ? "true" : "false"}
           />
-          <span className="input-prefix">#</span>
+          <span className="input-prefix" aria-hidden="true">#</span>
           <label htmlFor="team-number-input">Team number</label>
         </div>
 
@@ -202,11 +167,13 @@ const Login: React.FC = () => {
             id="scouter-name-input"
             name="scouterName"
             type="text"
-            maxLength={32}
+            maxLength={VALIDATION.MAX_SCOUTER_NAME_LENGTH}
             autoComplete="off"
             required
             value={scouterName}
-            onChange={(e) => setScouterName(e.target.value)}
+            onChange={(e) => { setIsInitialLoad(false); setScouterName(e.target.value); }}
+            aria-label="Your name or identifier for scouting"
+            aria-required="true"
           />
           <label htmlFor="scouter-name-input">Scouter name</label>
         </div>
@@ -216,11 +183,13 @@ const Login: React.FC = () => {
             id="event-code-input"
             name="eventCode"
             type="text"
-            maxLength={32}
+            maxLength={VALIDATION.MAX_EVENT_CODE_LENGTH}
             autoComplete="off"
             required
             value={eventCode}
-            onChange={(e) => setEventCode(e.target.value)}
+            onChange={(e) => { setIsInitialLoad(false); setEventCode(e.target.value); }}
+            aria-label="FRC event code (e.g., 2026arc)"
+            aria-required="true"
           />
           <label htmlFor="event-code-input">Event code</label>
         </div>
@@ -230,11 +199,13 @@ const Login: React.FC = () => {
             id="secret-code-input"
             name="secretCode"
             type="text"
-            maxLength={32}
+            maxLength={VALIDATION.MAX_SECRET_CODE_LENGTH}
             autoComplete="off"
             required
             value={secretCode}
-            onChange={(e) => setSecretCode(e.target.value)}
+            onChange={(e) => { setIsInitialLoad(false); setSecretCode(e.target.value); }}
+            aria-label="Authentication secret code from team lead"
+            aria-required="true"
           />
           <label htmlFor="secret-code-input">Secret code</label>
         </div>
@@ -244,16 +215,23 @@ const Login: React.FC = () => {
             id="tba-code-input"
             name="tbaCode"
             type="text"
-            maxLength={6}
+            maxLength={VALIDATION.MAX_TBA_CODE_LENGTH}
             autoComplete="off"
             value={tbaCode}
-            onChange={(e) => setTbaCode(e.target.value)}
+            onChange={(e) => { setIsInitialLoad(false); setTbaCode(e.target.value); }}
+            aria-label="The Blue Alliance API key (optional)"
+            aria-describedby="tba-helper-text"
           />
           <label htmlFor="tba-code-input">TBA code (optional)</label>
-          <div className="helper-text">The Blue Alliance event ID</div>
+          <div id="tba-helper-text" className="helper-text">The Blue Alliance event ID</div>
         </div>
 
-        <button id="login-submit-button" type="submit" disabled={!isValid}>
+        <button 
+          id="login-submit-button" 
+          type="submit" 
+          disabled={!isValid}
+          aria-label={isValid ? "Submit and proceed to data collection" : "Complete all required fields to submit"}
+        >
           Submit
         </button>
       </form>

@@ -13,6 +13,26 @@ export interface IUser {
 	eventCode: string;
 }
 
+/**
+ * Type guard to validate IUser objects
+ * @param data - Data to validate
+ * @returns True if data is a valid IUser
+ */
+export function isValidUser(data: unknown): data is IUser {
+	return (
+		typeof data === 'object' &&
+		data !== null &&
+		'teamNumber' in data &&
+		'scouterName' in data &&
+		'secretCode' in data &&
+		'eventCode' in data &&
+		typeof (data as IUser).teamNumber === 'string' &&
+		typeof (data as IUser).scouterName === 'string' &&
+		typeof (data as IUser).secretCode === 'string' &&
+		typeof (data as IUser).eventCode === 'string'
+	);
+}
+
 // ============================================================================
 // Match Data
 // ============================================================================
