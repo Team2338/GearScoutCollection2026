@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>I Don't Like Cats</title>
+
+    <style>
+      body {
+        background-color: #010320;
+        font-family: Arial, sans-serif;
+      }
+      .ElijahIsABigWhiteBoy {
+        width: 500px;
+        height: 60px;
+        font-size: 36px;
+        color: black;
+        background-color: rgb(185, 79, 7);
+        transition: 0.3s;
+        margin-right: 50px;
+      }
+      .ElijahIsABigWhiteBoy:hover {
+        background-color: rgb(150, 55, 3);
+        transform: scale(1.01);
+      }
+      .SubmitButton {
+        width: 200px;
+        height: 50px;
+        font-size: 24px;
+        transform : translateY(200 px);
+        color: rgb(0, 0, 0);
+        background-color: rgb(185, 79, 7);
+        transition: 0.3s;
+      }
+      .SubmitButton:hover {
+          background-color: rgb(150, 55, 3);
+          color: white;
+        }
+      #root {
+        color: white;
+        font-size: 32px;
+        margin-top: 20px;
+      }
+      
+    </style>
+  </head>
+
+  <body>
+    <form> 
+        <div class="form-example"></div>
+        <input type="submit" value="Submit" class="SubmitButton">
+        
+    </form>
+
+    
+    <button id="counterBtn" class="ElijahIsABigWhiteBoy">
+Up   
+ </button>
+    <button id="subtractBtn" class="ElijahIsABigWhiteBoy">
+Down
+</button>
+
+    <div id="root">Counter: 0</div>
+
+    <script>
+  let count = 0;
+
+  const addBtn = document.getElementById("counterBtn");
+  const subtractBtn = document.getElementById("subtractBtn");
+  const root = document.getElementById("root");
+
+  addBtn.addEventListener("click", () => {
+    count++;
+    root.textContent = "Counter: " + count;
+  });
+
+  subtractBtn.addEventListener("click", () => {
+    count--;
+    root.textContent = "Counter: " + count;
+    const submitBtn = document.getElementById("submitBtn");
+
+    submitBtn.addEventListener("click", () => {
+        var xhr = new XMLHttpRequest();
+        var requestUrl = "https://api.restful-api.dev/objects";
+
+        xhr.open("POST", requestUrl, true);
+        xhr.setRequestHeader("Content-Type", "application/json");
+
+        xhr.onload = function () {
+            const response = JSON.parse(xhr.responseText);
+            console.log("Created ID:", response.id);
+        };
+
+        const body = {
+            name: "Counter Value",
+            data: { example: "value" }
+        };
+
+        xhr.send(JSON.stringify(body));
+    });
+
+  });
+
+  // form submit event listener
+  // prevent the default behavior
+  // log to the api
+  // reset the form
+</script>
+  </body>
+</html>
