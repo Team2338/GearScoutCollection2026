@@ -55,21 +55,34 @@ function updateTeamNumberUI(): void {
 	}
 
 	// Valid match number with schedule - show dropdown
-	populateTeamDropdown(matchIndex);
+	const restoredTeamNumber = populateTeamDropdown(matchIndex);
 	dropdownContainer.style.display = 'block';
 	manualContainer.style.display = 'none';
 	allianceSection.style.display = 'none';
+	
+	// If team was restored, set the alliance
+	if (restoredTeamNumber) {
+		const dropdown = document.getElementById('team-number-dropdown') as HTMLSelectElement;
+		const selectedOption = dropdown?.options[dropdown?.selectedIndex];
+		if (selectedOption?.dataset.alliance) {
+			const allianceValue = selectedOption.dataset.alliance;
+			// Update selectedAlliance variable if it exists in scope
+			// This will be handled by the initialization code
+			saveToLocalStorage('allianceColor', allianceValue);
+		}
+	}
 }
 
 /**
  * Populate team number dropdown from schedule
+ * @returns The saved team number if restored, null otherwise
  */
-function populateTeamDropdown(matchIndex: number): void {
+function populateTeamDropdown(matchIndex: number): string | null {
 	const schedule = getSchedule();
-	if (!schedule) return;
+	if (!schedule) return null;
 
 	const dropdown = document.getElementById('team-number-dropdown') as HTMLSelectElement;
-	if (!dropdown) return;
+	if (!dropdown) return null;
 
 	const lineup = schedule[matchIndex];
 	const redRobots = [lineup.red1, lineup.red2, lineup.red3].map(String);
@@ -116,7 +129,10 @@ function populateTeamDropdown(matchIndex: number): void {
 	const savedTeamNumber = getFromLocalStorage('scoutedTeamNumber');
 	if (savedTeamNumber && (redRobots.includes(savedTeamNumber) || blueRobots.includes(savedTeamNumber))) {
 		dropdown.value = savedTeamNumber;
+		// Also restore the alliance based on the selected option
+		return savedTeamNumber;
 	}
+	return null;
 }
 
 /**
@@ -226,6 +242,13 @@ export function initializeDataCollection(): void {
 		clearValidationError('match-number');
 		clearValidationError('team-number');
 		clearValidationError('team-number-dropdown');
+		
+		// Clear alliance error
+		const allianceSection = document.getElementById('alliance-section');
+		if (allianceSection) {
+			allianceSection.querySelector('.field-error')?.remove();
+			allianceSection.classList.remove('has-error');
+		}
 
 		const hasMatchNumber = matchNumberInput && matchNumberInput.value.trim() !== '';
 		if (!hasMatchNumber) {
@@ -249,10 +272,20 @@ export function initializeDataCollection(): void {
 			isValid = false;
 		}
 
-		// Alliance selection is ALWAYS required
+		// Alliance selection is required in manual mode
+		// In dropdown mode (with schedule), alliance is auto-set from the selected team
 		const hasAlliance = selectedAlliance !== '';
-		if (!hasAlliance) {
-			// Don't show error toast during real-time validation, only disable submit button
+		
+		// Only validate alliance if NOT in dropdown mode
+		if (!hasAlliance && !isDropdownMode) {
+			if (showErrors && allianceSection) {
+				// Show error for alliance selection
+				const errorSpan = document.createElement('span');
+				errorSpan.className = 'field-error';
+				errorSpan.textContent = 'Alliance color is required';
+				allianceSection.appendChild(errorSpan);
+				allianceSection.classList.add('has-error');
+			}
 			isValid = false;
 		}
 
@@ -759,7 +792,7 @@ export function initializeDataCollection(): void {
 			
 			if (submitButton) {
 				submitButton.disabled = true;
-				submitButton.textContent = 'Saving...';
+				submitButton.textContent = 'Submitting...';
 			}
 			
 			try {
