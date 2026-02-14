@@ -12,7 +12,7 @@ function isLocalHost(): boolean {
 	);
 }
 
-export const register = async (config?: IConfig) => {
+export const register = async (config: IConfig) => {
 	window.addEventListener('load', async () => {
 		if ('serviceWorker' in navigator) {
 			if (isLocalHost() || import.meta.env.MODE !== 'production') {
@@ -26,10 +26,8 @@ export const register = async (config?: IConfig) => {
 						type: 'module'
 					});
 
-				if (config) {
-					listenForUpdatedWorkerDownload(registration, config);
-					listenForWorkerActivation(config);
-				}
+				listenForUpdatedWorkerDownload(registration, config);
+				listenForWorkerActivation(config);
 			} catch (error) {
 				console.error('Service worker registration error', error);
 			}

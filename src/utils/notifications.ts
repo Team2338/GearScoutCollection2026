@@ -15,7 +15,7 @@ export type NotificationType = 'error' | 'success';
 export function showNotification(
 	message: string,
 	type: NotificationType,
-	duration = TIMING.NOTIFICATION_DURATION_DEFAULT
+	duration: number = TIMING.NOTIFICATION_DURATION_DEFAULT
 ): void {
 	const id = `${type}-notification`;
 	const existing = document.getElementById(id);

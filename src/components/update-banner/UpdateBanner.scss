@@ -1,0 +1,21 @@
+.update-available-banner {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	background-color: khaki;
+	gap: 4px;
+	width: 100%;
+	color: #000;
+}
+
+.update-button {
+	background-color: transparent;
+	border: 0;
+	color: #1976D2;
+	text-decoration: underline;
+	font-size: inherit;
+	font-weight: 600;
+	padding: 8px;
+	cursor: pointer;
+}

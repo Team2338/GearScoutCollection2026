@@ -3,7 +3,9 @@ import { UserProvider, useUser } from '@/context/UserContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import Login from '@/pages/Login';
 import DataCollection from '@/pages/DataCollection';
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
+import { register as registerServiceWorker } from '@/ServiceWorkerRegistration.ts';
+import UpdateBanner from '@/components/update-banner/UpdateBanner.tsx';
 
 /**
  * Protected route wrapper that requires authentication
@@ -35,8 +37,24 @@ const AppRoutes = () => {
 };
 
 const App = () => {
+  const [hasAppUpdate, setHasAppUpdate] = useState<boolean>(false);
+  const [serviceWorker, setServiceWorker] = useState<ServiceWorker | null>(null);
+
+  useEffect(() => {
+    registerServiceWorker({
+      onUpdate: (sw: ServiceWorker) => {
+        setHasAppUpdate(true);
+        setServiceWorker(sw);
+      },
+      onSuccess: () => {
+        window.location.reload();
+      }
+    });
+  }, []);
+
   return (
     <ErrorBoundary>
+      <UpdateBanner hasUpdate={ hasAppUpdate } serviceWorker={ serviceWorker } />
       <UserProvider>
         <Router
           future={{
