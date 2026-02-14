@@ -29,7 +29,7 @@ const DataCollection = () => {
         />
         <div className="header-main">
           <div className="logo">
-            <img src="/logo.png" alt="2338 logo" height={100} width={100} loading="eager" />
+            <img src="/logos/192-pwa.png" alt="2338 logo" height={100} width={100} loading="eager" />
           </div>
           <div className="analytics">
             <a href="https://data.gearitforward.com/" className="analytics-button">ANALYTICS</a>
