@@ -456,12 +456,14 @@ html {
 			margin-bottom: 20px;
 		}
 		
-		.previous-cycle-section {
+		.previous-cycle-section,
+		.previous-auto-cycle-section {
 			display: flex;
 			flex-direction: column;
 			align-items: center;
 			width: 100%;
 			width: 270px;
+			margin-top: 30px;
 			
 			.sub-label {
 				text-align: center;
@@ -492,10 +494,14 @@ html {
 			gap: 16px;
 			margin-bottom: 20px;
 
+			@media (max-width: 768px) {
+				gap: 12px;
+			}
+
 			.toggle-button,
 			.toggle-button-teleop {
 				border-radius: 4px;
-				height: 40px;
+				height: 44px;
 				min-width: 140px;
 				padding: 0 0px;
 				color: $grey;
@@ -506,6 +512,10 @@ html {
 				letter-spacing: 0.5px;
 				cursor: pointer;
 				transition: all 0.2s;
+
+				@media (max-width: 768px) {
+					font-size: 14px;
+				}
 
 				&:hover {
 					border-color: $offwhite;
@@ -521,6 +531,24 @@ html {
 			}
 		}
 
+		.climb-button-group {
+			display: flex;
+			flex-wrap: wrap;
+			justify-content: center;
+			gap: 12px;
+			max-width: 300px;
+			margin: 0 auto 20px;
+
+			@media (max-width: 768px) {
+				gap: 10px;
+			}
+
+			.toggle-button-teleop {
+				min-width: 65px;
+				flex: 1;
+			}
+		}
+
 		.accuracy-button-group {
 			display: flex;
 			flex-wrap: wrap;
@@ -528,6 +556,10 @@ html {
 			gap: 16px;
 			margin-bottom: 20px;
 			max-width: 272px;
+
+			@media (max-width: 768px) {
+				gap: 14px;
+			}
 
 			.accuracy-button,
 			.accuracy-button-teleop {
@@ -579,6 +611,31 @@ html {
 					border-color: $grey;
 				}
 			}
+
+			.accuracy-button-previous-auto {
+				border-radius: 50%;
+				width: 80px;
+				height: 80px;
+				padding: 0;
+				color: $grey;
+				border: 3px solid $grey;
+				background-color: transparent;
+				font-size: 18px;
+				font-weight: 600;
+				cursor: pointer;
+				transition: all 0.2s;
+
+				&:hover {
+					background-color: rgba($grey, 0.1);
+					transform: scale(1.05);
+				}
+
+				&.selected {
+					color: #fff;
+					background-color: $grey;
+					border-color: $grey;
+				}
+			}
 		}
 
 		.alliance-section {
@@ -594,9 +651,13 @@ html {
 				justify-content: center;
 				gap: 16px;
 
+				@media (max-width: 768px) {
+					gap: 12px;
+				}
+
 				.alliance-toggle {
 					border-radius: 4px;
-					height: 40px;
+					height: 44px;
 					min-width: 140px;
 					padding: 0 0px;
 					color: $grey;
@@ -607,6 +668,10 @@ html {
 					letter-spacing: 0.5px;
 					cursor: pointer;
 					transition: all 0.2s;
+
+					@media (max-width: 768px) {
+						font-size: 14px;
+					}
 
 					&:hover {
 						border-color: $offwhite;
@@ -651,14 +716,15 @@ html {
 			gap: 16px;
 
 			@media (max-width: 768px) {
-				gap: 8px;
+				gap: 12px;
 				max-width: 340px;
 			}
 
 			.trench-button {
 				border-radius: 4px;
-				height: 40px;
-				min-width: 140px;
+				height: 44px;
+				width: 140px;
+				flex-shrink: 0;
 				padding: 0 0px;
 				color: #fff;
 				border: 1px solid transparent;
@@ -669,8 +735,8 @@ html {
 				transition: all 0.2s;
 
 				@media (max-width: 768px) {
-					min-width: 110px;
-					font-size: 13px;
+					width: 110px;
+					font-size: 14px;
 				}
 
 				&.left-trench,
@@ -694,12 +760,13 @@ html {
 				color: white;
 				font-size: 18px;
 				font-weight: 500;
-				min-width: 30px;
+				width: 30px;
+				flex-shrink: 0;
 				text-align: center;
 
 				@media (max-width: 768px) {
-					min-width: 24px;
-					font-size: 16px;
+					width: 24px;
+					font-size: 17px;
 				}
 			}
 		}
@@ -710,15 +777,15 @@ html {
 			gap: 108px;
 
 			@media (max-width: 768px) {
-				gap: 72px;
+				gap: 84px;
 				max-width: 340px;
 			}
 
 			.trench-decrement {
 				border-radius: 4px;
-				height: 40px;
+				height: 44px;
 				width: 140px;
-				min-width: 140px;
+				flex-shrink: 0;
 				padding: 0;
 				color: $grey;
 				border: 2px solid rgba($grey, 0.5);
@@ -735,7 +802,6 @@ html {
 
 				@media (max-width: 768px) {
 					width: 110px;
-					min-width: 110px;
 				}
 
 				&:hover {
@@ -745,7 +811,8 @@ html {
 			}
 		}
 
-		.previous-cycle-section {
+		.previous-cycle-section,
+		.previous-auto-cycle-section {
 			display: flex;
 			flex-direction: column;
 			align-items: center;
@@ -758,6 +825,10 @@ html {
 					font-size: 14px;
 					font-weight: 500;
 					letter-spacing: 0.5px;
+
+					@media (max-width: 768px) {
+						font-size: 15px;
+					}
 				}
 		.objective-label {
 			text-align: center;
@@ -785,6 +856,12 @@ html {
 				cursor: pointer;
 				transition: all 0.2s;
 
+				@media (max-width: 768px) {
+					width: 220px;
+					height: 52px;
+					font-size: 17px;
+				}
+
 				&:hover {
 					background-color: $offorange;
 					border-color: $offorange;
@@ -801,6 +878,10 @@ html {
 				font-size: 14px;
 				font-weight: 500;
 				letter-spacing: 0.5px;
+
+				@media (max-width: 768px) {
+					font-size: 15px;
+				}
 			}
 		}
 
@@ -808,6 +889,10 @@ html {
 			display: flex;
 			column-gap: 12px;
 			margin-top: 40px;
+
+			@media (max-width: 768px) {
+				column-gap: 16px;
+			}
 
 			button {
 				width: 4.5em;
@@ -817,6 +902,12 @@ html {
 				box-sizing: border-box;
 				cursor: pointer;
 				transition: all 0.2s;
+
+				@media (max-width: 768px) {
+					width: 5em;
+					height: 2.5em;
+					font-size: 1.05rem;
+				}
 			}
 
 			.back-button {

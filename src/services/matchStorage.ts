@@ -60,6 +60,7 @@ export interface MatchDataToSave {
 	estimateSizeAuto: string;
 	leaveValueTeleop: string;
 	accuracyValueTeleop: number;
+	autoCycles: Array<{ accuracy: number; estimateSize: string }>;
 	cycles: Array<{ accuracy: number; estimateSize: string }>;
 }
 
@@ -203,33 +204,54 @@ function clearSubmittedMatches(userData: IUser): void {
 function convertStoredMatchToAPIFormat(userData: IUser, storedMatch: IStoredMatch): IMatch {
 	const objectives: IObjective[] = [];
 	
-	// ALLIANCE
-	objectives.push({
-		gamemode: Gamemode.alliance,
-		objective: `${storedMatch.allianceColor}`,
-		count: 0
-	});
-	
 	// AUTO objectives
 	objectives.push(
-		{ gamemode: Gamemode.auto, objective: 'red-trench', count: storedMatch.leftCounter },
-		{ gamemode: Gamemode.auto, objective: 'blue-trench', count: storedMatch.rightCounter },
-		{ gamemode: Gamemode.auto, objective: 'red-bump', count: storedMatch.leftBumpCounter },
-		{ gamemode: Gamemode.auto, objective: 'blue-bump', count: storedMatch.rightBumpCounter },
-		{ gamemode: Gamemode.auto, objective: `climb-${storedMatch.leaveValue}`, count: 1 },
-		{ gamemode: Gamemode.auto, objective: 'accuracy', count: storedMatch.accuracyValue }
+		{ gamemode: Gamemode.AUTO, objective: 'RED_TRENCH_2026', count: storedMatch.leftCounter },
+		{ gamemode: Gamemode.AUTO, objective: 'BLUE_TRENCH_2026', count: storedMatch.rightCounter },
+		{ gamemode: Gamemode.AUTO, objective: 'RED_BUMP_2026', count: storedMatch.leftBumpCounter },
+		{ gamemode: Gamemode.AUTO, objective: 'BLUE_BUMP_2026', count: storedMatch.rightBumpCounter }
 	);
+
+	// Auto climb - convert to point values (only send if they climbed)
+	if (storedMatch.leaveValue === 'yes') {
+		objectives.push({ gamemode: Gamemode.AUTO, objective: 'CLIMB_2026', count: 15 });
+	}
+
+	// Auto accuracy - include cycles
+	let totalAutoAccuracy = 0;
+	let autoAccuracyCount = 0;
+
+	if (storedMatch.autoCycles && storedMatch.autoCycles.length > 0) {
+		totalAutoAccuracy = storedMatch.autoCycles.reduce((sum, cycle) => sum + cycle.accuracy, 0);
+		autoAccuracyCount = storedMatch.autoCycles.filter(cycle => cycle.accuracy > 0).length;
+	}
+	
+	if (storedMatch.accuracyValue) {
+		totalAutoAccuracy += storedMatch.accuracyValue;
+		autoAccuracyCount++;
+	}
+
+	const avgAutoAccuracy = autoAccuracyCount > 0 ? Math.round(totalAutoAccuracy / autoAccuracyCount) : 0;
+	objectives.push({ gamemode: Gamemode.AUTO, objective: 'ACCURACY', count: avgAutoAccuracy });
 
 	// Auto estimate size
 	const autoEstimateSizeCounts: Record<string, number> = { '1-10': 0, '11-25': 0, '26+': 0 };
+	if (storedMatch.autoCycles) {
+		storedMatch.autoCycles.forEach(cycle => {
+			if (cycle.estimateSize) {
+				autoEstimateSizeCounts[cycle.estimateSize] = (autoEstimateSizeCounts[cycle.estimateSize] || 0) + 1;
+			}
+		});
+	}
 	if (storedMatch.estimateSizeAuto) {
-		autoEstimateSizeCounts[storedMatch.estimateSizeAuto] = 1;
+		autoEstimateSizeCounts[storedMatch.estimateSizeAuto] = (autoEstimateSizeCounts[storedMatch.estimateSizeAuto] || 0) + 1;
 	}
 	
 	Object.entries(autoEstimateSizeCounts).forEach(([size, count]) => {
+		const sizeKey = size === '1-10' ? 'SMALL_CYCLE_2026' : size === '11-25' ? 'MEDIUM_CYCLE_2026' : 'LARGE_CYCLE_2026';
 		objectives.push({
-			gamemode: Gamemode.auto,
-			objective: `estimate-size-${size}`,
+			gamemode: Gamemode.AUTO,
+			objective: sizeKey,
 			count
 		});
 	});
@@ -250,10 +272,16 @@ function convertStoredMatchToAPIFormat(userData: IUser, storedMatch: IStoredMatc
 
 	const avgAccuracy = accuracyCount > 0 ? Math.round(totalAccuracy / accuracyCount) : 0;
 	
-	objectives.push(
-		{ gamemode: Gamemode.teleop, objective: `climb-${storedMatch.leaveValueTeleop}`, count: 1 },
-		{ gamemode: Gamemode.teleop, objective: 'accuracy', count: avgAccuracy }
-	);
+	// Teleop climb - convert to point values (only send if they climbed)
+	if (storedMatch.leaveValueTeleop === 'l1') {
+		objectives.push({ gamemode: Gamemode.TELEOP, objective: 'CLIMB_L1_2026', count: 10 });
+	} else if (storedMatch.leaveValueTeleop === 'l2') {
+		objectives.push({ gamemode: Gamemode.TELEOP, objective: 'CLIMB_L2_2026', count: 20 });
+	} else if (storedMatch.leaveValueTeleop === 'l3') {
+		objectives.push({ gamemode: Gamemode.TELEOP, objective: 'CLIMB_L3_2026', count: 30 });
+	}
+	
+	objectives.push({ gamemode: Gamemode.TELEOP, objective: 'ACCURACY', count: avgAccuracy });
 
 	// Teleop estimate size
 	const estimateSizeCounts: Record<string, number> = { '1-10': 0, '11-25': 0, '26+': 0 };
@@ -264,9 +292,10 @@ function convertStoredMatchToAPIFormat(userData: IUser, storedMatch: IStoredMatc
 	});
 	
 	Object.entries(estimateSizeCounts).forEach(([size, count]) => {
+		const sizeKey = size === '1-10' ? 'SMALL_CYCLE_2026' : size === '11-25' ? 'MEDIUM_CYCLE_2026' : 'LARGE_CYCLE_2026';
 		objectives.push({
-			gamemode: Gamemode.teleop,
-			objective: `estimate-size-${size}`,
+			gamemode: Gamemode.TELEOP,
+			objective: sizeKey,
 			count
 		});
 	});

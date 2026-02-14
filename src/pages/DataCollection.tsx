@@ -155,7 +155,35 @@ const DataCollection = () => {
               </div>
             </div>
 
-            <h3 className="objective-label" id="auto-accuracy-label">Accuracy</h3>
+            <div id="previous-auto-cycle-section" className="previous-cycle-section" style={{ display: 'none', backgroundColor: '#001b2f', borderRadius: '8px'}}>
+              <h3 className="objective-label">Previous Auto Cycle</h3>
+                <div className="cycle-count" id="previous-auto-cycle-count">Auto Cycle: 0</div>
+              
+              <h4 className="sub-label">Accuracy</h4>
+              <div className="accuracy-button-group">
+                <button type="button" className="accuracy-button-previous-auto" data-value="0">0%</button>
+                <button type="button" className="accuracy-button-previous-auto" data-value="25">25%</button>
+                <button type="button" className="accuracy-button-previous-auto" data-value="50">50%</button>
+                <button type="button" className="accuracy-button-previous-auto" data-value="75">75%</button>
+                <button type="button" className="accuracy-button-previous-auto" data-value="95">95%</button>
+                <button type="button" className="accuracy-button-previous-auto" data-value="100">100%</button>
+              </div>
+              
+              <h4 className="sub-label estimate-size-label">Estimated Size</h4>
+              <div className="form-field estimate-size-field">
+                <select id="estimate-size-previous-auto" name="estimateSizePreviousAuto">
+                  <option value="">Select Range</option>
+                  <option value="1-10">1-10</option>
+                  <option value="11-25">11-25</option>
+                  <option value="26+">26+</option>
+                </select>
+                <label htmlFor="estimate-size-previous-auto" style={{ backgroundColor: '#001b2f'}}>Estimate Size</label>
+              </div>
+            </div>
+
+            <h3 className="objective-label" id="auto-current-cycle-label">Current Auto Cycle</h3>
+
+            <h4 className="sub-label">Accuracy</h4>
             <div className="accuracy-button-group" role="group" aria-labelledby="auto-accuracy-label">
               <button type="button" className="accuracy-button" data-value="0" aria-label="0 percent accuracy">0%</button>
               <button type="button" className="accuracy-button" data-value="25" aria-label="25 percent accuracy">25%</button>
@@ -165,7 +193,7 @@ const DataCollection = () => {
               <button type="button" className="accuracy-button" data-value="100" aria-label="100 percent accuracy">100%</button>
             </div>
 
-            <h3 className="objective-label">Estimated Size</h3>
+            <h4 className="sub-label estimate-size-label">Estimated Size</h4>
             <div className="form-field estimate-size-field">
               <select id="estimate-size-auto" name="estimateSizeAuto">
                 <option value="">Select Range</option>
@@ -174,6 +202,13 @@ const DataCollection = () => {
                 <option value="26+">26+</option>
               </select>
               <label htmlFor="estimate-size-auto">Estimate Size</label>
+            </div>
+
+            <div className="cycle-button-area">
+              <button type="button" className="cycle-button" id="auto-cycle-button">
+                CYCLE
+              </button>
+              <div className="cycle-count" id="auto-cycle-count">Auto Cycles: 0</div>
             </div>
 
             <h3 className="objective-label" id="auto-climb-label">Climb</h3>
@@ -228,7 +263,7 @@ const DataCollection = () => {
               </div>
             </div>
 
-            <h3 className="objective-label" id="current-cycle-label">Current Cycle</h3>
+            <h3 className="objective-label" id="current-cycle-label">Current Teleop Cycle</h3>
             
             <h4 className="sub-label">Accuracy</h4>
             <div className="accuracy-button-group">
@@ -257,12 +292,18 @@ const DataCollection = () => {
               <div className="cycle-count" id="cycle-count">Cycles: 0</div>
             </div>
             <h3 className="objective-label">Climb</h3>
-            <div className="toggle-button-group">
-              <button type="button" className="toggle-button-teleop selected" data-value="no">
-                No
+            <div className="toggle-button-group climb-button-group">
+              <button type="button" className="toggle-button-teleop selected" data-value="none">
+                None
               </button>
-              <button type="button" className="toggle-button-teleop" data-value="yes">
-                Yes
+              <button type="button" className="toggle-button-teleop" data-value="l1">
+                L1
+              </button>
+              <button type="button" className="toggle-button-teleop" data-value="l2">
+                L2
+              </button>
+              <button type="button" className="toggle-button-teleop" data-value="l3">
+                L3
               </button>
             </div>
 

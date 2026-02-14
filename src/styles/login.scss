@@ -201,6 +201,12 @@ body {
         line-height: 15px;
         outline: none;
         transition: border-color 0.2s ease;
+        min-height: 51px;
+
+        @media (max-width: 768px) {
+            min-height: 53px;
+            font-size: 16px;
+        }
 
         &:hover:not(:focus) {
             border-color: #fe7755;
@@ -263,6 +269,7 @@ body {
     margin-top: 8px;
     padding: 10px 18px;
     width: 100%;
+    min-height: 44px;
     background-color: $orange;
     color: $offwhite;
     border: none;
@@ -272,6 +279,12 @@ body {
     cursor: pointer;
     transition: background-color 0.2s;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+
+    @media (max-width: 768px) {
+        min-height: 48px;
+        font-size: 15px;
+        padding: 12px 18px;
+    }
 
     &:hover:not(:disabled) {
         background-color: #e04800;

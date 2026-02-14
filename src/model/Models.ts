@@ -68,15 +68,14 @@ export interface IMatchLineup {
 // ============================================================================
 
 export enum AllianceColor {
-	red = 'red',
-	blue = 'blue',
-	unknown = 'unknown'
+	RED = 'RED',
+	BLUE = 'BLUE',
+	UNKNOWN = 'UNKNOWN'
 }
 
 export enum Gamemode {
-	alliance = 'alliance',
-	auto = 'auto',
-	teleop = 'teleop'
+	AUTO = 'AUTO',
+	TELEOP = 'TELEOP'
 }
 
 // ============================================================================
@@ -109,6 +108,10 @@ export interface IStoredMatch {
 	estimateSizeAuto: string;
 	leaveValueTeleop: string;
 	accuracyValueTeleop: number;
+	autoCycles: Array<{
+		accuracy: number;
+		estimateSize: string;
+	}>;
 	cycles: Array<{
 		accuracy: number;
 		estimateSize: string;

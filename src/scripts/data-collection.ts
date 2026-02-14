@@ -155,10 +155,15 @@ export function initializeDataCollection(): void {
 	const estimateSizeAuto = document.getElementById('estimate-size-auto') as HTMLSelectElement;
 	const estimateSizeSelect = document.getElementById('estimate-size') as HTMLSelectElement;
 	const estimateSizePrevious = document.getElementById('estimate-size-previous') as HTMLSelectElement;
+	const estimateSizePreviousAuto = document.getElementById('estimate-size-previous-auto') as HTMLSelectElement;
 	const cycleButton = document.getElementById('cycle-button');
 	const cycleCountEl = document.getElementById('cycle-count');
 	const previousCycleCountEl = document.getElementById('previous-cycle-count');
 	const previousCycleSection = document.getElementById('previous-cycle-section');
+	const autoCycleButton = document.getElementById('auto-cycle-button');
+	const autoCycleCountEl = document.getElementById('auto-cycle-count');
+	const previousAutoCycleCountEl = document.getElementById('previous-auto-cycle-count');
+	const previousAutoCycleSection = document.getElementById('previous-auto-cycle-section');
 	
 	// Verify critical elements exist
 	if (!matchNumberInput || !teamNumberInput) {
@@ -169,7 +174,7 @@ export function initializeDataCollection(): void {
 	let selectedAlliance = '';
 	let hasUserInteracted = false;
 	let leaveValue = getFromLocalStorage('leaveValue', 'no');
-	let leaveValueTeleop = getFromLocalStorage('leaveValueTeleop', 'no');
+	let leaveValueTeleop = getFromLocalStorage('leaveValueTeleop', 'none');
 	let accuracyValue = getFromLocalStorage('accuracyValue', '');
 	let accuracyValueTeleop = getFromLocalStorage('accuracyValueTeleop', '');
 	let estimateSizeAutoValue = getFromLocalStorage('estimateSizeAuto', '');
@@ -180,6 +185,11 @@ export function initializeDataCollection(): void {
 
 	// Cycle tracking arrays
 	let cycles: Array<{
+		accuracy: number;
+		estimateSize: string;
+	}> = [];
+
+	let autoCycles: Array<{
 		accuracy: number;
 		estimateSize: string;
 	}> = [];
@@ -195,6 +205,19 @@ export function initializeDataCollection(): void {
 			console.warn('[Data Collection] Error restoring cycles:', error.message);
 		}
 		cycles = [];
+	}
+
+	// Restore saved auto cycles
+	try {
+		const savedAutoCycles = getFromLocalStorage('autoCycles', '');
+		if (savedAutoCycles) {
+			autoCycles = JSON.parse(savedAutoCycles);
+		}
+	} catch (error) {
+		if (error instanceof Error) {
+			console.warn('[Data Collection] Error restoring auto cycles:', error.message);
+		}
+		autoCycles = [];
 	}
 
 	// Get user data and event code
@@ -455,7 +478,7 @@ export function initializeDataCollection(): void {
 			button.classList.add('selected');
 			button.setAttribute('aria-checked', 'true');
 			const dataValue = button.getAttribute('data-value');
-			leaveValue = dataValue ?? 'no';
+			leaveValue = dataValue ?? 'none';
 			saveToLocalStorage('leaveValue', leaveValue);
 		});
 	});
@@ -620,7 +643,7 @@ export function initializeDataCollection(): void {
 			button.classList.add('selected');
 			button.setAttribute('aria-checked', 'true');
 			const dataValue = button.getAttribute('data-value');
-			leaveValueTeleop = dataValue ?? 'no';
+			leaveValueTeleop = dataValue ?? 'none';
 			saveToLocalStorage('leaveValueTeleop', leaveValueTeleop);
 		});
 	});
@@ -681,6 +704,37 @@ export function initializeDataCollection(): void {
 		});
 	}
 
+	// Previous Auto Cycle Accuracy toggle functionality
+	const accuracyButtonsPreviousAuto = document.querySelectorAll('.accuracy-button-group .accuracy-button-previous-auto');
+
+	accuracyButtonsPreviousAuto.forEach(button => {
+		button.addEventListener('click', () => {
+			if (autoCycles.length === 0) return;
+			
+			accuracyButtonsPreviousAuto.forEach(btn => {
+				btn.classList.remove('selected');
+				btn.setAttribute('aria-pressed', 'false');
+			});
+			button.classList.add('selected');
+			button.setAttribute('aria-pressed', 'true');
+			const dataValue = button.getAttribute('data-value');
+			const newValue = dataValue ?? '0';
+			
+			autoCycles[autoCycles.length - 1].accuracy = parseInt(newValue, 10);
+			saveToLocalStorage('autoCycles', JSON.stringify(autoCycles));
+		});
+	});
+
+	// Previous Auto Cycle Estimate Size functionality
+	if (estimateSizePreviousAuto) {
+		estimateSizePreviousAuto.addEventListener('change', () => {
+			if (autoCycles.length === 0) return;
+			
+			autoCycles[autoCycles.length - 1].estimateSize = estimateSizePreviousAuto.value;
+			saveToLocalStorage('autoCycles', JSON.stringify(autoCycles));
+		});
+	}
+
 	function updatePreviousCycleDisplay() {
 		if (!previousCycleSection) return;
 		
@@ -708,14 +762,84 @@ export function initializeDataCollection(): void {
 		}
 	}
 
+	function updatePreviousAutoCycleDisplay() {
+		if (!previousAutoCycleSection) return;
+		
+		if (autoCycles.length > 0) {
+			previousAutoCycleSection.style.display = 'block';
+			
+			const lastCycle = autoCycles[autoCycles.length - 1];
+			accuracyButtonsPreviousAuto.forEach(btn => {
+				btn.classList.remove('selected');
+				if (btn.getAttribute('data-value') === String(lastCycle.accuracy)) {
+					btn.classList.add('selected');
+				}
+			});
+			
+			if (estimateSizePreviousAuto) {
+				estimateSizePreviousAuto.value = lastCycle.estimateSize || '';
+				if (lastCycle.estimateSize) {
+					estimateSizePreviousAuto.parentElement?.classList.add('has-value');
+				} else {
+					estimateSizePreviousAuto.parentElement?.classList.remove('has-value');
+				}
+			}
+		} else {
+			previousAutoCycleSection.style.display = 'none';
+		}
+	}
+
 	// Update cycle count display on load
 	if (cycles.length > 0) {
 		if (cycleCountEl) cycleCountEl.textContent = `Cycles: ${cycles.length}`;
 		if (previousCycleCountEl) previousCycleCountEl.textContent = `Cycle: ${cycles.length}`;
 	}
 
+	// Update auto cycle count display on load
+	if (autoCycles.length > 0) {
+		if (autoCycleCountEl) autoCycleCountEl.textContent = `Auto Cycles: ${autoCycles.length}`;
+		if (previousAutoCycleCountEl) previousAutoCycleCountEl.textContent = `Auto Cycle: ${autoCycles.length}`;
+	}
+
 	// Initialize previous cycle display on load
 	updatePreviousCycleDisplay();
+	updatePreviousAutoCycleDisplay();
+
+	// Auto Cycle button functionality
+	if (autoCycleButton && autoCycleCountEl && previousAutoCycleCountEl) {
+		autoCycleButton.addEventListener('click', () => {
+			const currentEstimateSize = estimateSizeAuto?.value || '';
+			
+			if (!accuracyValue || !currentEstimateSize) {
+				showError('Please enter estimate size and accuracy before cycling.');
+				return;
+			}
+
+			autoCycles.push({
+				accuracy: accuracyValue ? parseInt(accuracyValue, 10) : 0,
+				estimateSize: currentEstimateSize
+			});
+
+			saveToLocalStorage('autoCycles', JSON.stringify(autoCycles));
+
+			autoCycleCountEl.textContent = `Auto Cycles: ${autoCycles.length}`;
+			previousAutoCycleCountEl.textContent = `Auto Cycle: ${autoCycles.length}`;
+
+			updatePreviousAutoCycleDisplay();
+
+			accuracyButtons.forEach(btn => btn.classList.remove('selected'));
+			accuracyValue = '';
+			saveToLocalStorage('accuracyValue', '');
+			
+			if (estimateSizeAuto) {
+				estimateSizeAuto.value = '';
+				estimateSizeAuto.parentElement?.classList.remove('has-value');
+			}
+			estimateSizeAutoValue = '';
+
+			showSuccess(`Auto Cycle ${autoCycles.length} recorded!`);
+		});
+	}
 
 	// Cycle button functionality
 	if (cycleButton && cycleCountEl && previousCycleCountEl) {
@@ -818,9 +942,9 @@ export function initializeDataCollection(): void {
 					const selectedOption = teamNumberDropdown.options[teamNumberDropdown.selectedIndex];
 					const alliance = selectedOption?.dataset.alliance;
 					if (alliance === 'red') {
-						allianceColor = AllianceColor.red;
+						allianceColor = AllianceColor.RED;
 					} else if (alliance === 'blue') {
-						allianceColor = AllianceColor.blue;
+						allianceColor = AllianceColor.BLUE;
 					} else {
 						showError('Unable to determine alliance color. Please try again.');
 						throw new Error('Invalid alliance color');
@@ -828,9 +952,9 @@ export function initializeDataCollection(): void {
 				} else {
 					// Manual mode - use selectedAlliance
 					if (selectedAlliance === 'red') {
-						allianceColor = AllianceColor.red;
+						allianceColor = AllianceColor.RED;
 					} else if (selectedAlliance === 'blue') {
-						allianceColor = AllianceColor.blue;
+						allianceColor = AllianceColor.BLUE;
 					} else {
 						showError('Please select an alliance color.');
 						throw new Error('Alliance color not selected');
@@ -851,14 +975,16 @@ export function initializeDataCollection(): void {
 					estimateSizeAuto: estimateSizeAutoValue,
 					leaveValueTeleop,
 					accuracyValueTeleop: accuracyValueTeleop ? parseInt(accuracyValueTeleop) : 0,
+					autoCycles: [...autoCycles], // Deep copy
 					cycles: [...cycles] // Deep copy
 				});
-				
+			
 				showSuccess('Match data saved locally!');
 				
 				// Clear current form state including cycles
 				clearFormDataFromLocalStorage();
 				localStorage.removeItem('cycles');
+				localStorage.removeItem('autoCycles');
 				
 				// Reset form UI
 				form.reset();
@@ -876,11 +1002,9 @@ export function initializeDataCollection(): void {
 				
 				leaveToggleButtons.forEach(btn => btn.classList.remove('selected'));
 				leaveToggleButtons[0]?.classList.add('selected');
-				leaveValue = 'no';
-				
-				leaveToggleButtonsTeleop.forEach(btn => btn.classList.remove('selected'));
+			leaveValue = 'none';
 				leaveToggleButtonsTeleop[0]?.classList.add('selected');
-				leaveValueTeleop = 'no';
+				leaveValueTeleop = 'none';
 				
 				accuracyButtons.forEach(btn => btn.classList.remove('selected'));
 				accuracyValue = '';
@@ -903,7 +1027,12 @@ export function initializeDataCollection(): void {
 				if (cycleCountEl) cycleCountEl.textContent = 'Cycles: 0';
 				if (previousCycleCountEl) previousCycleCountEl.textContent = 'Cycle: 0';
 				
+				autoCycles = [];
+				if (autoCycleCountEl) autoCycleCountEl.textContent = 'Auto Cycles: 0';
+				if (previousAutoCycleCountEl) previousAutoCycleCountEl.textContent = 'Auto Cycle: 0';
+				
 				updatePreviousCycleDisplay();
+				updatePreviousAutoCycleDisplay();
 				formFields.forEach(field => field.classList.remove('has-value'));
 				
 				// Now try to submit all pending matches
@@ -912,20 +1041,19 @@ export function initializeDataCollection(): void {
 				}
 				
 				await submitAllPendingMatches(userData);
-				
+		
 			} catch (error) {
 			if (error instanceof Error) {
 				console.warn('[Data Collection] Error processing match data:', error.message);
 			}
-				showError('Failed to save match data. Please try again.');
+			showError('Failed to save match data. Please try again.');
 			} finally {
-				isSubmitting = false;
-				
-				if (submitButton) {
-					submitButton.textContent = 'Submit';
-					submitButton.disabled = true;
-				}
+			isSubmitting = false;
+			
+			if (submitButton) {
+				submitButton.textContent = 'Submit';
+				submitButton.disabled = true;
 			}
-		});
-	}
-}
+		}
+	});
+}}
