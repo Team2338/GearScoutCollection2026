@@ -44,6 +44,8 @@ export interface IMatch {
 	robotNumber: string;
 	creator: string;
 	allianceColor: AllianceColor;
+	autoClimb: string;
+	teleopClimb: string;
 	objectives: IObjective[];
 }
 

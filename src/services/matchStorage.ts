@@ -319,6 +319,8 @@ function convertStoredMatchToAPIFormat(userData: IUser, storedMatch: IStoredMatc
 		robotNumber: storedMatch.robotNumber,
 		creator: userData.scouterName,
 		allianceColor: storedMatch.allianceColor,
+		autoClimb: storedMatch.leaveValue,
+		teleopClimb: storedMatch.leaveValueTeleop,
 		objectives
 	};
 }
