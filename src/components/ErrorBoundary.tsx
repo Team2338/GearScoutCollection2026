@@ -2,7 +2,7 @@
  * Error Boundary component for graceful error handling
  */
 
-import { Component, ErrorInfo, ReactNode } from 'react';
+import { ErrorInfo, ReactNode, PureComponent } from 'react';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -14,7 +14,11 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+/**
+ * Error Boundary using PureComponent for optimized rendering
+ * Only re-renders when error state actually changes
+ */
+export class ErrorBoundary extends PureComponent<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = {

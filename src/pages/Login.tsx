@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import type { IUser } from '@/model/Models';
 import { useUser } from '@/context/UserContext';
@@ -11,7 +11,11 @@ import { saveToSessionStorage } from '@/utils/sessionStorage';
 import gearscoutService from '@/services/gearscout-services';
 import '@/styles/login.scss';
 
-const Login = () => {
+/**
+ * Login page component
+ * Memoized to prevent unnecessary re-renders
+ */
+const Login = memo(() => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { setUser } = useUser();
@@ -237,6 +241,8 @@ const Login = () => {
       </form>
     </main>
   );
-};
+});
+
+Login.displayName = 'Login';
 
 export default Login;

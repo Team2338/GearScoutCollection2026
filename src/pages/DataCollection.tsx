@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { initializeDataCollection } from '@/scripts/data-collection';
 import { usePendingMatches } from '@/hooks/usePendingMatches';
@@ -6,13 +6,20 @@ import { PendingMatchesIndicator } from '@/components/PendingMatchesIndicator';
 import { VALIDATION } from '@/constants';
 import '@/styles/data-collection.scss';
 
-const DataCollection = () => {
+/**
+ * Data Collection page component
+ * Memoized to prevent unnecessary re-renders
+ */
+const DataCollection = memo(() => {
   const navigate = useNavigate();
   const { pendingCount, isRetrying, handleRetry } = usePendingMatches();
 
   useEffect(() => {
     // Initialize the data collection logic
-    initializeDataCollection();
+    const cleanup = initializeDataCollection();
+    
+    // Return cleanup function to remove event listeners on unmount
+    return cleanup;
   }, []);
 
   const handleBack = useCallback(() => {
@@ -329,6 +336,8 @@ const DataCollection = () => {
       </main>
     </>
   );
-};
+});
+
+DataCollection.displayName = 'DataCollection';
 
 export default DataCollection;

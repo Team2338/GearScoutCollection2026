@@ -3,13 +3,18 @@
  */
 
 /**
+ * Serializable types that can be stored in session storage
+ */
+type Serializable = string | number | boolean | null | undefined | Serializable[] | { [key: string]: Serializable };
+
+/**
  * Save a value to sessionStorage
  * @param key - The storage key
- * @param value - The value to store (string or object)
+ * @param value - The value to store (string or serializable object)
  */
-export function saveToSessionStorage(
+export function saveToSessionStorage<T extends Serializable | object>(
 	key: string,
-	value: string | object
+	value: T
 ): void {
 	try {
 		const stringValue = typeof value === 'string' ? value : JSON.stringify(value);

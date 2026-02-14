@@ -2,7 +2,7 @@
  * User context provider for authentication state management
  */
 
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, ReactNode, useMemo } from 'react';
 import type { IUser } from '@/model/Models';
 import { isValidUser } from '@/model/Models';
 import { STORAGE_KEYS } from '@/constants';
@@ -57,8 +57,16 @@ export function UserProvider({ children }: UserProviderProps): JSX.Element {
 
   const isAuthenticated = user !== null;
 
+  // Memoize context value to prevent unnecessary re-renders of consumers
+  const contextValue = useMemo(() => ({
+    user,
+    setUser,
+    isAuthenticated,
+    logout
+  }), [user, setUser, isAuthenticated, logout]);
+
   return (
-    <UserContext.Provider value={{ user, setUser, isAuthenticated, logout }}>
+    <UserContext.Provider value={contextValue}>
       {children}
     </UserContext.Provider>
   );

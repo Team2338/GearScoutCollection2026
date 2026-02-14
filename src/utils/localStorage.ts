@@ -5,6 +5,11 @@
 import { FORM_DATA_KEYS } from '@/constants';
 
 /**
+ * Serializable value type for localStorage
+ */
+type StorableValue = string | number | boolean;
+
+/**
  * Save a value to localStorage
  * @param key - The storage key
  * @param value - The value to store
@@ -12,7 +17,7 @@ import { FORM_DATA_KEYS } from '@/constants';
  */
 export function saveToLocalStorage(
 	key: string,
-	value: string | number
+	value: StorableValue
 ): void {
 	try {
 		localStorage.setItem(key, String(value));
@@ -30,11 +35,11 @@ export function saveToLocalStorage(
  * Get a value from localStorage
  * @param key - The storage key
  * @param defaultValue - The default value if key not found
- * @returns The stored value or default value
+ * @returns The stored value or default value as a string
  */
 export function getFromLocalStorage(
 	key: string,
-	defaultValue: string | number = ''
+	defaultValue: StorableValue = ''
 ): string {
 	try {
 		return localStorage.getItem(key) ?? String(defaultValue);

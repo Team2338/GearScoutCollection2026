@@ -3,6 +3,8 @@
  * Displays the number of matches waiting to be submitted and provides a retry button
  */
 
+import { memo } from 'react';
+
 interface PendingMatchesIndicatorProps {
   /** Number of matches pending submission */
   pendingCount: number;
@@ -14,10 +16,11 @@ interface PendingMatchesIndicatorProps {
 
 /**
  * Component to show pending matches count and allow retry
+ * Memoized to prevent unnecessary re-renders when props haven't changed
  * @param props - Component props
  * @returns Pending matches indicator or null if no pending matches
  */
-export const PendingMatchesIndicator = ({
+export const PendingMatchesIndicator = memo(({
   pendingCount,
   isRetrying,
   onRetry,
@@ -41,4 +44,6 @@ export const PendingMatchesIndicator = ({
       </button>
     </div>
   );
-};
+});
+
+PendingMatchesIndicator.displayName = 'PendingMatchesIndicator';
