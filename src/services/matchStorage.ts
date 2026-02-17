@@ -11,61 +11,6 @@ import { STORAGE_KEYS } from '@/constants';
 const MULTI_MATCH_STORAGE_KEY = STORAGE_KEYS.MULTI_MATCH_DATA;
 
 /**
- * Validate if a match has valid data
- * @param match - Match to validate
- * @returns True if match is valid
- */
-function isValidMatch(match: IStoredMatch): boolean {
-	return match.matchNumber > 0 && Boolean(match.robotNumber) && match.robotNumber.trim() !== '';
-}
-
-/**
- * Calculate estimate size counts from cycles
- * @param cycles - Array of cycles with estimate sizes
- * @param additionalSize - Optional additional size to include
- * @returns Map of estimate size to count
- */
-function calculateEstimateSizeCounts(
-	cycles: Array<{ accuracy: number; estimateSize: string }>,
-	additionalSize?: string
-): Record<string, number> {
-	const sizeCounts: Record<string, number> = { '1-10': 0, '11-25': 0, '26+': 0 };
-	
-	cycles.forEach(cycle => {
-		if (cycle.estimateSize) {
-			sizeCounts[cycle.estimateSize] = (sizeCounts[cycle.estimateSize] || 0) + 1;
-		}
-	});
-	
-	if (additionalSize) {
-		sizeCounts[additionalSize] = (sizeCounts[additionalSize] || 0) + 1;
-	}
-	
-	return sizeCounts;
-}
-
-/**
- * Calculate average accuracy from cycles
- * @param cycles - Array of cycles with accuracy values
- * @param additionalAccuracy - Optional additional accuracy value
- * @returns Average accuracy rounded to nearest integer
- */
-function calculateAverageAccuracy(
-	cycles: Array<{ accuracy: number; estimateSize: string }>,
-	additionalAccuracy?: number
-): number {
-	let total = cycles.reduce((sum, cycle) => sum + cycle.accuracy, 0);
-	let count = cycles.filter(cycle => cycle.accuracy > 0).length;
-	
-	if (additionalAccuracy) {
-		total += additionalAccuracy;
-		count++;
-	}
-	
-	return count > 0 ? Math.round(total / count) : 0;
-}
-
-/**
  * Get multi-match storage for the current user
  * @param userData - Current user data
  * @returns Multi-match storage structure for the user
@@ -176,7 +121,10 @@ export function cleanInvalidMatches(userData: IUser): number {
 		const storage = getMultiMatchStorage(userData);
 		const initialCount = storage.matches.length;
 		
-		storage.matches = storage.matches.filter(isValidMatch);
+		storage.matches = storage.matches.filter(m => {
+			const isValid = m.matchNumber > 0 && m.robotNumber && m.robotNumber.trim() !== '';
+			return isValid;
+		});
 		
 		const removedCount = initialCount - storage.matches.length;
 		
@@ -269,31 +217,60 @@ function convertStoredMatchToAPIFormat(userData: IUser, storedMatch: IStoredMatc
 		objectives.push({ gamemode: Gamemode.AUTO, objective: 'CLIMB_2026', count: 15 });
 	}
 
-	// Auto accuracy - calculate average from cycles
-	const avgAutoAccuracy = calculateAverageAccuracy(
-		storedMatch.autoCycles || [],
-		storedMatch.accuracyValue || undefined
-	);
+	// Auto accuracy - include cycles
+	let totalAutoAccuracy = 0;
+	let autoAccuracyCount = 0;
+
+	if (storedMatch.autoCycles && storedMatch.autoCycles.length > 0) {
+		totalAutoAccuracy = storedMatch.autoCycles.reduce((sum, cycle) => sum + cycle.accuracy, 0);
+		autoAccuracyCount = storedMatch.autoCycles.filter(cycle => cycle.accuracy > 0).length;
+	}
+	
+	if (storedMatch.accuracyValue) {
+		totalAutoAccuracy += storedMatch.accuracyValue;
+		autoAccuracyCount++;
+	}
+
+	const avgAutoAccuracy = autoAccuracyCount > 0 ? Math.round(totalAutoAccuracy / autoAccuracyCount) : 0;
 	objectives.push({ gamemode: Gamemode.AUTO, objective: 'ACCURACY', count: avgAutoAccuracy });
 
-	// Auto estimate size - count from cycles
-	const autoEstimateSizeCounts = calculateEstimateSizeCounts(
-		storedMatch.autoCycles || [],
-		storedMatch.estimateSizeAuto || undefined
-	);
+	// Auto estimate size
+	const autoEstimateSizeCounts: Record<string, number> = { '1-10': 0, '11-25': 0, '26+': 0 };
+	if (storedMatch.autoCycles) {
+		storedMatch.autoCycles.forEach(cycle => {
+			if (cycle.estimateSize) {
+				autoEstimateSizeCounts[cycle.estimateSize] = (autoEstimateSizeCounts[cycle.estimateSize] || 0) + 1;
+			}
+		});
+	}
+	if (storedMatch.estimateSizeAuto) {
+		autoEstimateSizeCounts[storedMatch.estimateSizeAuto] = (autoEstimateSizeCounts[storedMatch.estimateSizeAuto] || 0) + 1;
+	}
 	
 	Object.entries(autoEstimateSizeCounts).forEach(([size, count]) => {
 		const sizeKey = size === '1-10' ? 'SMALL_CYCLE_2026' : size === '11-25' ? 'MEDIUM_CYCLE_2026' : 'LARGE_CYCLE_2026';
-		objectives.push({ gamemode: Gamemode.AUTO, objective: sizeKey, count });
+		objectives.push({
+			gamemode: Gamemode.AUTO,
+			objective: sizeKey,
+			count
+		});
 	});
 
 	// TELEOP objectives
-	// Teleop accuracy - calculate average from cycles
-	const avgAccuracy = calculateAverageAccuracy(
-		storedMatch.cycles || [],
-		storedMatch.accuracyValueTeleop || undefined
-	);
-	objectives.push({ gamemode: Gamemode.TELEOP, objective: 'ACCURACY', count: avgAccuracy });
+	let totalAccuracy = 0;
+	let accuracyCount = 0;
+
+	if (storedMatch.cycles.length > 0) {
+		totalAccuracy = storedMatch.cycles.reduce((sum, cycle) => sum + cycle.accuracy, 0);
+		accuracyCount = storedMatch.cycles.filter(cycle => cycle.accuracy > 0).length;
+	}
+	
+	if (storedMatch.accuracyValueTeleop) {
+		totalAccuracy += storedMatch.accuracyValueTeleop;
+		accuracyCount++;
+	}
+
+	const avgAccuracy = accuracyCount > 0 ? Math.round(totalAccuracy / accuracyCount) : 0;
 	
 	// Teleop climb - convert to point values (only send if they climbed)
 	if (storedMatch.leaveValueTeleop === 'l1') {
@@ -303,13 +280,24 @@ function convertStoredMatchToAPIFormat(userData: IUser, storedMatch: IStoredMatc
 	} else if (storedMatch.leaveValueTeleop === 'l3') {
 		objectives.push({ gamemode: Gamemode.TELEOP, objective: 'CLIMB_L3_2026', count: 30 });
 	}
+	
+	objectives.push({ gamemode: Gamemode.TELEOP, objective: 'ACCURACY', count: avgAccuracy });
 
-	// Teleop estimate size - count from cycles
-	const estimateSizeCounts = calculateEstimateSizeCounts(storedMatch.cycles || []);
+	// Teleop estimate size
+	const estimateSizeCounts: Record<string, number> = { '1-10': 0, '11-25': 0, '26+': 0 };
+	storedMatch.cycles.forEach(cycle => {
+		if (cycle.estimateSize) {
+			estimateSizeCounts[cycle.estimateSize] = (estimateSizeCounts[cycle.estimateSize] || 0) + 1;
+		}
+	});
 	
 	Object.entries(estimateSizeCounts).forEach(([size, count]) => {
 		const sizeKey = size === '1-10' ? 'SMALL_CYCLE_2026' : size === '11-25' ? 'MEDIUM_CYCLE_2026' : 'LARGE_CYCLE_2026';
-		objectives.push({ gamemode: Gamemode.TELEOP, objective: sizeKey, count });
+		objectives.push({
+			gamemode: Gamemode.TELEOP,
+			objective: sizeKey,
+			count
+		});
 	});
 
 	return {
@@ -319,8 +307,6 @@ function convertStoredMatchToAPIFormat(userData: IUser, storedMatch: IStoredMatc
 		robotNumber: storedMatch.robotNumber,
 		creator: userData.scouterName,
 		allianceColor: storedMatch.allianceColor,
-		autoClimb: storedMatch.leaveValue,
-		teleopClimb: storedMatch.leaveValueTeleop,
 		objectives
 	};
 }
@@ -345,11 +331,11 @@ export async function submitAllPendingMatches(userData: IUser): Promise<void> {
 	
 	// Filter out invalid matches before submission
 	const validMatches = pendingMatches.filter(m => {
-		if (!isValidMatch(m)) {
+		const isValid = m.matchNumber > 0 && m.robotNumber && m.robotNumber.trim() !== '';
+		if (!isValid) {
 			console.warn(`[Match Submission] Skipping invalid match: Match #${m.matchNumber}, Team ${m.robotNumber}`);
-			return false;
 		}
-		return true;
+		return isValid;
 	});
 	
 	if (validMatches.length === 0) {

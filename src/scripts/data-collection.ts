@@ -139,66 +139,36 @@ function populateTeamDropdown(matchIndex: number): string | null {
  * Initialize the data collection form
  * @returns Cleanup function to remove event listeners
  */
-export function initializeDataCollection(): () => void {
+export function initializeDataCollection(): void {
 	console.log('[Data Collection] Initializing...');
 	
 	const form = document.getElementById('data-collection-form') as HTMLFormElement;
 	if (!form) {
 		console.error('[Data Collection] Form element not found');
-		return () => {}; // Return no-op cleanup function
+		return;
 	}
 	
-	// Cache DOM element references to avoid repeated queries
-	const elements = {
-		submitButton: document.querySelector('.submit-button') as HTMLButtonElement,
-		matchNumberInput: document.getElementById('match-number') as HTMLInputElement,
-		teamNumberInput: document.getElementById('team-number') as HTMLInputElement,
-		teamNumberDropdown: document.getElementById('team-number-dropdown') as HTMLSelectElement,
-		estimateSizeAuto: document.getElementById('estimate-size-auto') as HTMLSelectElement,
-		estimateSizeSelect: document.getElementById('estimate-size') as HTMLSelectElement,
-		estimateSizePrevious: document.getElementById('estimate-size-previous') as HTMLSelectElement,
-		estimateSizePreviousAuto: document.getElementById('estimate-size-previous-auto') as HTMLSelectElement,
-		cycleButton: document.getElementById('cycle-button'),
-		cycleCountEl: document.getElementById('cycle-count'),
-		previousCycleCountEl: document.getElementById('previous-cycle-count'),
-		previousCycleSection: document.getElementById('previous-cycle-section'),
-		autoCycleButton: document.getElementById('auto-cycle-button'),
-		autoCycleCountEl: document.getElementById('auto-cycle-count'),
-		previousAutoCycleCountEl: document.getElementById('previous-auto-cycle-count'),
-		previousAutoCycleSection: document.getElementById('previous-auto-cycle-section'),
-		leftCounterEl: document.getElementById('left-counter'),
-		rightCounterEl: document.getElementById('right-counter'),
-		leftBumpCounterEl: document.getElementById('left-bump-counter'),
-		rightBumpCounterEl: document.getElementById('right-bump-counter'),
-	};
-	
-	const {
-		submitButton,
-		matchNumberInput,
-		teamNumberInput,
-		teamNumberDropdown,
-		estimateSizeAuto,
-		estimateSizeSelect,
-		estimateSizePrevious,
-		estimateSizePreviousAuto,
-		cycleButton,
-		cycleCountEl,
-		previousCycleCountEl,
-		previousCycleSection,
-		autoCycleButton,
-		autoCycleCountEl,
-		previousAutoCycleCountEl,
-		previousAutoCycleSection,
-		leftCounterEl,
-		rightCounterEl,
-		leftBumpCounterEl,
-		rightBumpCounterEl,
-	} = elements;
+	const submitButton = document.querySelector('.submit-button') as HTMLButtonElement;
+	const matchNumberInput = document.getElementById('match-number') as HTMLInputElement;
+	const teamNumberInput = document.getElementById('team-number') as HTMLInputElement;
+	const teamNumberDropdown = document.getElementById('team-number-dropdown') as HTMLSelectElement;
+	const estimateSizeAuto = document.getElementById('estimate-size-auto') as HTMLSelectElement;
+	const estimateSizeSelect = document.getElementById('estimate-size') as HTMLSelectElement;
+	const estimateSizePrevious = document.getElementById('estimate-size-previous') as HTMLSelectElement;
+	const estimateSizePreviousAuto = document.getElementById('estimate-size-previous-auto') as HTMLSelectElement;
+	const cycleButton = document.getElementById('cycle-button');
+	const cycleCountEl = document.getElementById('cycle-count');
+	const previousCycleCountEl = document.getElementById('previous-cycle-count');
+	const previousCycleSection = document.getElementById('previous-cycle-section');
+	const autoCycleButton = document.getElementById('auto-cycle-button');
+	const autoCycleCountEl = document.getElementById('auto-cycle-count');
+	const previousAutoCycleCountEl = document.getElementById('previous-auto-cycle-count');
+	const previousAutoCycleSection = document.getElementById('previous-auto-cycle-section');
 	
 	// Verify critical elements exist
 	if (!matchNumberInput || !teamNumberInput) {
 		console.error('[Data Collection] Critical form elements not found');
-		return () => {}; // Return no-op cleanup function
+		return;
 	}
 
 	let selectedAlliance = '';
@@ -257,7 +227,7 @@ export function initializeDataCollection(): () => void {
 		setTimeout(() => {
 			window.location.href = '/';
 		}, AUTH_ERROR_REDIRECT_DELAY_MS);
-		return () => {}; // Return no-op cleanup function
+		return;
 	}
 
 	let userData: IUser;
@@ -272,7 +242,7 @@ export function initializeDataCollection(): () => void {
 		setTimeout(() => {
 			window.location.href = '/';
 		}, AUTH_ERROR_REDIRECT_DELAY_MS);
-		return () => {}; // Return no-op cleanup function
+		return;
 	}
 
 	const eventCode = userData.eventCode;
@@ -560,6 +530,8 @@ export function initializeDataCollection(): () => void {
 	}
 
 	// Trench counter functionality
+	const leftCounterEl = document.getElementById('left-counter');
+	const rightCounterEl = document.getElementById('right-counter');
 	const leftTrenchBtn = document.querySelector('.left-trench');
 	const rightTrenchBtn = document.querySelector('.right-trench');
 	const leftDecrementBtn = document.querySelector('.left-decrement');
@@ -568,40 +540,45 @@ export function initializeDataCollection(): () => void {
 	if (leftCounterEl) leftCounterEl.textContent = leftCounter.toString();
 	if (rightCounterEl) rightCounterEl.textContent = rightCounter.toString();
 
-	const handleLeftTrench = () => {
-		leftCounter++;
-		if (leftCounterEl) leftCounterEl.textContent = leftCounter.toString();
-		saveToLocalStorage('leftCounter', leftCounter);
-	};
-
-	const handleRightTrench = () => {
-		rightCounter++;
-		if (rightCounterEl) rightCounterEl.textContent = rightCounter.toString();
-		saveToLocalStorage('rightCounter', rightCounter);
-	};
-
-	const handleLeftDecrement = () => {
-		if (leftCounter > 0) {
-			leftCounter--;
+	if (leftTrenchBtn) {
+		leftTrenchBtn.addEventListener('click', () => {
+			leftCounter++;
 			if (leftCounterEl) leftCounterEl.textContent = leftCounter.toString();
 			saveToLocalStorage('leftCounter', leftCounter);
-		}
-	};
+		});
+	}
 
-	const handleRightDecrement = () => {
-		if (rightCounter > 0) {
-			rightCounter--;
+	if (rightTrenchBtn) {
+		rightTrenchBtn.addEventListener('click', () => {
+			rightCounter++;
 			if (rightCounterEl) rightCounterEl.textContent = rightCounter.toString();
 			saveToLocalStorage('rightCounter', rightCounter);
-		}
-	};
+		});
+	}
 
-	if (leftTrenchBtn) leftTrenchBtn.addEventListener('click', handleLeftTrench);
-	if (rightTrenchBtn) rightTrenchBtn.addEventListener('click', handleRightTrench);
-	if (leftDecrementBtn) leftDecrementBtn.addEventListener('click', handleLeftDecrement);
-	if (rightDecrementBtn) rightDecrementBtn.addEventListener('click', handleRightDecrement);
+	if (leftDecrementBtn) {
+		leftDecrementBtn.addEventListener('click', () => {
+			if (leftCounter > 0) {
+				leftCounter--;
+				if (leftCounterEl) leftCounterEl.textContent = leftCounter.toString();
+				saveToLocalStorage('leftCounter', leftCounter);
+			}
+		});
+	}
+
+	if (rightDecrementBtn) {
+		rightDecrementBtn.addEventListener('click', () => {
+			if (rightCounter > 0) {
+				rightCounter--;
+				if (rightCounterEl) rightCounterEl.textContent = rightCounter.toString();
+				saveToLocalStorage('rightCounter', rightCounter);
+			}
+		});
+	}
 
 	// Bump counter functionality
+	const leftBumpCounterEl = document.getElementById('left-bump-counter');
+	const rightBumpCounterEl = document.getElementById('right-bump-counter');
 	const leftBumpBtn = document.querySelector('.left-bump');
 	const rightBumpBtn = document.querySelector('.right-bump');
 	const leftBumpDecrementBtn = document.querySelector('.left-bump-decrement');
@@ -610,38 +587,41 @@ export function initializeDataCollection(): () => void {
 	if (leftBumpCounterEl) leftBumpCounterEl.textContent = leftBumpCounter.toString();
 	if (rightBumpCounterEl) rightBumpCounterEl.textContent = rightBumpCounter.toString();
 
-	const handleLeftBump = () => {
-		leftBumpCounter++;
-		if (leftBumpCounterEl) leftBumpCounterEl.textContent = leftBumpCounter.toString();
-		saveToLocalStorage('leftBumpCounter', leftBumpCounter);
-	};
-
-	const handleRightBump = () => {
-		rightBumpCounter++;
-		if (rightBumpCounterEl) rightBumpCounterEl.textContent = rightBumpCounter.toString();
-		saveToLocalStorage('rightBumpCounter', rightBumpCounter);
-	};
-
-	const handleLeftBumpDecrement = () => {
-		if (leftBumpCounter > 0) {
-			leftBumpCounter--;
+	if (leftBumpBtn) {
+		leftBumpBtn.addEventListener('click', () => {
+			leftBumpCounter++;
 			if (leftBumpCounterEl) leftBumpCounterEl.textContent = leftBumpCounter.toString();
 			saveToLocalStorage('leftBumpCounter', leftBumpCounter);
-		}
-	};
+		});
+	}
 
-	const handleRightBumpDecrement = () => {
-		if (rightBumpCounter > 0) {
-			rightBumpCounter--;
+	if (rightBumpBtn) {
+		rightBumpBtn.addEventListener('click', () => {
+			rightBumpCounter++;
 			if (rightBumpCounterEl) rightBumpCounterEl.textContent = rightBumpCounter.toString();
 			saveToLocalStorage('rightBumpCounter', rightBumpCounter);
-		}
-	};
+		});
+	}
 
-	if (leftBumpBtn) leftBumpBtn.addEventListener('click', handleLeftBump);
-	if (rightBumpBtn) rightBumpBtn.addEventListener('click', handleRightBump);
-	if (leftBumpDecrementBtn) leftBumpDecrementBtn.addEventListener('click', handleLeftBumpDecrement);
-	if (rightBumpDecrementBtn) rightBumpDecrementBtn.addEventListener('click', handleRightBumpDecrement);
+	if (leftBumpDecrementBtn) {
+		leftBumpDecrementBtn.addEventListener('click', () => {
+			if (leftBumpCounter > 0) {
+				leftBumpCounter--;
+				if (leftBumpCounterEl) leftBumpCounterEl.textContent = leftBumpCounter.toString();
+				saveToLocalStorage('leftBumpCounter', leftBumpCounter);
+			}
+		});
+	}
+
+	if (rightBumpDecrementBtn) {
+		rightBumpDecrementBtn.addEventListener('click', () => {
+			if (rightBumpCounter > 0) {
+				rightBumpCounter--;
+				if (rightBumpCounterEl) rightBumpCounterEl.textContent = rightBumpCounter.toString();
+				saveToLocalStorage('rightBumpCounter', rightBumpCounter);
+			}
+		});
+	}
 
 	// Teleop Climb toggle functionality
 	const leaveToggleButtonsTeleop = document.querySelectorAll('.toggle-button-group .toggle-button-teleop');
@@ -1076,12 +1056,4 @@ export function initializeDataCollection(): () => void {
 			}
 		}
 	});
-	}
-	
-	// Return cleanup function
-	// Note: Full cleanup would require refactoring event handlers to named functions
-	// Currently, event listeners will be cleaned up when component unmounts
-	return () => {
-		console.log('[Data Collection] Component unmounting');
-	};
-}
+}}
