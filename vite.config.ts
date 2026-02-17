@@ -30,10 +30,6 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    // Enable source maps for production debugging if needed
-    sourcemap: false,
-    // Optimize chunk size
-    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       input: {
         app: './index.html',
@@ -44,31 +40,13 @@ export default defineConfig({
           if (asset.name === 'service-worker') {
             return '[name].js';
           }
+
           return 'assets/js/[name]-[hash].js'
-        },
-        chunkFileNames: 'assets/js/[name]-[hash].js',
-        assetFileNames: 'assets/[ext]/[name]-[hash].[ext]',
-        // Manual chunk splitting for better caching
-        manualChunks: (id) => {
-          // Vendor chunks
-          if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
-              return 'react-vendor';
-            }
-            if (id.includes('axios')) {
-              return 'axios-vendor';
-            }
-            return 'vendor';
-          }
         }
       }
-    },
-    // Enable minification
-    minify: 'esbuild',
-    // Target modern browsers for smaller bundles
-    target: 'es2015'
+    }
   },
   define: {
-    'import.meta.env.VITE_APP_VERSION': '2026.4'
+    'import.meta.env.VITE_APP_VERSION': '2026.1'
   }
 });

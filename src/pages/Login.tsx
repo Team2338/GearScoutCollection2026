@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, memo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import type { IUser } from '@/model/Models';
 import { useUser } from '@/context/UserContext';
@@ -13,9 +13,8 @@ import '@/styles/login.scss';
 
 /**
  * Login page component
- * Memoized to prevent unnecessary re-renders
  */
-const Login = memo(() => {
+const Login = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { setUser } = useUser();
@@ -242,7 +241,5 @@ const Login = memo(() => {
     </main>
   );
 });
-
-Login.displayName = 'Login';
 
 export default Login;
