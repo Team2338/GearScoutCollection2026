@@ -274,11 +274,11 @@ function convertStoredMatchToAPIFormat(userData: IUser, storedMatch: IStoredMatc
 	
 	// Teleop climb - convert to point values (only send if they climbed)
 	if (storedMatch.leaveValueTeleop === 'l1') {
-		objectives.push({ gamemode: Gamemode.TELEOP, objective: 'CLIMB_L1_2026', count: 10 });
+		objectives.push({ gamemode: Gamemode.TELEOP, objective: 'CLIMB_2026', count: 10 });
 	} else if (storedMatch.leaveValueTeleop === 'l2') {
-		objectives.push({ gamemode: Gamemode.TELEOP, objective: 'CLIMB_L2_2026', count: 20 });
+		objectives.push({ gamemode: Gamemode.TELEOP, objective: 'CLIMB_2026', count: 20 });
 	} else if (storedMatch.leaveValueTeleop === 'l3') {
-		objectives.push({ gamemode: Gamemode.TELEOP, objective: 'CLIMB_L3_2026', count: 30 });
+		objectives.push({ gamemode: Gamemode.TELEOP, objective: 'CLIMB_2026', count: 30 });
 	}
 	
 	objectives.push({ gamemode: Gamemode.TELEOP, objective: 'ACCURACY', count: avgAccuracy });

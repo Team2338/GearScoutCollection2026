@@ -178,6 +178,7 @@ export function initializeDataCollection(): void {
 	let accuracyValue = getFromLocalStorage('accuracyValue', '');
 	let accuracyValueTeleop = getFromLocalStorage('accuracyValueTeleop', '');
 	let estimateSizeAutoValue = getFromLocalStorage('estimateSizeAuto', '');
+	let estimateSizeValue = getFromLocalStorage('estimateSize', '');
 	let leftCounter = Number(getFromLocalStorage('leftCounter', 0));
 	let rightCounter = Number(getFromLocalStorage('rightCounter', 0));
 	let leftBumpCounter = Number(getFromLocalStorage('leftBumpCounter', 0));
@@ -194,31 +195,12 @@ export function initializeDataCollection(): void {
 		estimateSize: string;
 	}> = [];
 
-	// Restore saved cycles
-	try {
-		const savedCycles = getFromLocalStorage('cycles', '');
-		if (savedCycles) {
-			cycles = JSON.parse(savedCycles);
-		}
-	} catch (error) {
-		if (error instanceof Error) {
-			console.warn('[Data Collection] Error restoring cycles:', error.message);
-		}
-		cycles = [];
-	}
-
-	// Restore saved auto cycles
-	try {
-		const savedAutoCycles = getFromLocalStorage('autoCycles', '');
-		if (savedAutoCycles) {
-			autoCycles = JSON.parse(savedAutoCycles);
-		}
-	} catch (error) {
-		if (error instanceof Error) {
-			console.warn('[Data Collection] Error restoring auto cycles:', error.message);
-		}
-		autoCycles = [];
-	}
+	// Clear cycles and auto cycles on page load (they should not persist across refreshes)
+	// Cycles are only meant to accumulate within a single form session
+	localStorage.removeItem('cycles');
+	localStorage.removeItem('autoCycles');
+	cycles = [];
+	autoCycles = [];
 
 	// Get user data and event code
 	const userDataStr = sessionStorage.getItem(STORAGE_KEYS.CURRENT_USER);
@@ -521,6 +503,24 @@ export function initializeDataCollection(): void {
 		});
 	}
 
+	// Current Teleop estimate size functionality
+	if (estimateSizeSelect) {
+		if (estimateSizeValue) {
+			estimateSizeSelect.value = estimateSizeValue;
+			estimateSizeSelect.parentElement?.classList.add('has-value');
+		}
+		
+		estimateSizeSelect.addEventListener('change', () => {
+			estimateSizeValue = estimateSizeSelect.value;
+			saveToLocalStorage('estimateSize', estimateSizeValue);
+			if (estimateSizeValue) {
+				estimateSizeSelect.parentElement?.classList.add('has-value');
+			} else {
+				estimateSizeSelect.parentElement?.classList.remove('has-value');
+			}
+		});
+	}
+
 	// Trench counter functionality
 	const leftCounterEl = document.getElementById('left-counter');
 	const rightCounterEl = document.getElementById('right-counter');
@@ -782,16 +782,12 @@ export function initializeDataCollection(): void {
 	}
 
 	// Update cycle count display on load
-	if (cycles.length > 0) {
-		if (cycleCountEl) cycleCountEl.textContent = `Cycles: ${cycles.length}`;
-		if (previousCycleCountEl) previousCycleCountEl.textContent = `Cycle: ${cycles.length}`;
-	}
+	if (cycleCountEl) cycleCountEl.textContent = cycles.length > 0 ? `Cycles: ${cycles.length}` : 'Cycles: 0';
+	if (previousCycleCountEl) previousCycleCountEl.textContent = cycles.length > 0 ? `Cycle: ${cycles.length}` : 'Cycle: 0';
 
 	// Update auto cycle count display on load
-	if (autoCycles.length > 0) {
-		if (autoCycleCountEl) autoCycleCountEl.textContent = `Auto Cycles: ${autoCycles.length}`;
-		if (previousAutoCycleCountEl) previousAutoCycleCountEl.textContent = `Auto Cycle: ${autoCycles.length}`;
-	}
+	if (autoCycleCountEl) autoCycleCountEl.textContent = autoCycles.length > 0 ? `Auto Cycles: ${autoCycles.length}` : 'Auto Cycles: 0';
+	if (previousAutoCycleCountEl) previousAutoCycleCountEl.textContent = autoCycles.length > 0 ? `Auto Cycle: ${autoCycles.length}` : 'Auto Cycle: 0';
 
 	// Initialize previous cycle display on load
 	updatePreviousCycleDisplay();
@@ -800,16 +796,14 @@ export function initializeDataCollection(): void {
 	// Auto Cycle button functionality
 	if (autoCycleButton && autoCycleCountEl && previousAutoCycleCountEl) {
 		autoCycleButton.addEventListener('click', () => {
-			const currentEstimateSize = estimateSizeAuto?.value || '';
-			
-			if (!accuracyValue || !currentEstimateSize) {
+			if (accuracyValue === '' || accuracyValue === undefined || !estimateSizeAutoValue) {
 				showError('Please enter estimate size and accuracy before cycling.');
 				return;
 			}
 
 			autoCycles.push({
 				accuracy: accuracyValue ? parseInt(accuracyValue, 10) : 0,
-				estimateSize: currentEstimateSize
+				estimateSize: estimateSizeAutoValue
 			});
 
 			saveToLocalStorage('autoCycles', JSON.stringify(autoCycles));
@@ -836,16 +830,14 @@ export function initializeDataCollection(): void {
 	// Cycle button functionality
 	if (cycleButton && cycleCountEl && previousCycleCountEl) {
 		cycleButton.addEventListener('click', () => {
-			const currentEstimateSize = estimateSizeSelect?.value || '';
-			
-			if (!accuracyValueTeleop || !currentEstimateSize) {
+			if (accuracyValueTeleop === '' || accuracyValueTeleop === undefined || !estimateSizeValue) {
 				showError('Please enter estimate size and accuracy before cycling.');
 				return;
 			}
 
 			cycles.push({
 				accuracy: accuracyValueTeleop ? parseInt(accuracyValueTeleop, 10) : 0,
-				estimateSize: currentEstimateSize
+				estimateSize: estimateSizeValue
 			});
 
 			saveToLocalStorage('cycles', JSON.stringify(cycles));
@@ -863,6 +855,8 @@ export function initializeDataCollection(): void {
 				estimateSizeSelect.value = '';
 				estimateSizeSelect.parentElement?.classList.remove('has-value');
 			}
+			estimateSizeValue = '';
+			saveToLocalStorage('estimateSize', '');
 
 			showSuccess(`Cycle ${cycles.length} recorded!`);
 		});
