@@ -31,10 +31,11 @@ function updateTeamNumberUI(): void {
 	const schedule = getSchedule();
 	
 	if (schedule === null) {
-		loader.style.display = 'none';
+		// Schedule is still loading: show loader and hide inputs
+		loader.style.display = 'block';
 		dropdownContainer.style.display = 'none';
-		manualContainer.style.display = 'block';
-		allianceSection.style.display = 'flex';
+		manualContainer.style.display = 'none';
+		allianceSection.style.display = 'none';
 		return;
 	}
 
