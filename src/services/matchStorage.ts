@@ -212,10 +212,9 @@ function convertStoredMatchToAPIFormat(userData: IUser, storedMatch: IStoredMatc
 		{ gamemode: Gamemode.AUTO, objective: 'BLUE_BUMP_2026', count: storedMatch.rightBumpCounter }
 	);
 
-	// Auto climb - convert to point values (only send if they climbed)
-	if (storedMatch.leaveValue === 'yes') {
-		objectives.push({ gamemode: Gamemode.AUTO, objective: 'CLIMB_2026', count: 15 });
-	}
+	// Auto climb - always report, convert to point values
+	const autoClimbCount = storedMatch.leaveValue === 'yes' ? 15 : 0;
+	objectives.push({ gamemode: Gamemode.AUTO, objective: 'CLIMB_2026', count: autoClimbCount });
 
 	// Auto accuracy - include cycles
 	let totalAutoAccuracy = 0;
@@ -272,14 +271,16 @@ function convertStoredMatchToAPIFormat(userData: IUser, storedMatch: IStoredMatc
 
 	const avgAccuracy = accuracyCount > 0 ? Math.round(totalAccuracy / accuracyCount) : 0;
 	
-	// Teleop climb - convert to point values (only send if they climbed)
+	// Teleop climb - always report, convert to point values
+	let teleopClimbCount = 0;
 	if (storedMatch.leaveValueTeleop === 'l1') {
-		objectives.push({ gamemode: Gamemode.TELEOP, objective: 'CLIMB_2026', count: 10 });
+		teleopClimbCount = 10;
 	} else if (storedMatch.leaveValueTeleop === 'l2') {
-		objectives.push({ gamemode: Gamemode.TELEOP, objective: 'CLIMB_2026', count: 20 });
+		teleopClimbCount = 20;
 	} else if (storedMatch.leaveValueTeleop === 'l3') {
-		objectives.push({ gamemode: Gamemode.TELEOP, objective: 'CLIMB_2026', count: 30 });
+		teleopClimbCount = 30;
 	}
+	objectives.push({ gamemode: Gamemode.TELEOP, objective: 'CLIMB_2026', count: teleopClimbCount });
 	
 	objectives.push({ gamemode: Gamemode.TELEOP, objective: 'ACCURACY', count: avgAccuracy });
 
