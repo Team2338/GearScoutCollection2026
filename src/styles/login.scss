@@ -1,0 +1,304 @@
+// Official Team 2338 Brand Colors (Branding Document Revised 23-24)
+$blue: #02243e;     // Pantone 5395c "Tangaroa" - RGB: 2, 36, 62
+$orange: #fe5000;   // Pantone 021c "Orange" - RGB: 254, 80, 0
+$offwhite: #faf9f6; // Auxiliary color for backgrounds
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    width: 100%;
+}
+
+body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+        sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: $blue;
+    overflow: auto;
+}
+
+/* Hide scrollbar only within the login page container */
+.login-page,
+.login-page * {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+
+.login-page::-webkit-scrollbar,
+.login-page *::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+}
+
+.page {
+    min-height: 100vh;
+}
+
+.login-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 30px;
+    color: $orange;
+    background-color: $blue;
+    min-height: 100vh;
+    position: relative;
+
+    .pending-matches-indicator {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        background-color: rgba(255, 152, 0, 0.2);
+        border: 1px solid #ff9800;
+        border-radius: 4px;
+        color: #ff9800;
+        font-size: 13px;
+        font-weight: 500;
+        margin-bottom: 20px;
+
+        @media (max-width: 768px) {
+            font-size: 11px;
+            padding: 6px 8px;
+            margin-bottom: 16px;
+        }
+
+        .pending-matches-count {
+            font-weight: 700;
+            font-size: 16px;
+            
+            @media (max-width: 768px) {
+                font-size: 14px;
+            }
+        }
+
+        .retry-submit-button {
+            background-color: #ff9800;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            padding: 0;
+            
+            &:hover {
+                background-color: #f57c00;
+                transform: rotate(90deg);
+            }
+            
+            &:active {
+                transform: scale(0.95) rotate(90deg);
+            }
+
+            &:disabled {
+                cursor: not-allowed;
+                opacity: 0.5;
+            }
+
+            @media (max-width: 768px) {
+                width: 24px;
+                height: 24px;
+                font-size: 16px;
+            }
+        }
+    }
+}
+
+.title {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: fit-content;
+    margin: 0;
+}
+
+.app-name {
+    font-weight: 600;
+    font-size: 32px;
+    line-height: 40px;
+    margin: 0;
+}
+
+.version {
+    font-size: 16px;
+    line-height: 20px;
+    margin: 0;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    margin-top: 60px;
+    padding: 0;
+    width: 220px;
+}
+
+#login-form-header {
+    margin-top: 0;
+    margin-bottom: 24px;
+    color: $orange;
+    font-size: 32px;
+    font-family: Roboto, Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    font-weight: 700;
+    font-synthesis: none;
+    height: 48px;
+    text-align: left;
+}
+
+.form-field {
+    margin-bottom: 28px;
+    position: relative;
+
+    label {
+        position: absolute;
+        top: 17px;
+        left: 12px;
+        transform: translateY(0);
+        background-color: transparent;
+        padding: 0 4px;
+        font-size: 15px;
+        line-height: 15px;
+        color: $offwhite;
+        pointer-events: none;
+        transition: all 0.2s ease;
+        opacity: 0.7;
+        z-index: 1;
+        max-width: calc(100% - 28px);
+        white-space: nowrap;
+    }
+
+    &.has-value label,
+    input:focus + label {
+        top: -8px;
+        transform: translateY(0);
+        font-size: 12px;
+        background-color: $blue;
+        opacity: 1;
+    }
+
+    input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 16px 12px;
+        border: 1px solid $offwhite;
+        border-radius: 4px;
+        background-color: transparent;
+        color: $offwhite;
+        font-size: 15px;
+        line-height: 15px;
+        outline: none;
+        transition: border-color 0.2s ease;
+        min-height: 51px;
+
+        @media (max-width: 768px) {
+            min-height: 53px;
+            font-size: 16px;
+        }
+
+        &:hover:not(:focus) {
+            border-color: #fe7755;
+        }
+
+        &:focus {
+            border-color: $orange;
+            border-width: 2px;
+            padding: 15px 11px;
+        }
+    }
+
+    &.with-prefix {
+        input {
+            padding-left: 28px;
+
+            &:focus {
+                padding: 14px 11px 14px 27px;
+            }
+        }
+
+        label {
+            left: 30px;
+            top: 17px;
+            transform: translateY(0);
+        }
+
+        &.has-value label,
+        input:focus + span + label {
+            top: -8px;
+            left: 12px;
+            transform: translateY(0);
+            font-size: 12px;
+            background-color: $blue;
+            opacity: 1;
+        }
+    }
+}
+
+.input-prefix {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: $offwhite;
+    font-size: 15px;
+    pointer-events: none;
+}
+
+.helper-text {
+    font-size: 12px;
+    color: $offwhite;
+    margin-top: 5px;
+    margin-right: 10px;
+    opacity: 0.7;
+    text-align: right;
+}
+
+#login-submit-button {
+    margin-top: 8px;
+    padding: 10px 18px;
+    width: 100%;
+    min-height: 44px;
+    background-color: $orange;
+    color: $offwhite;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+
+    @media (max-width: 768px) {
+        min-height: 48px;
+        font-size: 15px;
+        padding: 12px 18px;
+    }
+
+    &:hover:not(:disabled) {
+        background-color: #e04800;
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+}
+
+/* Remove number input arrows */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
