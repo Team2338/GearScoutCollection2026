@@ -294,12 +294,20 @@ export function initializeDataCollection(): void {
 			isValid = false;
 		}
 
-		// Alliance selection is required in manual mode
-		// In dropdown mode (with schedule), alliance is auto-set from the selected team
+		// Alliance selection is always required
 		const hasAlliance = selectedAlliance !== '';
 		
-		// Only validate alliance if NOT in dropdown mode
-		if (!hasAlliance && !isDropdownMode) {
+		if (!hasAlliance) {
+			if (showErrors) {
+				const allianceSection = document.getElementById('alliance-section');
+				if (allianceSection && !allianceSection.querySelector('.field-error')) {
+					const errorSpan = document.createElement('span');
+					errorSpan.className = 'field-error';
+					errorSpan.textContent = 'Alliance color is required';
+					allianceSection.appendChild(errorSpan);
+					allianceSection.classList.add('has-error');
+				}
+			}
 			isValid = false;
 		}
 
@@ -899,6 +907,71 @@ export function initializeDataCollection(): void {
 	// Submission state guard
 	let isSubmitting = false;
 	
+	// Function to reset form state
+	function resetFormState() {
+		// Clear current form state including cycles and counters
+		clearFormDataFromLocalStorage();
+		localStorage.removeItem('cycles');
+		localStorage.removeItem('autoCycles');
+		
+		// Explicitly clear counter values from localStorage to ensure clean state
+		localStorage.removeItem('leftCounter');
+		localStorage.removeItem('rightCounter');
+		localStorage.removeItem('leftBumpCounter');
+		localStorage.removeItem('rightBumpCounter');
+		
+		// Reset form UI
+		form.reset();
+		leftCounter = 0;
+		rightCounter = 0;
+		leftBumpCounter = 0;
+		rightBumpCounter = 0;
+		if (leftCounterEl) leftCounterEl.textContent = '0';
+		if (rightCounterEl) rightCounterEl.textContent = '0';
+		if (leftBumpCounterEl) leftBumpCounterEl.textContent = '0';
+		if (rightBumpCounterEl) rightBumpCounterEl.textContent = '0';
+		
+		allianceButtons.forEach(btn => btn.classList.remove('selected'));
+		selectedAlliance = '';
+		
+		leaveToggleButtons.forEach(btn => btn.classList.remove('selected'));
+		leaveToggleButtons[0]?.classList.add('selected');
+		leaveValue = 'no';
+		leaveToggleButtonsTeleop.forEach(btn => btn.classList.remove('selected'));
+		leaveToggleButtonsTeleop[0]?.classList.add('selected');
+		leaveValueTeleop = 'none';
+		
+		accuracyButtons.forEach(btn => btn.classList.remove('selected'));
+		accuracyValue = '';
+
+		if (estimateSizeAuto) {
+			estimateSizeAuto.value = '';
+			estimateSizeAuto.parentElement?.classList.remove('has-value');
+		}
+		estimateSizeAutoValue = '';
+		
+		accuracyButtonsTeleop.forEach(btn => btn.classList.remove('selected'));
+		accuracyValueTeleop = '';
+
+		if (estimateSizeSelect) {
+			estimateSizeSelect.value = '';
+			estimateSizeSelect.parentElement?.classList.remove('has-value');
+		}
+		estimateSizeValue = '';
+
+		cycles = [];
+		if (cycleCountEl) cycleCountEl.textContent = 'Cycles: 0';
+		if (previousCycleCountEl) previousCycleCountEl.textContent = 'Cycle: 0';
+		
+		autoCycles = [];
+		if (autoCycleCountEl) autoCycleCountEl.textContent = 'Auto Cycles: 0';
+		if (previousAutoCycleCountEl) previousAutoCycleCountEl.textContent = 'Auto Cycle: 0';
+		
+		updatePreviousCycleDisplay();
+		updatePreviousAutoCycleDisplay();
+		formFields.forEach(field => field.classList.remove('has-value'));
+	}
+	
 	// Form submit handler
 	if (form) {
 		form.addEventListener('submit', async (event) => {
@@ -984,59 +1057,8 @@ export function initializeDataCollection(): void {
 			
 				showSuccess('Match data saved locally!');
 				
-				// Clear current form state including cycles
-				clearFormDataFromLocalStorage();
-				localStorage.removeItem('cycles');
-				localStorage.removeItem('autoCycles');
-				
-				// Reset form UI
-				form.reset();
-				leftCounter = 0;
-				rightCounter = 0;
-				leftBumpCounter = 0;
-				rightBumpCounter = 0;
-				if (leftCounterEl) leftCounterEl.textContent = '0';
-				if (rightCounterEl) rightCounterEl.textContent = '0';
-				if (leftBumpCounterEl) leftBumpCounterEl.textContent = '0';
-				if (rightBumpCounterEl) rightBumpCounterEl.textContent = '0';
-				
-				allianceButtons.forEach(btn => btn.classList.remove('selected'));
-				selectedAlliance = '';
-				
-				leaveToggleButtons.forEach(btn => btn.classList.remove('selected'));
-				leaveToggleButtons[0]?.classList.add('selected');
-			leaveValue = 'none';
-				leaveToggleButtonsTeleop[0]?.classList.add('selected');
-				leaveValueTeleop = 'none';
-				
-				accuracyButtons.forEach(btn => btn.classList.remove('selected'));
-				accuracyValue = '';
-
-				if (estimateSizeAuto) {
-					estimateSizeAuto.value = '';
-					estimateSizeAuto.parentElement?.classList.remove('has-value');
-				}
-				estimateSizeAutoValue = '';
-				
-				accuracyButtonsTeleop.forEach(btn => btn.classList.remove('selected'));
-				accuracyValueTeleop = '';
-
-				if (estimateSizeSelect) {
-					estimateSizeSelect.value = '';
-					estimateSizeSelect.parentElement?.classList.remove('has-value');
-				}
-
-				cycles = [];
-				if (cycleCountEl) cycleCountEl.textContent = 'Cycles: 0';
-				if (previousCycleCountEl) previousCycleCountEl.textContent = 'Cycle: 0';
-				
-				autoCycles = [];
-				if (autoCycleCountEl) autoCycleCountEl.textContent = 'Auto Cycles: 0';
-				if (previousAutoCycleCountEl) previousAutoCycleCountEl.textContent = 'Auto Cycle: 0';
-				
-				updatePreviousCycleDisplay();
-				updatePreviousAutoCycleDisplay();
-				formFields.forEach(field => field.classList.remove('has-value'));
+				// Reset form state (clears localStorage and resets all UI)
+				resetFormState();
 				
 				// Now try to submit all pending matches
 				if (submitButton) {
