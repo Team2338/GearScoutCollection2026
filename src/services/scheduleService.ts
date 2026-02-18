@@ -16,6 +16,7 @@ const CURRENT_GAME_YEAR = API.CURRENT_GAME_YEAR;
 let schedule: IMatchLineup[] | null = null;
 let scheduleIsLoading = false;
 let currentEventCode = '';
+let scheduleCompletedCallback: (() => void) | null = null;
 
 /**
  * Get current schedule
@@ -31,6 +32,14 @@ export function getSchedule(): IMatchLineup[] | null {
  */
 export function isScheduleLoading(): boolean {
 	return scheduleIsLoading;
+}
+
+/**
+ * Register callback to be called when schedule loading completes
+ * @param callback - Function to call when schedule load completes
+ */
+export function onScheduleLoadComplete(callback: () => void): void {
+	scheduleCompletedCallback = callback;
 }
 
 /**
@@ -63,6 +72,10 @@ async function fetchScheduleInternal(eventCode: string): Promise<void> {
 		showError('Failed to load event schedule. Manual team entry will be used.');
 	} finally {
 		scheduleIsLoading = false;
+		// Notify listeners that schedule loading is complete
+		if (scheduleCompletedCallback) {
+			scheduleCompletedCallback();
+		}
 	}
 }
 

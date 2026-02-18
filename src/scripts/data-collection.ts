@@ -8,7 +8,7 @@ import { showError, showSuccess } from '@/utils/notifications';
 import { showValidationError, clearValidationError } from '@/utils/validation';
 import { saveToLocalStorage, getFromLocalStorage, clearFormDataFromLocalStorage } from '@/utils/localStorage';
 import { saveMatchToStorage, submitAllPendingMatches, cleanInvalidMatches } from '@/services/matchStorage';
-import { fetchSchedule, getSchedule } from '@/services/scheduleService';
+import { fetchSchedule, getSchedule, isScheduleLoading, onScheduleLoadComplete } from '@/services/scheduleService';
 import { setupKeyboardNavigation } from '@/utils/keyboardNav';
 import { TIMING, STORAGE_KEYS } from '@/constants';
 
@@ -30,8 +30,8 @@ function updateTeamNumberUI(): void {
 
 	const schedule = getSchedule();
 	
-	if (schedule === null) {
-		// Schedule is still loading: show loader and hide inputs
+	if (schedule === null && isScheduleLoading()) {
+		// Schedule is actively loading: show loader and hide inputs
 		loader.style.display = 'block';
 		dropdownContainer.style.display = 'none';
 		manualContainer.style.display = 'none';
@@ -41,6 +41,7 @@ function updateTeamNumberUI(): void {
 
 	const matchNumber = matchNumberInput?.value;
 	if (!matchNumber || matchNumber.trim() === '') {
+		loader.style.display = 'none';
 		dropdownContainer.style.display = 'none';
 		manualContainer.style.display = 'none';
 		allianceSection.style.display = 'none';
@@ -48,7 +49,9 @@ function updateTeamNumberUI(): void {
 	}
 
 	const matchIndex = parseInt(matchNumber) - 1;
-	if (isNaN(matchIndex) || matchIndex < 0 || matchIndex >= schedule.length) {
+	if (isNaN(matchIndex) || schedule === null || matchIndex < 0 || matchIndex >= schedule.length) {
+		// Schedule not available or match number doesn't match schedule - use manual entry
+		loader.style.display = 'none';
 		dropdownContainer.style.display = 'none';
 		manualContainer.style.display = 'block';
 		allianceSection.style.display = 'flex';
@@ -236,6 +239,8 @@ export function initializeDataCollection(): void {
 	// Fetch schedule on load
 	if (eventCode) {
 		fetchSchedule(eventCode);
+		// Register callback to update UI when schedule finishes loading
+		onScheduleLoadComplete(() => updateTeamNumberUI());
 		// Give schedule time to load, then update UI
 		setTimeout(() => updateTeamNumberUI(), SCHEDULE_LOAD_DELAY_MS);
 	}
