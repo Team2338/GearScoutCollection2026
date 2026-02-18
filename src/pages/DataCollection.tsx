@@ -126,10 +126,10 @@ const DataCollection = () => {
               </div>
               <div className="trench-decrements">
                 <button type="button" className="trench-decrement left-decrement">
-                  ΓêÆ
+                -
                 </button>
                 <button type="button" className="trench-decrement right-decrement">
-                  ΓêÆ
+                    -
                 </button>
               </div>
             </div>
@@ -147,10 +147,10 @@ const DataCollection = () => {
               </div>
               <div className="trench-decrements">
                 <button type="button" className="trench-decrement left-bump-decrement">
-                  ΓêÆ
+                    -
                 </button>
                 <button type="button" className="trench-decrement right-bump-decrement">
-                  ΓêÆ
+                    -
                 </button>
               </div>
             </div>
