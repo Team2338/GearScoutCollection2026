@@ -40,6 +40,17 @@ function updateTeamNumberUI(): void {
 	}
 
 	const matchNumber = matchNumberInput?.value;
+	
+	// If schedule failed to load (is null but not loading), show manual entry mode regardless of match number
+	if (schedule === null) {
+		loader.style.display = 'none';
+		dropdownContainer.style.display = 'none';
+		manualContainer.style.display = 'block';
+		allianceSection.style.display = 'flex';
+		return;
+	}
+
+	// If no match number entered and schedule exists, hide fields (waiting for match number input)
 	if (!matchNumber || matchNumber.trim() === '') {
 		loader.style.display = 'none';
 		dropdownContainer.style.display = 'none';
@@ -49,8 +60,8 @@ function updateTeamNumberUI(): void {
 	}
 
 	const matchIndex = parseInt(matchNumber) - 1;
-	if (isNaN(matchIndex) || schedule === null || matchIndex < 0 || matchIndex >= schedule.length) {
-		// Schedule not available or match number doesn't match schedule - use manual entry
+	if (isNaN(matchIndex) || matchIndex < 0 || matchIndex >= schedule.length) {
+		// Match number doesn't match schedule - use manual entry
 		loader.style.display = 'none';
 		dropdownContainer.style.display = 'none';
 		manualContainer.style.display = 'block';
