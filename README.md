@@ -2,7 +2,7 @@
 
 A modern, accessible FRC (FIRST Robotics Competition) scouting application for collecting and submitting match data during competitions. Built with React, TypeScript, and offline-first architecture.
 
-**Access the application at: [www.gearitforward.com](https://www.gearitforward.com)**
+**Access the application at: [gearitforward.com](https://gearitforward.com)**
 
 ## 📋 Table of Contents
 
