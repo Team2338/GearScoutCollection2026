@@ -33,7 +33,7 @@ GearScout Collection 2026 is a Progressive Web App (PWA) designed to help FRC te
 
 ### Initial Setup
 
-When you first visit [www.gearitforward.com](https://www.gearitforward.com), you'll see the login page where you configure your scouting session:
+When you first visit [gearitforward.com](https://gearitforward.com), you'll see the login page where you configure your scouting session:
 
 #### Required Fields:
 
@@ -244,4 +244,4 @@ src/
 ---
 
 **Version:** 2026.0.1  
-**URL:** [www.gearitforward.com](https://www.gearitforward.com)
+**URL:** [gearitforward.com](https://gearitforward.com)
