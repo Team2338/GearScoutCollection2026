@@ -301,14 +301,6 @@ export function initializeDataCollection(): void {
 		
 		// Only validate alliance if NOT in dropdown mode
 		if (!hasAlliance && !isDropdownMode) {
-			if (showErrors && allianceSection) {
-				// Show error for alliance selection
-				const errorSpan = document.createElement('span');
-				errorSpan.className = 'field-error';
-				errorSpan.textContent = 'Alliance color is required';
-				allianceSection.appendChild(errorSpan);
-				allianceSection.classList.add('has-error');
-			}
 			isValid = false;
 		}
 
