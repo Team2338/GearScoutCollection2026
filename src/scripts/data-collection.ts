@@ -310,16 +310,6 @@ export function initializeDataCollection(): (() => void) | void {
 		const hasAlliance = selectedAlliance !== '';
 		
 		if (!hasAlliance) {
-			if (showErrors) {
-				const allianceSection = document.getElementById('alliance-section');
-				if (allianceSection && !allianceSection.querySelector('.field-error')) {
-					const errorSpan = document.createElement('span');
-					errorSpan.className = 'field-error';
-					errorSpan.textContent = 'Alliance color is required';
-					allianceSection.appendChild(errorSpan);
-					allianceSection.classList.add('has-error');
-				}
-			}
 			isValid = false;
 		}
 
