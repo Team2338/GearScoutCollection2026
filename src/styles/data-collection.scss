@@ -644,6 +644,18 @@ html {
 			flex-direction: column;
 			align-items: center;
 		    margin-top: 0;
+			position: relative;
+
+			.field-error {
+				position: absolute;
+				bottom: -20px;
+				left: 50%;
+				transform: translateX(-50%);
+				color: $errorRed;
+				font-size: 12px;
+				font-weight: 500;
+				white-space: nowrap;
+			}
 
 			.toggle-button-group {
 				display: flex;

@@ -12,7 +12,10 @@ const DataCollection = () => {
 
   useEffect(() => {
     // Initialize the data collection logic
-    initializeDataCollection();
+    const cleanup = initializeDataCollection();
+    
+    // Return cleanup function to prevent double initialization
+    return cleanup;
   }, []);
 
   const handleBack = useCallback(() => {
