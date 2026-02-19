@@ -154,7 +154,7 @@ function populateTeamDropdown(matchIndex: number): string | null {
  * Initialize the data collection form
  * @returns Cleanup function to remove event listeners
  */
-export function initializeDataCollection(): void {
+export function initializeDataCollection(): (() => void) | void {
 	console.log('[Data Collection] Initializing...');
 	
 	const form = document.getElementById('data-collection-form') as HTMLFormElement;
@@ -162,6 +162,18 @@ export function initializeDataCollection(): void {
 		console.error('[Data Collection] Form element not found');
 		return;
 	}
+	
+	// Prevent double initialization (React Strict Mode runs effects twice)
+	if (form.dataset.initialized === 'true') {
+		console.log('[Data Collection] Already initialized, skipping...');
+		return () => {
+			// Cleanup function even if already initialized
+			form.dataset.initialized = 'false';
+		};
+	}
+	
+	// Mark form as initialized
+	form.dataset.initialized = 'true';
 	
 	const submitButton = document.querySelector('.submit-button') as HTMLButtonElement;
 	const matchNumberInput = document.getElementById('match-number') as HTMLInputElement;
@@ -365,6 +377,7 @@ export function initializeDataCollection(): void {
 	// Team number dropdown handler
 	if (teamNumberDropdown) {
 		teamNumberDropdown.addEventListener('change', () => {
+			if (isResetting) return;
 			hasUserInteracted = true;
 			const selectedOption = teamNumberDropdown.options[teamNumberDropdown.selectedIndex];
 			const teamNumber = teamNumberDropdown.value;
@@ -393,6 +406,7 @@ export function initializeDataCollection(): void {
 			updateTeamNumberUI();
 		}
 		matchNumberInput.addEventListener('input', () => {
+			if (isResetting) return;
 			hasUserInteracted = true;
 			saveToLocalStorage('matchNumber', matchNumberInput.value);
 			clearValidationError('match-number');
@@ -408,6 +422,7 @@ export function initializeDataCollection(): void {
 			// Don't trigger input event during initialization - we'll validate at the end
 		}
 		teamNumberInput.addEventListener('input', () => {
+			if (isResetting) return;
 			hasUserInteracted = true;
 			saveToLocalStorage('scoutedTeamNumber', teamNumberInput.value);
 			clearValidationError('team-number');
@@ -436,6 +451,7 @@ export function initializeDataCollection(): void {
 
 	allianceButtons.forEach(button => {
 		button.addEventListener('click', () => {
+			if (isResetting) return;
 			hasUserInteracted = true;
 			// Remove selected class and update ARIA from all buttons
 			allianceButtons.forEach(btn => {
@@ -906,9 +922,14 @@ export function initializeDataCollection(): void {
 
 	// Submission state guard
 	let isSubmitting = false;
+	let isResetting = false;
 	
 	// Function to reset form state
 	function resetFormState() {
+		// Set resetting flag first to prevent any event handlers from triggering validation
+		isResetting = true;
+		hasUserInteracted = false;
+		
 		// Clear current form state including cycles and counters
 		clearFormDataFromLocalStorage();
 		localStorage.removeItem('cycles');
@@ -922,6 +943,17 @@ export function initializeDataCollection(): void {
 		
 		// Reset form UI
 		form.reset();
+		
+		// Clear validation errors immediately after resetting form
+		clearValidationError('match-number');
+		clearValidationError('team-number');
+		clearValidationError('team-number-dropdown');
+		const allianceSection = document.getElementById('alliance-section');
+		if (allianceSection) {
+			allianceSection.querySelector('.field-error')?.remove();
+			allianceSection.classList.remove('has-error');
+		}
+		
 		leftCounter = 0;
 		rightCounter = 0;
 		leftBumpCounter = 0;
@@ -970,6 +1002,14 @@ export function initializeDataCollection(): void {
 		updatePreviousCycleDisplay();
 		updatePreviousAutoCycleDisplay();
 		formFields.forEach(field => field.classList.remove('has-value'));
+		
+		// Update button state without showing errors
+		validateForm(false);
+		
+		// Clear resetting flag at the very end
+		setTimeout(() => {
+			isResetting = false;
+		}, 0);
 	}
 	
 	// Form submit handler
@@ -1081,4 +1121,11 @@ export function initializeDataCollection(): void {
 			}
 		}
 	});
-}}
+}
+
+	// Return cleanup function
+	return () => {
+		console.log('[Data Collection] Cleaning up...');
+		form.dataset.initialized = 'false';
+	};
+}
