@@ -12,8 +12,8 @@ A modern, accessible FRC (FIRST Robotics Competition) scouting application for c
   - [Initial Setup](#initial-setup)
   - [Data Collection](#data-collection)
   - [Offline Mode & Pending Matches](#offline-mode--pending-matches)
-- [Accessibility](#accessibility)
 - [For Developers](#for-developers)
+- [Support](#support)
 
 ## Overview
 
@@ -52,15 +52,14 @@ When you first visit [gearitforward.com](https://gearitforward.com), you'll see 
 
 Your team lead can provide a pre-configured link like:
 ```
-https://www.gearitforward.com/?team=2338&event=2026arc&secret=yourCode&tba=yourTBAKey
+https://gearitforward.com/?team=2338&event=2026arc&secret=yourCode&tba=yourTBAKey
 ```
 
-When you visit this link, all fields populate automatically and you'll be ready to scout immediately.
-
-#### Submitting Your Configuration:
-
-- Once all required fields are filled, the "GO" button becomes active
-- Click **GO** to proceed to the data collection page
+When you visit this link:
+- **All matching fields autofill** on the login page (team number, event code, secret code, and TBA code)
+- Any parameter can be included or omitted - only provided parameters autofill
+- If all required fields are autofilled, the **Submit** button is immediately active and ready to click
+- You can submit right away without manually entering anything, or fill in any missing required fields
 - Your settings are automatically saved in your browser
 
 ### Data Collection
@@ -167,36 +166,22 @@ The application works offline and stores data when internet is unavailable:
 - The pending count updates automatically every 5 seconds
 - Retry submissions when you have stable internet connection
 
-## Features
+## What Data is Collected
 
-### Core Capabilities:
-✅ Real-time match data collection  
-✅ Offline data storage with automatic retry  
-✅ The Blue Alliance integration for match schedules  
-✅ Alliance-based team selection  
-✅ Cycle-based teleop tracking  
-✅ Works on tablets, phones, and computers  
-✅ No installation required - just visit the website  
-✅ Auto-saves your configuration  
-✅ Visual pending match indicator and manual retry  
+GearScout Collection tracks the following information for each match:
 
-### Data Collected:
-- Match and team identification
-- Alliance color
-- Auto period performance (trench scoring, bump scoring, accuracy, estimated size, climb)
-- Teleop cycle data (multiple cycles with accuracy and estimated size each)
-- Teleop climb status
-- Timestamp for each match submission
+- **Match and team identification** - Match number, team number, alliance color
+- **Auto period** - Trench scoring, bump scoring, shooting accuracy, estimated game pieces, climb status
+- **Teleop period** - Multiple scoring cycles (accuracy and estimated size for each), climb status
+- **Metadata** - Timestamp of submission and scouter identifier
 
-### User Experience:
-- Intuitive button-based interface for fast data entry
-- Minimal typing required during matches
-- Visual feedback for all interactions
-- Auto-save of user preferences and login settings
-- Clear indicators for required vs optional fields
-- Responsive design optimized for scouting tablets
+All data is automatically saved locally if submission fails and retried when internet is available.
 
 ## For Developers
+
+### Overview
+
+GearScout Collection is built with modern web technologies and follows best practices for accessibility, type safety, and offline-first PWA development. The codebase is modular, well-tested, and designed to be easy to maintain and extend.
 
 ### Tech Stack
 
@@ -205,43 +190,79 @@ The application works offline and stores data when internet is unavailable:
 - **Routing:** React Router v6
 - **HTTP Client:** Axios
 - **Styling:** SCSS/Sass
-- **Hosting:** www.gearitforward.com
+- **Hosting:** gearitforward.com
 
-### Local Development
+### Getting Started
 
-If you want to contribute or run locally:
+To run the application locally:
 
-1. Clone the repository
+1. Clone the repository: `git clone <repo-url>`
 2. Install dependencies: `npm install`
-3. Start dev server: `npm run dev`
-4. Build for production: `npm run build`
+3. Start the development server: `npm run dev`
+4. Open `http://localhost:5173` in your browser
+
+### Build and Deployment
+
+- Build for production: `npm run build`
+- Output is in the `dist/` directory
+- The built app is a static PWA and can be deployed to any web host
 
 ### Project Structure
 
 ```
 src/
 ├── pages/
-│   ├── Login.tsx              # Login/configuration page
-│   └── DataCollection.tsx     # Main data collection page
-├── model/Models.ts            # TypeScript interfaces
+│   ├── Login.tsx              # Login/setup page
+│   └── DataCollection.tsx     # Main data collection interface
+├── components/
+│   ├── PendingMatchesIndicator.tsx  # Offline sync indicator
+│   ├── ErrorBoundary.tsx            # Error handling
+│   └── update-banner/               # PWA update notifications
+├── context/
+│   └── UserContext.tsx        # User authentication state
+├── hooks/
+│   └── usePendingMatches.ts   # Offline data management logic
+├── model/
+│   └── Models.ts              # TypeScript type definitions
 ├── services/
 │   ├── gearscout-services.ts  # API communication
-│   ├── matchStorage.ts        # Local storage for offline
-│   └── scheduleService.ts     # TBA integration
+│   ├── matchStorage.ts        # Offline data persistence
+│   └── scheduleService.ts     # The Blue Alliance integration
 ├── scripts/
-│   └── data-collection.ts     # Data collection logic
-└── utils/                     # Helper utilities
+│   ├── data-collection.ts     # Match data processing
+│   └── service-worker.ts      # PWA offline capability
+├── styles/                    # SCSS stylesheets
+└── utils/                     # Helper functions (validation, sanitization, etc.)
 ```
+
+### Key Design Patterns
+
+- **Offline-First:** Data is saved locally before submission and synced when online
+- **Type Safety:** Full TypeScript coverage for reliability
+- **Input Sanitization:** All user inputs are validated and sanitized
+- **Route Protection:** Authentication checks prevent unauthorized access
+- **Accessibility:** WCAG 2.1 compliant with keyboard navigation and ARIA labels
 
 ## Support
 
-**For questions or issues:**
-- Contact your team lead for event-specific setup
-- Check with your scouting coordinator for Secret Codes and TBA keys
+### For End Users
 
-**Analytics Dashboard:** [data.gearitforward.com](https://data.gearitforward.com/)
+- **Event Setup:** Contact your team lead for the pre-configured URL link
+- **Secret Codes:** Talk to your scouting coordinator to get the authentication code
+- **TBA Keys:** Ask your team lead for The Blue Alliance API key
+
+### For Developers
+
+- Review the TypeScript interfaces in [src/model/Models.ts](src/model/Models.ts)
+- Check the API service layer in [src/services/gearscout-services.ts](src/services/gearscout-services.ts)
+- Offline storage logic is in [src/services/matchStorage.ts](src/services/matchStorage.ts)
+
+### View Analytics
+
+Scouted match data can be analyzed at [data.gearitforward.com](https://data.gearitforward.com/)
 
 ---
 
 **Version:** 2026.0.1  
-**URL:** [gearitforward.com](https://gearitforward.com)
+**Live Application:** [gearitforward.com](https://gearitforward.com)  
+**Built with:** React 18 + TypeScript + Vite

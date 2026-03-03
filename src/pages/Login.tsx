@@ -31,39 +31,60 @@ const Login = () => {
   const { pendingCount, isRetrying, handleRetry } = usePendingMatches();
 
   useEffect(() => {
-    // Handle URL parameters
+    // Handle URL parameters and storage
     const initialTeamNumber = searchParams.get('team');
     const initialEventCode = searchParams.get('event');
     const initialSecretCode = searchParams.get('secret');
     const initialTbaCode = searchParams.get('tba');
 
-    if (initialTeamNumber || initialEventCode || initialSecretCode || initialTbaCode) {
-      if (initialTeamNumber) {
-        const teamNum = parseInt(initialTeamNumber, 10);
-        if (!isNaN(teamNum) && teamNum >= VALIDATION.MIN_TEAM_NUMBER && teamNum <= VALIDATION.MAX_TEAM_NUMBER) {
-          saveToLocalStorage(STORAGE_KEYS.TEAM_NUMBER, initialTeamNumber);
-        }
+    let hasUrlParams = false;
+
+    // Set team number from URL or storage
+    if (initialTeamNumber) {
+      const teamNum = parseInt(initialTeamNumber, 10);
+      if (!isNaN(teamNum) && teamNum >= VALIDATION.MIN_TEAM_NUMBER && teamNum <= VALIDATION.MAX_TEAM_NUMBER) {
+        setTeamNumber(initialTeamNumber);
+        saveToLocalStorage(STORAGE_KEYS.TEAM_NUMBER, initialTeamNumber);
+        hasUrlParams = true;
       }
-      if (initialEventCode && initialEventCode.length <= VALIDATION.MAX_EVENT_CODE_LENGTH) {
-        saveToLocalStorage(STORAGE_KEYS.EVENT_CODE, initialEventCode);
-      }
-      if (initialSecretCode && initialSecretCode.length <= VALIDATION.MAX_SECRET_CODE_LENGTH) {
-        saveToSessionStorage(STORAGE_KEYS.SECRET_CODE, initialSecretCode);
-      }
-      if (initialTbaCode && initialTbaCode.length <= VALIDATION.MAX_TBA_CODE_LENGTH) {
-        saveToSessionStorage(STORAGE_KEYS.TBA_CODE, initialTbaCode);
-      }
-      window.location.replace('/');
-      return;
+    } else {
+      setTeamNumber(localStorage.getItem(STORAGE_KEYS.TEAM_NUMBER) || '');
     }
 
-    // Load only team number and scouter name from storage
-    // Note: eventCode is saved to localStorage for app functionality but is not auto-filled
-    // per user requirements to keep the login form clean and require explicit entry each time
-    setTeamNumber(localStorage.getItem(STORAGE_KEYS.TEAM_NUMBER) || '');
+    // Set scouter name from storage
     setScouterName(localStorage.getItem(STORAGE_KEYS.SCOUTER_NAME) || '');
-    // Don't auto-fill eventCode, secretCode, or tbaCode
-    // Keep isInitialLoad true until user interacts with form
+
+    // Set event code from URL or storage
+    if (initialEventCode && initialEventCode.length <= VALIDATION.MAX_EVENT_CODE_LENGTH) {
+      setEventCode(initialEventCode);
+      saveToLocalStorage(STORAGE_KEYS.EVENT_CODE, initialEventCode);
+      hasUrlParams = true;
+    } else {
+      setEventCode(localStorage.getItem(STORAGE_KEYS.EVENT_CODE) || '');
+    }
+
+    // Set secret code from URL or storage
+    if (initialSecretCode && initialSecretCode.length <= VALIDATION.MAX_SECRET_CODE_LENGTH) {
+      setSecretCode(initialSecretCode);
+      saveToSessionStorage(STORAGE_KEYS.SECRET_CODE, initialSecretCode);
+      hasUrlParams = true;
+    } else {
+      setSecretCode(sessionStorage.getItem(STORAGE_KEYS.SECRET_CODE) || '');
+    }
+
+    // Set TBA code from URL or storage
+    if (initialTbaCode && initialTbaCode.length <= VALIDATION.MAX_TBA_CODE_LENGTH) {
+      setTbaCode(initialTbaCode);
+      saveToSessionStorage(STORAGE_KEYS.TBA_CODE, initialTbaCode);
+      hasUrlParams = true;
+    } else {
+      setTbaCode(sessionStorage.getItem(STORAGE_KEYS.TBA_CODE) || '');
+    }
+
+    // If we have URL parameters, allow form validation to run
+    if (hasUrlParams) {
+      setIsInitialLoad(false);
+    }
   }, [searchParams]);
 
   useEffect(() => {

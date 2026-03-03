@@ -206,10 +206,28 @@ export function initializeDataCollection(): (() => void) | void {
 	let accuracyValueTeleop = getFromLocalStorage('accuracyValueTeleop', '');
 	let estimateSizeAutoValue = getFromLocalStorage('estimateSizeAuto', '');
 	let estimateSizeValue = getFromLocalStorage('estimateSize', '');
-	let leftCounter = Number(getFromLocalStorage('leftCounter', 0));
-	let rightCounter = Number(getFromLocalStorage('rightCounter', 0));
-	let leftBumpCounter = Number(getFromLocalStorage('leftBumpCounter', 0));
-	let rightBumpCounter = Number(getFromLocalStorage('rightBumpCounter', 0));
+	
+	// Store counter state on form element to avoid closure scope issues
+	const getCounters = () => ({
+		leftCounter: Number(form.dataset.leftCounter || getFromLocalStorage('leftCounter', 0)),
+		rightCounter: Number(form.dataset.rightCounter || getFromLocalStorage('rightCounter', 0)),
+		leftBumpCounter: Number(form.dataset.leftBumpCounter || getFromLocalStorage('leftBumpCounter', 0)),
+		rightBumpCounter: Number(form.dataset.rightBumpCounter || getFromLocalStorage('rightBumpCounter', 0))
+	});
+	
+	const setCounters = (counters: { leftCounter: number; rightCounter: number; leftBumpCounter: number; rightBumpCounter: number }) => {
+		form.dataset.leftCounter = String(counters.leftCounter);
+		form.dataset.rightCounter = String(counters.rightCounter);
+		form.dataset.leftBumpCounter = String(counters.leftBumpCounter);
+		form.dataset.rightBumpCounter = String(counters.rightBumpCounter);
+	};
+	
+	// Initialize counters from localStorage
+	setCounters(getCounters());
+	let leftCounter = Number(form.dataset.leftCounter || 0);
+	let rightCounter = Number(form.dataset.rightCounter || 0);
+	let leftBumpCounter = Number(form.dataset.leftBumpCounter || 0);
+	let rightBumpCounter = Number(form.dataset.rightBumpCounter || 0);
 
 	// Cycle tracking arrays
 	let cycles: Array<{
@@ -555,17 +573,51 @@ export function initializeDataCollection(): (() => void) | void {
 	// Trench counter functionality
 	const leftCounterEl = document.getElementById('left-counter');
 	const rightCounterEl = document.getElementById('right-counter');
-	const leftTrenchBtn = document.querySelector('.left-trench');
-	const rightTrenchBtn = document.querySelector('.right-trench');
-	const leftDecrementBtn = document.querySelector('.left-decrement');
-	const rightDecrementBtn = document.querySelector('.right-decrement');
+	let leftTrenchBtn = document.querySelector('.left-trench') as HTMLButtonElement | null;
+	let rightTrenchBtn = document.querySelector('.right-trench') as HTMLButtonElement | null;
+	let leftDecrementBtn = document.querySelector('.left-decrement') as HTMLButtonElement | null;
+	let rightDecrementBtn = document.querySelector('.right-decrement') as HTMLButtonElement | null;
+
+	// Clone buttons to remove all previous event listeners
+	if (leftTrenchBtn) {
+		const newBtn = leftTrenchBtn.cloneNode(true) as HTMLButtonElement;
+		leftTrenchBtn.replaceWith(newBtn);
+		leftTrenchBtn = newBtn;
+	}
+	if (rightTrenchBtn) {
+		const newBtn = rightTrenchBtn.cloneNode(true) as HTMLButtonElement;
+		rightTrenchBtn.replaceWith(newBtn);
+		rightTrenchBtn = newBtn;
+	}
+	if (leftDecrementBtn) {
+		const newBtn = leftDecrementBtn.cloneNode(true) as HTMLButtonElement;
+		leftDecrementBtn.replaceWith(newBtn);
+		leftDecrementBtn = newBtn;
+	}
+	if (rightDecrementBtn) {
+		const newBtn = rightDecrementBtn.cloneNode(true) as HTMLButtonElement;
+		rightDecrementBtn.replaceWith(newBtn);
+		rightDecrementBtn = newBtn;
+	}
 
 	if (leftCounterEl) leftCounterEl.textContent = leftCounter.toString();
 	if (rightCounterEl) rightCounterEl.textContent = rightCounter.toString();
 
+	// Debounce handler to prevent rapid clicks from triggering multiple increments
+	let leftTrenchLastClick = 0;
+	let rightTrenchLastClick = 0;
+	let leftDecrementLastClick = 0;
+	let rightDecrementLastClick = 0;
+	const DEBOUNCE_MS = 100; // 100ms debounce
+
 	if (leftTrenchBtn) {
 		leftTrenchBtn.addEventListener('click', () => {
+			const now = Date.now();
+			if (now - leftTrenchLastClick < DEBOUNCE_MS) return;
+			leftTrenchLastClick = now;
+
 			leftCounter++;
+			form.dataset.leftCounter = String(leftCounter);
 			if (leftCounterEl) leftCounterEl.textContent = leftCounter.toString();
 			saveToLocalStorage('leftCounter', leftCounter);
 		});
@@ -573,7 +625,12 @@ export function initializeDataCollection(): (() => void) | void {
 
 	if (rightTrenchBtn) {
 		rightTrenchBtn.addEventListener('click', () => {
+			const now = Date.now();
+			if (now - rightTrenchLastClick < DEBOUNCE_MS) return;
+			rightTrenchLastClick = now;
+
 			rightCounter++;
+			form.dataset.rightCounter = String(rightCounter);
 			if (rightCounterEl) rightCounterEl.textContent = rightCounter.toString();
 			saveToLocalStorage('rightCounter', rightCounter);
 		});
@@ -581,8 +638,13 @@ export function initializeDataCollection(): (() => void) | void {
 
 	if (leftDecrementBtn) {
 		leftDecrementBtn.addEventListener('click', () => {
+			const now = Date.now();
+			if (now - leftDecrementLastClick < DEBOUNCE_MS) return;
+			leftDecrementLastClick = now;
+
 			if (leftCounter > 0) {
 				leftCounter--;
+				form.dataset.leftCounter = String(leftCounter);
 				if (leftCounterEl) leftCounterEl.textContent = leftCounter.toString();
 				saveToLocalStorage('leftCounter', leftCounter);
 			}
@@ -591,8 +653,13 @@ export function initializeDataCollection(): (() => void) | void {
 
 	if (rightDecrementBtn) {
 		rightDecrementBtn.addEventListener('click', () => {
+			const now = Date.now();
+			if (now - rightDecrementLastClick < DEBOUNCE_MS) return;
+			rightDecrementLastClick = now;
+
 			if (rightCounter > 0) {
 				rightCounter--;
+				form.dataset.rightCounter = String(rightCounter);
 				if (rightCounterEl) rightCounterEl.textContent = rightCounter.toString();
 				saveToLocalStorage('rightCounter', rightCounter);
 			}
@@ -602,17 +669,50 @@ export function initializeDataCollection(): (() => void) | void {
 	// Bump counter functionality
 	const leftBumpCounterEl = document.getElementById('left-bump-counter');
 	const rightBumpCounterEl = document.getElementById('right-bump-counter');
-	const leftBumpBtn = document.querySelector('.left-bump');
-	const rightBumpBtn = document.querySelector('.right-bump');
-	const leftBumpDecrementBtn = document.querySelector('.left-bump-decrement');
-	const rightBumpDecrementBtn = document.querySelector('.right-bump-decrement');
+	let leftBumpBtn = document.querySelector('.left-bump') as HTMLButtonElement | null;
+	let rightBumpBtn = document.querySelector('.right-bump') as HTMLButtonElement | null;
+	let leftBumpDecrementBtn = document.querySelector('.left-bump-decrement') as HTMLButtonElement | null;
+	let rightBumpDecrementBtn = document.querySelector('.right-bump-decrement') as HTMLButtonElement | null;
+
+	// Clone buttons to remove all previous event listeners
+	if (leftBumpBtn) {
+		const newBtn = leftBumpBtn.cloneNode(true) as HTMLButtonElement;
+		leftBumpBtn.replaceWith(newBtn);
+		leftBumpBtn = newBtn;
+	}
+	if (rightBumpBtn) {
+		const newBtn = rightBumpBtn.cloneNode(true) as HTMLButtonElement;
+		rightBumpBtn.replaceWith(newBtn);
+		rightBumpBtn = newBtn;
+	}
+	if (leftBumpDecrementBtn) {
+		const newBtn = leftBumpDecrementBtn.cloneNode(true) as HTMLButtonElement;
+		leftBumpDecrementBtn.replaceWith(newBtn);
+		leftBumpDecrementBtn = newBtn;
+	}
+	if (rightBumpDecrementBtn) {
+		const newBtn = rightBumpDecrementBtn.cloneNode(true) as HTMLButtonElement;
+		rightBumpDecrementBtn.replaceWith(newBtn);
+		rightBumpDecrementBtn = newBtn;
+	}
 
 	if (leftBumpCounterEl) leftBumpCounterEl.textContent = leftBumpCounter.toString();
 	if (rightBumpCounterEl) rightBumpCounterEl.textContent = rightBumpCounter.toString();
 
+	// Debounce handler to prevent rapid clicks from triggering multiple increments
+	let leftBumpLastClick = 0;
+	let rightBumpLastClick = 0;
+	let leftBumpDecrementLastClick = 0;
+	let rightBumpDecrementLastClick = 0;
+
 	if (leftBumpBtn) {
 		leftBumpBtn.addEventListener('click', () => {
+			const now = Date.now();
+			if (now - leftBumpLastClick < DEBOUNCE_MS) return;
+			leftBumpLastClick = now;
+
 			leftBumpCounter++;
+			form.dataset.leftBumpCounter = String(leftBumpCounter);
 			if (leftBumpCounterEl) leftBumpCounterEl.textContent = leftBumpCounter.toString();
 			saveToLocalStorage('leftBumpCounter', leftBumpCounter);
 		});
@@ -620,7 +720,12 @@ export function initializeDataCollection(): (() => void) | void {
 
 	if (rightBumpBtn) {
 		rightBumpBtn.addEventListener('click', () => {
+			const now = Date.now();
+			if (now - rightBumpLastClick < DEBOUNCE_MS) return;
+			rightBumpLastClick = now;
+
 			rightBumpCounter++;
+			form.dataset.rightBumpCounter = String(rightBumpCounter);
 			if (rightBumpCounterEl) rightBumpCounterEl.textContent = rightBumpCounter.toString();
 			saveToLocalStorage('rightBumpCounter', rightBumpCounter);
 		});
@@ -628,8 +733,13 @@ export function initializeDataCollection(): (() => void) | void {
 
 	if (leftBumpDecrementBtn) {
 		leftBumpDecrementBtn.addEventListener('click', () => {
+			const now = Date.now();
+			if (now - leftBumpDecrementLastClick < DEBOUNCE_MS) return;
+			leftBumpDecrementLastClick = now;
+
 			if (leftBumpCounter > 0) {
 				leftBumpCounter--;
+				form.dataset.leftBumpCounter = String(leftBumpCounter);
 				if (leftBumpCounterEl) leftBumpCounterEl.textContent = leftBumpCounter.toString();
 				saveToLocalStorage('leftBumpCounter', leftBumpCounter);
 			}
@@ -638,8 +748,13 @@ export function initializeDataCollection(): (() => void) | void {
 
 	if (rightBumpDecrementBtn) {
 		rightBumpDecrementBtn.addEventListener('click', () => {
+			const now = Date.now();
+			if (now - rightBumpDecrementLastClick < DEBOUNCE_MS) return;
+			rightBumpDecrementLastClick = now;
+
 			if (rightBumpCounter > 0) {
 				rightBumpCounter--;
+				form.dataset.rightBumpCounter = String(rightBumpCounter);
 				if (rightBumpCounterEl) rightBumpCounterEl.textContent = rightBumpCounter.toString();
 				saveToLocalStorage('rightBumpCounter', rightBumpCounter);
 			}
@@ -944,10 +1059,16 @@ export function initializeDataCollection(): (() => void) | void {
 			allianceSection.classList.remove('has-error');
 		}
 		
+		// Reset counters both locally and on the form dataset
 		leftCounter = 0;
 		rightCounter = 0;
 		leftBumpCounter = 0;
 		rightBumpCounter = 0;
+		form.dataset.leftCounter = '0';
+		form.dataset.rightCounter = '0';
+		form.dataset.leftBumpCounter = '0';
+		form.dataset.rightBumpCounter = '0';
+		
 		if (leftCounterEl) leftCounterEl.textContent = '0';
 		if (rightCounterEl) rightCounterEl.textContent = '0';
 		if (leftBumpCounterEl) leftBumpCounterEl.textContent = '0';
