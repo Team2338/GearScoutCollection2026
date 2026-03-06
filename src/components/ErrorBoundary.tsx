@@ -3,6 +3,7 @@
  */
 
 import { Component, ErrorInfo, ReactNode } from 'react';
+import './ErrorBoundary.scss';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -48,33 +49,16 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       }
 
       return (
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100vh',
-          padding: '20px',
-          textAlign: 'center',
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-        }}>
-          <h1 style={{ fontSize: '24px', marginBottom: '16px' }}>
+        <div className="error-boundary-container">
+          <h1 className="error-boundary-title">
             Something went wrong
           </h1>
-          <p style={{ color: '#666', marginBottom: '24px' }}>
+          <p className="error-boundary-message">
             {this.state.error?.message || 'An unexpected error occurred'}
           </p>
           <button
             onClick={this.handleReset}
-            style={{
-              padding: '10px 20px',
-              fontSize: '16px',
-              backgroundColor: '#007bff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-            }}
+            className="error-boundary-button"
           >
             Try Again
           </button>

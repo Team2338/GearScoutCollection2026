@@ -59,12 +59,12 @@ const DataCollection = () => {
             </div>
 
             <div id="team-number-container">
-              <div className="team-number-loader" id="schedule-loader" style={{ display: 'none' }}>
+              <div className="team-number-loader hidden" id="schedule-loader">
                 <div className="textbox-placeholder">Team Number</div>
                 <div className="spin-loader"></div>
               </div>
 
-              <div className="form-field" id="team-number-dropdown-container" style={{ display: 'none' }}>
+              <div className="form-field hidden" id="team-number-dropdown-container">
                 <select 
                   id="team-number-dropdown" 
                   name="teamNumberDropdown"
@@ -84,6 +84,8 @@ const DataCollection = () => {
                   autoComplete="off"
                   aria-label="Team number to scout"
                   aria-required="true"
+                  min={VALIDATION.MIN_TEAM_NUMBER}
+                  max={VALIDATION.MAX_TEAM_NUMBER}
                 />
                 <label htmlFor="team-number">Team Number</label>
               </div>
@@ -158,7 +160,7 @@ const DataCollection = () => {
               </div>
             </div>
 
-            <div id="previous-auto-cycle-section" className="previous-cycle-section" style={{ display: 'none', backgroundColor: '#001b2f', borderRadius: '8px'}}>
+            <div id="previous-auto-cycle-section" className="previous-cycle-section hidden">
               <h3 className="objective-label">Previous Auto Cycle</h3>
                 <div className="cycle-count" id="previous-auto-cycle-count">Auto Cycle: 0</div>
               
@@ -180,7 +182,7 @@ const DataCollection = () => {
                   <option value="11-25">11-25</option>
                   <option value="26+">26+</option>
                 </select>
-                <label htmlFor="estimate-size-previous-auto" style={{ backgroundColor: '#001b2f'}}>Estimate Size</label>
+                <label htmlFor="estimate-size-previous-auto">Estimate Size</label>
               </div>
             </div>
 
@@ -240,7 +242,7 @@ const DataCollection = () => {
 
             <h2 className="section-title">Teleop</h2>
 
-            <div id="previous-cycle-section" className="previous-cycle-section" style={{ display: 'none', backgroundColor: '#001b2f', borderRadius: '8px'}}>
+            <div id="previous-cycle-section" className="previous-cycle-section hidden">
               <h3 className="objective-label">Previous Cycle</h3>
                 <div className="cycle-count" id="previous-cycle-count">Cycle: 0</div>
               
@@ -262,7 +264,7 @@ const DataCollection = () => {
                   <option value="11-25">11-25</option>
                   <option value="26+">26+</option>
                 </select>
-                <label htmlFor="estimate-size-previous" style={{ backgroundColor: '#001b2f'}}>Estimate Size</label>
+                <label htmlFor="estimate-size-previous">Estimate Size</label>
               </div>
             </div>
 

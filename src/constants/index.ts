@@ -70,7 +70,7 @@ export const API = {
  * Validation constraints for form inputs
  */
 export const VALIDATION = {
-  MAX_TEAM_NUMBER: 99999,
+  MAX_TEAM_NUMBER: 9999999,
   MIN_TEAM_NUMBER: 0,
   MAX_MATCH_NUMBER: 999,
   MIN_MATCH_NUMBER: 0,
