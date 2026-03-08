@@ -157,7 +157,7 @@ function populateTeamDropdown(matchIndex: number): string | null {
 export function initializeDataCollection(): (() => void) | void {
 	console.log('[Data Collection] Initializing...');
 	
-	const form = document.getElementById('data-collection-form') as HTMLFormElement;
+	let form = document.getElementById('data-collection-form') as HTMLFormElement;
 	if (!form) {
 		console.error('[Data Collection] Form element not found');
 		return;
@@ -830,10 +830,10 @@ export function initializeDataCollection(): (() => void) | void {
 	// Auto Cycle button functionality
 	if (autoCycleButton && autoCycleCountEl && previousAutoCycleCountEl) {
 		autoCycleButton.addEventListener('click', () => {
-			if (accuracyValue === '' || accuracyValue === undefined || !estimateSizeAutoValue) {
-				showError('Please enter estimate size and accuracy before cycling.');
-				return;
-			}
+			// if (accuracyValue === '' || accuracyValue === undefined || !estimateSizeAutoValue) {
+			// 	showError('Please enter estimate size and accuracy before cycling.');
+			// 	return;
+			// }
 
 			autoCycles.push({
 				accuracy: accuracyValue ? parseInt(accuracyValue, 10) : 0,
@@ -864,10 +864,10 @@ export function initializeDataCollection(): (() => void) | void {
 	// Cycle button functionality
 	if (cycleButton && cycleCountEl && previousCycleCountEl) {
 		cycleButton.addEventListener('click', () => {
-			if (accuracyValueTeleop === '' || accuracyValueTeleop === undefined || !estimateSizeValue) {
-				showError('Please enter estimate size and accuracy before cycling.');
-				return;
-			}
+			// if (accuracyValueTeleop === '' || accuracyValueTeleop === undefined || !estimateSizeValue) {
+			// 	showError('Please enter estimate size and accuracy before cycling.');
+			// 	return;
+			// }
 
 			cycles.push({
 				accuracy: accuracyValueTeleop ? parseInt(accuracyValueTeleop, 10) : 0,
@@ -1081,7 +1081,7 @@ export function initializeDataCollection(): (() => void) | void {
 					leftBumpCounter,
 					rightBumpCounter,
 					leaveValue,
-					accuracyValue: accuracyValue ? parseInt(accuracyValue) : 0,
+					accuracyValue: 100,
 					estimateSizeAuto: estimateSizeAutoValue,
 					leaveValueTeleop,
 					accuracyValueTeleop: accuracyValueTeleop ? parseInt(accuracyValueTeleop) : 0,
@@ -1161,6 +1161,11 @@ export function initializeDataCollection(): (() => void) | void {
 			const newBtn = rightBumpDecrementBtn.cloneNode(true) as HTMLButtonElement;
 			rightBumpDecrementBtn.replaceWith(newBtn);
 			rightBumpDecrementBtn = newBtn;
+		}
+		if (form) {
+			const newForm = form.cloneNode(true) as HTMLFormElement;
+			form.replaceWith(newForm);
+			form = newForm;
 		}
 		form.dataset.initialized = 'false';
 	};
