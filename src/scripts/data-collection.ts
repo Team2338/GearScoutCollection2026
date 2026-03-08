@@ -512,6 +512,7 @@ export function initializeDataCollection(): (() => void) | void {
 			saveToLocalStorage('accuracyValue', accuracyValue);
 		});
 	});
+	saveToLocalStorage('accuracyValue', "100");
 
 	// Setup keyboard navigation for accuracy buttons
 	setupKeyboardNavigation('.accuracy-button-group', '.accuracy-button');
@@ -555,10 +556,10 @@ export function initializeDataCollection(): (() => void) | void {
 	// Trench counter functionality
 	const leftCounterEl = document.getElementById('left-counter');
 	const rightCounterEl = document.getElementById('right-counter');
-	const leftTrenchBtn = document.querySelector('.left-trench');
-	const rightTrenchBtn = document.querySelector('.right-trench');
-	const leftDecrementBtn = document.querySelector('.left-decrement');
-	const rightDecrementBtn = document.querySelector('.right-decrement');
+	let leftTrenchBtn = document.querySelector('.left-trench');
+	let rightTrenchBtn = document.querySelector('.right-trench');
+	let leftDecrementBtn = document.querySelector('.left-decrement');
+	let rightDecrementBtn = document.querySelector('.right-decrement');
 
 	if (leftCounterEl) leftCounterEl.textContent = leftCounter.toString();
 	if (rightCounterEl) rightCounterEl.textContent = rightCounter.toString();
@@ -602,10 +603,10 @@ export function initializeDataCollection(): (() => void) | void {
 	// Bump counter functionality
 	const leftBumpCounterEl = document.getElementById('left-bump-counter');
 	const rightBumpCounterEl = document.getElementById('right-bump-counter');
-	const leftBumpBtn = document.querySelector('.left-bump');
-	const rightBumpBtn = document.querySelector('.right-bump');
-	const leftBumpDecrementBtn = document.querySelector('.left-bump-decrement');
-	const rightBumpDecrementBtn = document.querySelector('.right-bump-decrement');
+	let leftBumpBtn = document.querySelector('.left-bump');
+	let rightBumpBtn = document.querySelector('.right-bump');
+	let leftBumpDecrementBtn = document.querySelector('.left-bump-decrement');
+	let rightBumpDecrementBtn = document.querySelector('.right-bump-decrement');
 
 	if (leftBumpCounterEl) leftBumpCounterEl.textContent = leftBumpCounter.toString();
 	if (rightBumpCounterEl) rightBumpCounterEl.textContent = rightBumpCounter.toString();
@@ -695,6 +696,8 @@ export function initializeDataCollection(): (() => void) | void {
 			saveToLocalStorage('accuracyValueTeleop', accuracyValueTeleop);
 		});
 	});
+
+	saveToLocalStorage("accuracyValueTeleop", 100);
 
 	// Previous Cycle Accuracy toggle functionality
 	const accuracyButtonsPrevious = document.querySelectorAll('.accuracy-button-group .accuracy-button-previous');
@@ -845,8 +848,8 @@ export function initializeDataCollection(): (() => void) | void {
 			updatePreviousAutoCycleDisplay();
 
 			accuracyButtons.forEach(btn => btn.classList.remove('selected'));
-			accuracyValue = '';
-			saveToLocalStorage('accuracyValue', '');
+			accuracyValue = '100';
+			// saveToLocalStorage('accuracyValue', '');
 			
 			if (estimateSizeAuto) {
 				estimateSizeAuto.value = '';
@@ -879,8 +882,8 @@ export function initializeDataCollection(): (() => void) | void {
 			updatePreviousCycleDisplay();
 
 			accuracyButtonsTeleop.forEach(btn => btn.classList.remove('selected'));
-			accuracyValueTeleop = '';
-			saveToLocalStorage('accuracyValueTeleop', '');
+			accuracyValueTeleop = '100';
+			// saveToLocalStorage('accuracyValueTeleop', '');
 			
 			if (estimateSizeSelect) {
 				estimateSizeSelect.value = '';
@@ -948,6 +951,7 @@ export function initializeDataCollection(): (() => void) | void {
 		rightCounter = 0;
 		leftBumpCounter = 0;
 		rightBumpCounter = 0;
+
 		if (leftCounterEl) leftCounterEl.textContent = '0';
 		if (rightCounterEl) rightCounterEl.textContent = '0';
 		if (leftBumpCounterEl) leftBumpCounterEl.textContent = '0';
@@ -963,8 +967,8 @@ export function initializeDataCollection(): (() => void) | void {
 		leaveToggleButtonsTeleop[0]?.classList.add('selected');
 		leaveValueTeleop = 'none';
 		
-		accuracyButtons.forEach(btn => btn.classList.remove('selected'));
-		accuracyValue = '';
+		// accuracyButtons.forEach(btn => btn.classList.remove('selected'));
+		accuracyValue = '100';
 
 		if (estimateSizeAuto) {
 			estimateSizeAuto.value = '';
@@ -972,8 +976,8 @@ export function initializeDataCollection(): (() => void) | void {
 		}
 		estimateSizeAutoValue = '';
 		
-		accuracyButtonsTeleop.forEach(btn => btn.classList.remove('selected'));
-		accuracyValueTeleop = '';
+		// accuracyButtonsTeleop.forEach(btn => btn.classList.remove('selected'));
+		accuracyValueTeleop = '100';
 
 		if (estimateSizeSelect) {
 			estimateSizeSelect.value = '';
@@ -1116,6 +1120,48 @@ export function initializeDataCollection(): (() => void) | void {
 	// Return cleanup function
 	return () => {
 		console.log('[Data Collection] Cleaning up...');
+		//Clone all buttons to remove event listeners
+		if (leftTrenchBtn) {
+			const newBtn = leftTrenchBtn.cloneNode(true) as HTMLButtonElement;
+			leftTrenchBtn.replaceWith(newBtn);
+			leftTrenchBtn = newBtn;
+		}
+		if (rightTrenchBtn) {
+			const newBtn = rightTrenchBtn.cloneNode(true) as HTMLButtonElement;
+			rightTrenchBtn.replaceWith(newBtn);
+			rightTrenchBtn = newBtn;
+		}
+		if (leftDecrementBtn) {
+			const newBtn = leftDecrementBtn.cloneNode(true) as HTMLButtonElement;
+			leftDecrementBtn.replaceWith(newBtn);
+			leftDecrementBtn = newBtn;
+		}
+		if (rightDecrementBtn) {
+			const newBtn = rightDecrementBtn.cloneNode(true) as HTMLButtonElement;
+			rightDecrementBtn.replaceWith(newBtn);
+			rightDecrementBtn = newBtn;
+		}
+
+		if (leftBumpBtn) {
+			const newBtn = leftBumpBtn.cloneNode(true) as HTMLButtonElement;
+			leftBumpBtn.replaceWith(newBtn);
+			leftBumpBtn = newBtn;
+		}
+		if (rightBumpBtn) {
+			const newBtn = rightBumpBtn.cloneNode(true) as HTMLButtonElement;
+			rightBumpBtn.replaceWith(newBtn);
+			rightBumpBtn = newBtn;
+		}
+		if (leftBumpDecrementBtn) {
+			const newBtn = leftBumpDecrementBtn.cloneNode(true) as HTMLButtonElement;
+			leftBumpDecrementBtn.replaceWith(newBtn);
+			leftBumpDecrementBtn = newBtn;
+		}
+		if (rightBumpDecrementBtn) {
+			const newBtn = rightBumpDecrementBtn.cloneNode(true) as HTMLButtonElement;
+			rightBumpDecrementBtn.replaceWith(newBtn);
+			rightBumpDecrementBtn = newBtn;
+		}
 		form.dataset.initialized = 'false';
 	};
 }
