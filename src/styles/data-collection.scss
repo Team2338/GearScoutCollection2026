@@ -368,6 +368,13 @@ html {
 					border-width: 2px;
 					padding: 15px 11px;
 				}
+
+				&:disabled {
+					opacity: 0.5;
+					cursor: not-allowed;
+					border-color: #666;
+					color: #999;
+				}
 			}
 
 			input {

@@ -8,6 +8,7 @@ import { STORAGE_KEYS, VALIDATION, API } from '@/constants';
 import { sanitizeInput, sanitizeEventCode } from '@/utils/sanitization';
 import { saveToLocalStorage } from '@/utils/localStorage';
 import { saveToSessionStorage } from '@/utils/sessionStorage';
+import { showSuccess, showError } from '@/utils/notifications';
 import gearscoutService from '@/services/gearscout-services';
 import '@/styles/login.scss';
 
@@ -81,10 +82,8 @@ const Login = () => {
       setTbaCode(sessionStorage.getItem(STORAGE_KEYS.TBA_CODE) || '');
     }
 
-    // If we have URL parameters, allow form validation to run
-    if (hasUrlParams) {
-      setIsInitialLoad(false);
-    }
+    // Mark initial load as complete - allow validation to proceed
+    setIsInitialLoad(false);
   }, [searchParams]);
 
   useEffect(() => {
@@ -143,9 +142,12 @@ const Login = () => {
       try {
         const response = await gearscoutService.getEventSchedule(API.CURRENT_GAME_YEAR, sanitizedTbaCode);
         saveToSessionStorage(STORAGE_KEYS.SCHEDULE, response.data);
+        showSuccess('Schedule loaded successfully!');
       } catch (error) {
         if (error instanceof Error) {
           console.error('[Login] Failed to get schedule:', error.message);
+          showError(`Failed to load schedule: ${error.message}`);
+          return;
         }
       }
     }
@@ -242,7 +244,15 @@ const Login = () => {
             maxLength={VALIDATION.MAX_TBA_CODE_LENGTH}
             autoComplete="off"
             value={tbaCode}
-            onChange={(e) => { setIsInitialLoad(false); setTbaCode(e.target.value); }}
+            onChange={(e) => { 
+              setIsInitialLoad(false); 
+              const newValue = e.target.value;
+              setTbaCode(newValue);
+              // Clear cached schedule if TBA code is erased
+              if (newValue.trim() === '') {
+                sessionStorage.removeItem(STORAGE_KEYS.SCHEDULE);
+              }
+            }}
             aria-label="The Blue Alliance API key (optional)"
             aria-describedby="tba-helper-text"
           />

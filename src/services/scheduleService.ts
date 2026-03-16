@@ -43,6 +43,24 @@ export function onScheduleLoadComplete(callback: () => void): void {
 }
 
 /**
+ * Directly set the schedule (useful for pre-loaded data)
+ * @param scheduleData - The schedule data to set
+ * @param eventCode - The event code for this schedule
+ */
+export function setSchedule(scheduleData: IMatchLineup[], eventCode: string): void {
+	schedule = scheduleData;
+	currentEventCode = eventCode;
+}
+
+/**
+ * Clear the cached schedule
+ */
+export function clearSchedule(): void {
+	schedule = null;
+	currentEventCode = '';
+}
+
+/**
  * Fetch schedule from API (internal implementation)
  * @param eventCode - The event code to fetch schedule for
  */

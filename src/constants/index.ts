@@ -50,10 +50,8 @@ export const FORM_DATA_KEYS = [
   'rightCounter',
   'leftBumpCounter',
   'rightBumpCounter',
-  'accuracyValue',
   'estimateSizeAuto',
   'leaveValueTeleop',
-  'accuracyValueTeleop',
   'cycles',
   'estimateSize',
 ] as const;
