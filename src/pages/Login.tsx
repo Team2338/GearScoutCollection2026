@@ -19,7 +19,7 @@ const Login = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { setUser } = useUser();
-  const version = import.meta.env.VITE_APP_VERSION || '2026.0.1';
+  const version = import.meta.env.VITE_APP_VERSION || '2026.2';
 
   const [teamNumber, setTeamNumber] = useState('');
   const [scouterName, setScouterName] = useState('');
