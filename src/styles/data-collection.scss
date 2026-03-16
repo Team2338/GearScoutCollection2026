@@ -149,6 +149,7 @@ html {
 
 			&:disabled {
 				cursor: not-allowed;
+				opacity: 0.5;
 			}
 
 			@media (max-width: 768px) {
@@ -240,6 +241,10 @@ html {
 			margin-bottom: 30px;
 			width: 12em;
 
+			&.hidden {
+				display: none;
+			}
+
 			.textbox-placeholder {
 				display: flex;
 				align-items: center;
@@ -277,6 +282,10 @@ html {
 			position: relative;
 			width: 12em;
 			max-width: 100%;
+
+			&.hidden {
+				display: none;
+			}
 
 			&.has-error {
 				input,
@@ -358,6 +367,13 @@ html {
 					border-color: $orange;
 					border-width: 2px;
 					padding: 15px 11px;
+				}
+
+				&:disabled {
+					opacity: 0.5;
+					cursor: not-allowed;
+					border-color: #666;
+					color: #999;
 				}
 			}
 
@@ -464,6 +480,12 @@ html {
 			width: 100%;
 			width: 270px;
 			margin-top: 30px;
+			background-color: #001b2f;
+			border-radius: 8px;
+
+			&.hidden {
+				display: none;
+			}
 			
 			.sub-label {
 				text-align: center;
@@ -483,6 +505,10 @@ html {
 				
 				select {
 					margin: 0 auto;
+				}
+
+				label {
+					background-color: #001b2f;
 				}
 			}
 		}

@@ -7,9 +7,10 @@ import { AllianceColor, isValidUser } from '@/model/Models';
 import { showError, showSuccess } from '@/utils/notifications';
 import { showValidationError, clearValidationError } from '@/utils/validation';
 import { saveToLocalStorage, getFromLocalStorage, clearFormDataFromLocalStorage } from '@/utils/localStorage';
+import { getFromSessionStorage } from '@/utils/sessionStorage';
+import { getJsonFromSessionStorage } from '@/utils/sessionStorage';
 import { saveMatchToStorage, submitAllPendingMatches, cleanInvalidMatches } from '@/services/matchStorage';
-import { fetchSchedule, getSchedule, isScheduleLoading, onScheduleLoadComplete } from '@/services/scheduleService';
-import { setupKeyboardNavigation } from '@/utils/keyboardNav';
+import { fetchSchedule, getSchedule, isScheduleLoading, onScheduleLoadComplete, setSchedule, clearSchedule } from '@/services/scheduleService';
 import { TIMING, STORAGE_KEYS } from '@/constants';
 
 // Constants
@@ -25,17 +26,18 @@ function updateTeamNumberUI(): void {
 	const manualContainer = document.getElementById('team-number-manual-container');
 	const allianceSection = document.getElementById('alliance-section');
 	const matchNumberInput = document.getElementById('match-number') as HTMLInputElement;
+	const dropdown = document.getElementById('team-number-dropdown') as HTMLSelectElement;
 
-	if (!loader || !dropdownContainer || !manualContainer || !allianceSection) return;
+	if (!loader || !dropdownContainer || !manualContainer || !allianceSection || !dropdown) return;
 
 	const schedule = getSchedule();
 	
 	if (schedule === null && isScheduleLoading()) {
 		// Schedule is actively loading: show loader and hide inputs
-		loader.style.display = 'block';
-		dropdownContainer.style.display = 'none';
-		manualContainer.style.display = 'none';
-		allianceSection.style.display = 'none';
+		loader.classList.remove('hidden');
+		dropdownContainer.classList.add('hidden');
+		manualContainer.classList.add('hidden');
+		allianceSection.classList.add('hidden');
 		return;
 	}
 
@@ -43,37 +45,42 @@ function updateTeamNumberUI(): void {
 	
 	// If schedule failed to load (is null but not loading), show manual entry mode regardless of match number
 	if (schedule === null) {
-		loader.style.display = 'none';
-		dropdownContainer.style.display = 'none';
-		manualContainer.style.display = 'block';
-		allianceSection.style.display = 'flex';
+		loader.classList.add('hidden');
+		dropdownContainer.classList.add('hidden');
+		manualContainer.classList.remove('hidden');
+		allianceSection.classList.remove('hidden');
 		return;
 	}
 
-	// If no match number entered and schedule exists, hide fields (waiting for match number input)
+	// If no match number entered and schedule exists, show dropdown as disabled/grayed out
 	if (!matchNumber || matchNumber.trim() === '') {
-		loader.style.display = 'none';
-		dropdownContainer.style.display = 'none';
-		manualContainer.style.display = 'none';
-		allianceSection.style.display = 'none';
+		loader.classList.add('hidden');
+		dropdownContainer.classList.remove('hidden');
+		manualContainer.classList.add('hidden');
+		allianceSection.classList.add('hidden');
+		// Disable dropdown when no match number
+		dropdown.disabled = true;
+		dropdown.value = '';
 		return;
 	}
 
 	const matchIndex = parseInt(matchNumber) - 1;
 	if (isNaN(matchIndex) || matchIndex < 0 || matchIndex >= schedule.length) {
 		// Match number doesn't match schedule - use manual entry
-		loader.style.display = 'none';
-		dropdownContainer.style.display = 'none';
-		manualContainer.style.display = 'block';
-		allianceSection.style.display = 'flex';
+		loader.classList.add('hidden');
+		dropdownContainer.classList.add('hidden');
+		manualContainer.classList.remove('hidden');
+		allianceSection.classList.remove('hidden');
 		return;
 	}
 
-	// Valid match number with schedule - show dropdown
+	// Valid match number with schedule - show dropdown as enabled
 	const restoredTeamNumber = populateTeamDropdown(matchIndex);
-	dropdownContainer.style.display = 'block';
-	manualContainer.style.display = 'none';
-	allianceSection.style.display = 'none';
+	dropdownContainer.classList.remove('hidden');
+	manualContainer.classList.add('hidden');
+	allianceSection.classList.add('hidden');
+	// Enable dropdown when valid match number
+	dropdown.disabled = false;
 	
 	// If team was restored, set the alliance
 	if (restoredTeamNumber) {
@@ -202,8 +209,6 @@ export function initializeDataCollection(): (() => void) | void {
 	let hasUserInteracted = false;
 	let leaveValue = getFromLocalStorage('leaveValue', 'no');
 	let leaveValueTeleop = getFromLocalStorage('leaveValueTeleop', 'none');
-	let accuracyValue = getFromLocalStorage('accuracyValue', '');
-	let accuracyValueTeleop = getFromLocalStorage('accuracyValueTeleop', '');
 	let estimateSizeAutoValue = getFromLocalStorage('estimateSizeAuto', '');
 	let estimateSizeValue = getFromLocalStorage('estimateSize', '');
 	
@@ -231,12 +236,10 @@ export function initializeDataCollection(): (() => void) | void {
 
 	// Cycle tracking arrays
 	let cycles: Array<{
-		accuracy: number;
 		estimateSize: string;
 	}> = [];
 
 	let autoCycles: Array<{
-		accuracy: number;
 		estimateSize: string;
 	}> = [];
 
@@ -272,18 +275,31 @@ export function initializeDataCollection(): (() => void) | void {
 		return;
 	}
 
-	const eventCode = userData.eventCode;
-
 	// Clean invalid matches on load (just log, don't show error toast)
 	cleanInvalidMatches(userData);
 
-	// Fetch schedule on load
-	if (eventCode) {
-		fetchSchedule(eventCode);
-		// Register callback to update UI when schedule finishes loading
-		onScheduleLoadComplete(() => updateTeamNumberUI());
-		// Give schedule time to load, then update UI
-		setTimeout(() => updateTeamNumberUI(), SCHEDULE_LOAD_DELAY_MS);
+	// Initialize schedule from cache or fetch if needed
+	const tbaCode = getFromSessionStorage(STORAGE_KEYS.TBA_CODE);
+	if (tbaCode) {
+		// Try to use schedule cached from login first
+		const cachedSchedule = getJsonFromSessionStorage<any[]>(STORAGE_KEYS.SCHEDULE);
+		if (cachedSchedule && Array.isArray(cachedSchedule) && cachedSchedule.length > 0) {
+			// Use cached schedule from login
+			setSchedule(cachedSchedule, tbaCode);
+			// Update UI immediately
+			setTimeout(() => updateTeamNumberUI(), 50);
+		} else {
+			// No cached schedule, fetch from API
+			fetchSchedule(tbaCode);
+			// Register callback to update UI when schedule finishes loading
+			onScheduleLoadComplete(() => updateTeamNumberUI());
+			// Give schedule time to load, then update UI
+			setTimeout(() => updateTeamNumberUI(), SCHEDULE_LOAD_DELAY_MS);
+		}
+	} else {
+		// No TBA code - clear any cached schedule
+		clearSchedule();
+		setTimeout(() => updateTeamNumberUI(), 50);
 	}
 
 	// Function to validate form and update submit button state
@@ -397,11 +413,22 @@ export function initializeDataCollection(): (() => void) | void {
 				selectedAlliance = selectedOption.dataset.alliance;
 				saveToLocalStorage('scoutedTeamNumber', teamNumber);
 				saveToLocalStorage('allianceColor', selectedAlliance);
+				
+				// Update alliance button UI to match selected team
+				allianceButtons.forEach(btn => {
+					if (btn.getAttribute('data-value') === selectedAlliance) {
+						btn.classList.add('selected');
+						btn.setAttribute('aria-checked', 'true');
+					} else {
+						btn.classList.remove('selected');
+						btn.setAttribute('aria-checked', 'false');
+					}
+				});
 			} else {
 				selectedAlliance = '';
 			}
 			
-			validateForm();
+			validateForm(false);
 		});
 	}
 
@@ -419,7 +446,7 @@ export function initializeDataCollection(): (() => void) | void {
 			saveToLocalStorage('matchNumber', matchNumberInput.value);
 			clearValidationError('match-number');
 			updateTeamNumberUI();
-			validateForm();
+			validateForm(false);
 		});
 	}
 
@@ -434,7 +461,7 @@ export function initializeDataCollection(): (() => void) | void {
 			hasUserInteracted = true;
 			saveToLocalStorage('scoutedTeamNumber', teamNumberInput.value);
 			clearValidationError('team-number');
-			validateForm();
+			validateForm(false);
 		});
 	}
 
@@ -477,7 +504,7 @@ export function initializeDataCollection(): (() => void) | void {
 			saveToLocalStorage('allianceColor', selectedAlliance);
 			
 			// Validate form after alliance selection
-			validateForm();
+			validateForm(false);
 		});
 	});
 
@@ -506,33 +533,7 @@ export function initializeDataCollection(): (() => void) | void {
 		});
 	});
 
-	// Accuracy toggle functionality (Auto)
-	const accuracyButtons = document.querySelectorAll('.accuracy-button-group .accuracy-button');
-	accuracyButtons.forEach(button => {
-		if (button.getAttribute('data-value') === accuracyValue) {
-			button.classList.add('selected');
-			button.setAttribute('aria-pressed', 'true');
-		} else {
-			button.setAttribute('aria-pressed', 'false');
-		}
-	});
 
-	accuracyButtons.forEach(button => {
-		button.addEventListener('click', () => {
-			accuracyButtons.forEach(btn => {
-				btn.classList.remove('selected');
-				btn.setAttribute('aria-pressed', 'false');
-			});
-			button.classList.add('selected');
-			button.setAttribute('aria-pressed', 'true');
-			const dataValue = button.getAttribute('data-value');
-			accuracyValue = dataValue ?? '0';
-			saveToLocalStorage('accuracyValue', accuracyValue);
-		});
-	});
-
-	// Setup keyboard navigation for accuracy buttons
-	setupKeyboardNavigation('.accuracy-button-group', '.accuracy-button');
 
 	// Auto estimate size functionality
 	if (estimateSizeAuto) {
@@ -786,51 +787,7 @@ export function initializeDataCollection(): (() => void) | void {
 		});
 	});
 
-	// Teleop Accuracy toggle functionality
-	const accuracyButtonsTeleop = document.querySelectorAll('.accuracy-button-group .accuracy-button-teleop');
-	accuracyButtonsTeleop.forEach(button => {
-		if (button.getAttribute('data-value') === accuracyValueTeleop) {
-			button.classList.add('selected');
-			button.setAttribute('aria-pressed', 'true');
-		} else {
-			button.setAttribute('aria-pressed', 'false');
-		}
-	});
 
-	accuracyButtonsTeleop.forEach(button => {
-		button.addEventListener('click', () => {
-			accuracyButtonsTeleop.forEach(btn => {
-				btn.classList.remove('selected');
-				btn.setAttribute('aria-pressed', 'false');
-			});
-			button.classList.add('selected');
-			button.setAttribute('aria-pressed', 'true');
-			const dataValue = button.getAttribute('data-value');
-			accuracyValueTeleop = dataValue ?? '0';
-			saveToLocalStorage('accuracyValueTeleop', accuracyValueTeleop);
-		});
-	});
-
-	// Previous Cycle Accuracy toggle functionality
-	const accuracyButtonsPrevious = document.querySelectorAll('.accuracy-button-group .accuracy-button-previous');
-
-	accuracyButtonsPrevious.forEach(button => {
-		button.addEventListener('click', () => {
-			if (cycles.length === 0) return;
-			
-			accuracyButtonsPrevious.forEach(btn => {
-				btn.classList.remove('selected');
-				btn.setAttribute('aria-pressed', 'false');
-			});
-			button.classList.add('selected');
-			button.setAttribute('aria-pressed', 'true');
-			const dataValue = button.getAttribute('data-value');
-			const newValue = dataValue ?? '0';
-			
-			cycles[cycles.length - 1].accuracy = parseInt(newValue, 10);
-			saveToLocalStorage('cycles', JSON.stringify(cycles));
-		});
-	});
 
 	// Previous Cycle Estimate Size functionality
 	if (estimateSizePrevious) {
@@ -841,27 +798,6 @@ export function initializeDataCollection(): (() => void) | void {
 			saveToLocalStorage('cycles', JSON.stringify(cycles));
 		});
 	}
-
-	// Previous Auto Cycle Accuracy toggle functionality
-	const accuracyButtonsPreviousAuto = document.querySelectorAll('.accuracy-button-group .accuracy-button-previous-auto');
-
-	accuracyButtonsPreviousAuto.forEach(button => {
-		button.addEventListener('click', () => {
-			if (autoCycles.length === 0) return;
-			
-			accuracyButtonsPreviousAuto.forEach(btn => {
-				btn.classList.remove('selected');
-				btn.setAttribute('aria-pressed', 'false');
-			});
-			button.classList.add('selected');
-			button.setAttribute('aria-pressed', 'true');
-			const dataValue = button.getAttribute('data-value');
-			const newValue = dataValue ?? '0';
-			
-			autoCycles[autoCycles.length - 1].accuracy = parseInt(newValue, 10);
-			saveToLocalStorage('autoCycles', JSON.stringify(autoCycles));
-		});
-	});
 
 	// Previous Auto Cycle Estimate Size functionality
 	if (estimateSizePreviousAuto) {
@@ -880,12 +816,6 @@ export function initializeDataCollection(): (() => void) | void {
 			previousCycleSection.style.display = 'block';
 			
 			const lastCycle = cycles[cycles.length - 1];
-			accuracyButtonsPrevious.forEach(btn => {
-				btn.classList.remove('selected');
-				if (btn.getAttribute('data-value') === String(lastCycle.accuracy)) {
-					btn.classList.add('selected');
-				}
-			});
 			
 			if (estimateSizePrevious) {
 				estimateSizePrevious.value = lastCycle.estimateSize || '';
@@ -907,12 +837,6 @@ export function initializeDataCollection(): (() => void) | void {
 			previousAutoCycleSection.style.display = 'block';
 			
 			const lastCycle = autoCycles[autoCycles.length - 1];
-			accuracyButtonsPreviousAuto.forEach(btn => {
-				btn.classList.remove('selected');
-				if (btn.getAttribute('data-value') === String(lastCycle.accuracy)) {
-					btn.classList.add('selected');
-				}
-			});
 			
 			if (estimateSizePreviousAuto) {
 				estimateSizePreviousAuto.value = lastCycle.estimateSize || '';
@@ -942,13 +866,12 @@ export function initializeDataCollection(): (() => void) | void {
 	// Auto Cycle button functionality
 	if (autoCycleButton && autoCycleCountEl && previousAutoCycleCountEl) {
 		autoCycleButton.addEventListener('click', () => {
-			if (accuracyValue === '' || accuracyValue === undefined || !estimateSizeAutoValue) {
-				showError('Please enter estimate size and accuracy before cycling.');
+			if (!estimateSizeAutoValue) {
+				showError('Please enter estimate size before cycling.');
 				return;
 			}
 
 			autoCycles.push({
-				accuracy: accuracyValue ? parseInt(accuracyValue, 10) : 0,
 				estimateSize: estimateSizeAutoValue
 			});
 
@@ -958,10 +881,6 @@ export function initializeDataCollection(): (() => void) | void {
 			previousAutoCycleCountEl.textContent = `Auto Cycle: ${autoCycles.length}`;
 
 			updatePreviousAutoCycleDisplay();
-
-			accuracyButtons.forEach(btn => btn.classList.remove('selected'));
-			accuracyValue = '';
-			saveToLocalStorage('accuracyValue', '');
 			
 			if (estimateSizeAuto) {
 				estimateSizeAuto.value = '';
@@ -976,13 +895,12 @@ export function initializeDataCollection(): (() => void) | void {
 	// Cycle button functionality
 	if (cycleButton && cycleCountEl && previousCycleCountEl) {
 		cycleButton.addEventListener('click', () => {
-			if (accuracyValueTeleop === '' || accuracyValueTeleop === undefined || !estimateSizeValue) {
-				showError('Please enter estimate size and accuracy before cycling.');
+			if (!estimateSizeValue) {
+				showError('Please enter estimate size before cycling.');
 				return;
 			}
 
 			cycles.push({
-				accuracy: accuracyValueTeleop ? parseInt(accuracyValueTeleop, 10) : 0,
 				estimateSize: estimateSizeValue
 			});
 
@@ -992,10 +910,6 @@ export function initializeDataCollection(): (() => void) | void {
 			previousCycleCountEl.textContent = `Cycle: ${cycles.length}`;
 
 			updatePreviousCycleDisplay();
-
-			accuracyButtonsTeleop.forEach(btn => btn.classList.remove('selected'));
-			accuracyValueTeleop = '';
-			saveToLocalStorage('accuracyValueTeleop', '');
 			
 			if (estimateSizeSelect) {
 				estimateSizeSelect.value = '';
@@ -1084,17 +998,11 @@ export function initializeDataCollection(): (() => void) | void {
 		leaveToggleButtonsTeleop[0]?.classList.add('selected');
 		leaveValueTeleop = 'none';
 		
-		accuracyButtons.forEach(btn => btn.classList.remove('selected'));
-		accuracyValue = '';
-
 		if (estimateSizeAuto) {
 			estimateSizeAuto.value = '';
 			estimateSizeAuto.parentElement?.classList.remove('has-value');
 		}
 		estimateSizeAutoValue = '';
-		
-		accuracyButtonsTeleop.forEach(btn => btn.classList.remove('selected'));
-		accuracyValueTeleop = '';
 
 		if (estimateSizeSelect) {
 			estimateSizeSelect.value = '';
@@ -1117,6 +1025,9 @@ export function initializeDataCollection(): (() => void) | void {
 		// Update button state without showing errors
 		validateForm(false);
 		
+		// Regray the team number dropdown after reset
+		updateTeamNumberUI();
+		
 		// Clear resetting flag at the very end
 		setTimeout(() => {
 			isResetting = false;
@@ -1133,8 +1044,7 @@ export function initializeDataCollection(): (() => void) | void {
 				return;
 			}
 			
-			if (!validateForm()) {
-				showError('Please fill in all required fields');
+			if (!validateForm(false)) {
 				return;
 			}
 
@@ -1198,10 +1108,8 @@ export function initializeDataCollection(): (() => void) | void {
 					leftBumpCounter,
 					rightBumpCounter,
 					leaveValue,
-					accuracyValue: accuracyValue ? parseInt(accuracyValue) : 0,
 					estimateSizeAuto: estimateSizeAutoValue,
 					leaveValueTeleop,
-					accuracyValueTeleop: accuracyValueTeleop ? parseInt(accuracyValueTeleop) : 0,
 					autoCycles: [...autoCycles], // Deep copy
 					cycles: [...cycles] // Deep copy
 				});
@@ -1219,20 +1127,20 @@ export function initializeDataCollection(): (() => void) | void {
 				await submitAllPendingMatches(userData);
 		
 			} catch (error) {
-			if (error instanceof Error) {
-				console.warn('[Data Collection] Error processing match data:', error.message);
-			}
-			showError('Failed to save match data. Please try again.');
+				if (error instanceof Error) {
+					console.warn('[Data Collection] Error processing match data:', error.message);
+				}
+				showError('Failed to save match data. Please try again.');
 			} finally {
-			isSubmitting = false;
-			
-			if (submitButton) {
-				submitButton.textContent = 'Submit';
-				submitButton.disabled = true;
+				isSubmitting = false;
+				
+				if (submitButton) {
+					submitButton.textContent = 'Submit';
+					submitButton.disabled = true;
+				}
 			}
-		}
-	});
-}
+		});
+	}
 
 	// Return cleanup function
 	return () => {

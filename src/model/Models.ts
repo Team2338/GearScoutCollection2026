@@ -104,16 +104,12 @@ export interface IStoredMatch {
 	leftBumpCounter: number;
 	rightBumpCounter: number;
 	leaveValue: string;
-	accuracyValue: number;
 	estimateSizeAuto: string;
 	leaveValueTeleop: string;
-	accuracyValueTeleop: number;
 	autoCycles: Array<{
-		accuracy: number;
 		estimateSize: string;
 	}>;
 	cycles: Array<{
-		accuracy: number;
 		estimateSize: string;
 	}>;
 	timestamp: number;

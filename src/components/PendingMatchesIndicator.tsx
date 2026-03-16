@@ -34,7 +34,6 @@ export const PendingMatchesIndicator = ({
         className="retry-submit-button"
         onClick={onRetry}
         disabled={isRetrying}
-        style={{ opacity: isRetrying ? 0.5 : 1 }}
         aria-label="Retry submitting pending matches"
       >
         ↻

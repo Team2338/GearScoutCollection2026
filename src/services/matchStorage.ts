@@ -56,12 +56,10 @@ export interface MatchDataToSave {
 	leftBumpCounter: number;
 	rightBumpCounter: number;
 	leaveValue: string;
-	accuracyValue: number;
 	estimateSizeAuto: string;
 	leaveValueTeleop: string;
-	accuracyValueTeleop: number;
-	autoCycles: Array<{ accuracy: number; estimateSize: string }>;
-	cycles: Array<{ accuracy: number; estimateSize: string }>;
+	autoCycles: Array<{ estimateSize: string }>;
+	cycles: Array<{ estimateSize: string }>;
 }
 
 /**
@@ -216,22 +214,7 @@ function convertStoredMatchToAPIFormat(userData: IUser, storedMatch: IStoredMatc
 	const autoClimbCount = storedMatch.leaveValue === 'yes' ? 15 : 0;
 	objectives.push({ gamemode: Gamemode.AUTO, objective: 'CLIMB_2026', count: autoClimbCount });
 
-	// Auto accuracy - include cycles
-	let totalAutoAccuracy = 0;
-	let autoAccuracyCount = 0;
-
-	if (storedMatch.autoCycles && storedMatch.autoCycles.length > 0) {
-		totalAutoAccuracy = storedMatch.autoCycles.reduce((sum, cycle) => sum + cycle.accuracy, 0);
-		autoAccuracyCount = storedMatch.autoCycles.filter(cycle => cycle.accuracy > 0).length;
-	}
-	
-	if (storedMatch.accuracyValue) {
-		totalAutoAccuracy += storedMatch.accuracyValue;
-		autoAccuracyCount++;
-	}
-
-	const avgAutoAccuracy = autoAccuracyCount > 0 ? Math.round(totalAutoAccuracy / autoAccuracyCount) : 0;
-	objectives.push({ gamemode: Gamemode.AUTO, objective: 'ACCURACY', count: avgAutoAccuracy });
+	// Auto cycles - included in estimate size objectives
 
 	// Auto estimate size
 	const autoEstimateSizeCounts: Record<string, number> = { '1-10': 0, '11-25': 0, '26+': 0 };
@@ -256,20 +239,6 @@ function convertStoredMatchToAPIFormat(userData: IUser, storedMatch: IStoredMatc
 	});
 
 	// TELEOP objectives
-	let totalAccuracy = 0;
-	let accuracyCount = 0;
-
-	if (storedMatch.cycles.length > 0) {
-		totalAccuracy = storedMatch.cycles.reduce((sum, cycle) => sum + cycle.accuracy, 0);
-		accuracyCount = storedMatch.cycles.filter(cycle => cycle.accuracy > 0).length;
-	}
-	
-	if (storedMatch.accuracyValueTeleop) {
-		totalAccuracy += storedMatch.accuracyValueTeleop;
-		accuracyCount++;
-	}
-
-	const avgAccuracy = accuracyCount > 0 ? Math.round(totalAccuracy / accuracyCount) : 0;
 	
 	// Teleop climb - always report, convert to point values
 	let teleopClimbCount = 0;
@@ -281,8 +250,6 @@ function convertStoredMatchToAPIFormat(userData: IUser, storedMatch: IStoredMatc
 		teleopClimbCount = 30;
 	}
 	objectives.push({ gamemode: Gamemode.TELEOP, objective: 'CLIMB_2026', count: teleopClimbCount });
-	
-	objectives.push({ gamemode: Gamemode.TELEOP, objective: 'ACCURACY', count: avgAccuracy });
 
 	// Teleop estimate size
 	const estimateSizeCounts: Record<string, number> = { '1-10': 0, '11-25': 0, '26+': 0 };
