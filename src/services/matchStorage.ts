@@ -240,7 +240,7 @@ function convertStoredMatchToAPIFormat(userData: IUser, storedMatch: IStoredMatc
 		if (count > 0) {
 			objectives.push({
 				gamemode: Gamemode.AUTO,
-				objective: `Cycle ${size}`,
+				objective: `${size}_CYCLE_2026`,
 				count,
 			});
 		}
@@ -279,7 +279,7 @@ function convertStoredMatchToAPIFormat(userData: IUser, storedMatch: IStoredMatc
 		if (count > 0) {
 			objectives.push({
 				gamemode: Gamemode.TELEOP,
-				objective: `Cycle ${size}`,
+				objective: `${size}_CYCLE_2026`,
 				count,
 			});
 		}
