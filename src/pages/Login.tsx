@@ -38,15 +38,12 @@ const Login = () => {
     const initialSecretCode = searchParams.get('secret');
     const initialTbaCode = searchParams.get('tba');
 
-    let hasUrlParams = false;
-
     // Set team number from URL or storage
     if (initialTeamNumber) {
       const teamNum = parseInt(initialTeamNumber, 10);
       if (!isNaN(teamNum) && teamNum >= VALIDATION.MIN_TEAM_NUMBER && teamNum <= VALIDATION.MAX_TEAM_NUMBER) {
         setTeamNumber(initialTeamNumber);
         saveToLocalStorage(STORAGE_KEYS.TEAM_NUMBER, initialTeamNumber);
-        hasUrlParams = true;
       }
     } else {
       setTeamNumber(localStorage.getItem(STORAGE_KEYS.TEAM_NUMBER) || '');
@@ -59,7 +56,6 @@ const Login = () => {
     if (initialEventCode && initialEventCode.length <= VALIDATION.MAX_EVENT_CODE_LENGTH) {
       setEventCode(initialEventCode);
       saveToLocalStorage(STORAGE_KEYS.EVENT_CODE, initialEventCode);
-      hasUrlParams = true;
     } else {
       setEventCode(localStorage.getItem(STORAGE_KEYS.EVENT_CODE) || '');
     }
@@ -68,7 +64,6 @@ const Login = () => {
     if (initialSecretCode && initialSecretCode.length <= VALIDATION.MAX_SECRET_CODE_LENGTH) {
       setSecretCode(initialSecretCode);
       saveToSessionStorage(STORAGE_KEYS.SECRET_CODE, initialSecretCode);
-      hasUrlParams = true;
     } else {
       setSecretCode(sessionStorage.getItem(STORAGE_KEYS.SECRET_CODE) || '');
     }
@@ -77,7 +72,6 @@ const Login = () => {
     if (initialTbaCode && initialTbaCode.length <= VALIDATION.MAX_TBA_CODE_LENGTH) {
       setTbaCode(initialTbaCode);
       saveToSessionStorage(STORAGE_KEYS.TBA_CODE, initialTbaCode);
-      hasUrlParams = true;
     } else {
       setTbaCode(sessionStorage.getItem(STORAGE_KEYS.TBA_CODE) || '');
     }

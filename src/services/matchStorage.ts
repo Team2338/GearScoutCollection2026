@@ -2,8 +2,7 @@
  * Multi-match storage service for offline data persistence
  */
 
-import type { IUser, IStoredMatch, IMultiMatchStorage, IMatch, IObjective, AllianceColor } from '../model/Models';
-import { Gamemode } from '../model/Models';
+import { AllianceColor, Gamemode, IMatch, IMultiMatchStorage, IObjective, IStoredMatch, IUser } from '../model/Models';
 import gearscoutService, { isAxiosError } from './gearscout-services';
 import { showError, showSuccess } from '../utils/notifications';
 import { STORAGE_KEYS } from '@/constants';
@@ -216,26 +215,39 @@ function convertStoredMatchToAPIFormat(userData: IUser, storedMatch: IStoredMatc
 
 	// Auto cycles - included in estimate size objectives
 
-	// Auto estimate size
-	const autoEstimateSizeCounts: Record<string, number> = { '1-10': 0, '11-25': 0, '26+': 0 };
+	// Auto estimate size - aggregate by actual cycle size (5, 10, 20, 30, 40, 50)
+	const autoEstimateSizeCounts: Record<string, number> = {
+		"5": 0,
+		"10": 0,
+		"20": 0,
+		"30": 0,
+		"40": 0,
+		"50": 0,
+	};
+	let totalAutoFuel = 0;
 	if (storedMatch.autoCycles) {
-		storedMatch.autoCycles.forEach(cycle => {
+		storedMatch.autoCycles.forEach((cycle) => {
 			if (cycle.estimateSize) {
-				autoEstimateSizeCounts[cycle.estimateSize] = (autoEstimateSizeCounts[cycle.estimateSize] || 0) + 1;
+				autoEstimateSizeCounts[cycle.estimateSize] =
+					(autoEstimateSizeCounts[cycle.estimateSize] || 0) + 1;
+				totalAutoFuel += Number(cycle.estimateSize);
 			}
 		});
 	}
-	if (storedMatch.estimateSizeAuto) {
-		autoEstimateSizeCounts[storedMatch.estimateSizeAuto] = (autoEstimateSizeCounts[storedMatch.estimateSizeAuto] || 0) + 1;
-	}
-	
+	// Note: estimateSizeAuto is NOT included here because it represents
+	// the currently-being-edited value, not a completed cycle
+
 	Object.entries(autoEstimateSizeCounts).forEach(([size, count]) => {
-		const sizeKey = size === '1-10' ? 'SMALL_CYCLE_2026' : size === '11-25' ? 'MEDIUM_CYCLE_2026' : 'LARGE_CYCLE_2026';
 		objectives.push({
 			gamemode: Gamemode.AUTO,
-			objective: sizeKey,
-			count
+			objective: `${size}_CYCLE_2026`,
+			count,
 		});
+	});
+	objectives.push({
+		gamemode: Gamemode.AUTO,
+		objective: 'HIGH_GOAL_2026',
+		count: totalAutoFuel
 	});
 
 	// TELEOP objectives
@@ -251,21 +263,35 @@ function convertStoredMatchToAPIFormat(userData: IUser, storedMatch: IStoredMatc
 	}
 	objectives.push({ gamemode: Gamemode.TELEOP, objective: 'CLIMB_2026', count: teleopClimbCount });
 
-	// Teleop estimate size
-	const estimateSizeCounts: Record<string, number> = { '1-10': 0, '11-25': 0, '26+': 0 };
-	storedMatch.cycles.forEach(cycle => {
+	// Teleop estimate size - aggregate by actual cycle size (5, 10, 20, 30, 40, 50)
+	const estimateSizeCounts: Record<string, number> = {
+		"5": 0,
+		"10": 0,
+		"20": 0,
+		"30": 0,
+		"40": 0,
+		"50": 0,
+	};
+	let totalTeleopFuel = 0;
+	storedMatch.cycles.forEach((cycle) => {
 		if (cycle.estimateSize) {
-			estimateSizeCounts[cycle.estimateSize] = (estimateSizeCounts[cycle.estimateSize] || 0) + 1;
+			estimateSizeCounts[cycle.estimateSize] =
+				(estimateSizeCounts[cycle.estimateSize] || 0) + 1;
+			totalTeleopFuel += Number(cycle.estimateSize);
 		}
 	});
-	
+
 	Object.entries(estimateSizeCounts).forEach(([size, count]) => {
-		const sizeKey = size === '1-10' ? 'SMALL_CYCLE_2026' : size === '11-25' ? 'MEDIUM_CYCLE_2026' : 'LARGE_CYCLE_2026';
 		objectives.push({
 			gamemode: Gamemode.TELEOP,
-			objective: sizeKey,
-			count
+			objective: `${size}_CYCLE_2026`,
+			count,
 		});
+	});
+	objectives.push({
+		gamemode: Gamemode.TELEOP,
+		objective: 'HIGH_GOAL_2026',
+		count: totalTeleopFuel
 	});
 
 	return {
