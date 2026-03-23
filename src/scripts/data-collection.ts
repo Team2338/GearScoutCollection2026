@@ -236,6 +236,13 @@ export function initializeDataCollection(): (() => void) | void {
   // Mark form as initialized
   form.dataset.initialized = "true";
 
+  // Clear any residual counter values from localStorage at the start
+  // This prevents stale counter values from being restored on page reload
+  localStorage.removeItem("leftCounter");
+  localStorage.removeItem("rightCounter");
+  localStorage.removeItem("leftBumpCounter");
+  localStorage.removeItem("rightBumpCounter");
+
   const submitButton = document.querySelector(
     ".submit-button",
   ) as HTMLButtonElement;
@@ -288,23 +295,14 @@ export function initializeDataCollection(): (() => void) | void {
   let estimateSizeAutoValue = getFromLocalStorage("estimateSizeAuto", "");
   let estimateSizeValue = getFromLocalStorage("estimateSize", "");
 
+  // Initialize counters to 0 on each page load for a fresh form session
+  // Do NOT restore from localStorage, as counters should always start fresh
+  let leftCounter = 0;
+  let rightCounter = 0;
+  let leftBumpCounter = 0;
+  let rightBumpCounter = 0;
+  
   // Store counter state on form element to avoid closure scope issues
-  const getCounters = () => ({
-    leftCounter: Number(
-      form.dataset.leftCounter || getFromLocalStorage("leftCounter", 0),
-    ),
-    rightCounter: Number(
-      form.dataset.rightCounter || getFromLocalStorage("rightCounter", 0),
-    ),
-    leftBumpCounter: Number(
-      form.dataset.leftBumpCounter || getFromLocalStorage("leftBumpCounter", 0),
-    ),
-    rightBumpCounter: Number(
-      form.dataset.rightBumpCounter ||
-        getFromLocalStorage("rightBumpCounter", 0),
-    ),
-  });
-
   const setCounters = (counters: {
     leftCounter: number;
     rightCounter: number;
@@ -317,12 +315,13 @@ export function initializeDataCollection(): (() => void) | void {
     form.dataset.rightBumpCounter = String(counters.rightBumpCounter);
   };
 
-  // Initialize counters from localStorage
-  setCounters(getCounters());
-  let leftCounter = Number(form.dataset.leftCounter || 0);
-  let rightCounter = Number(form.dataset.rightCounter || 0);
-  let leftBumpCounter = Number(form.dataset.leftBumpCounter || 0);
-  let rightBumpCounter = Number(form.dataset.rightBumpCounter || 0);
+  // Initialize form.dataset with current values
+  setCounters({
+    leftCounter,
+    rightCounter,
+    leftBumpCounter,
+    rightBumpCounter,
+  });
 
   // Cycle tracking arrays
   let cycles: Array<{
@@ -761,10 +760,12 @@ export function initializeDataCollection(): (() => void) | void {
       if (now - leftTrenchLastClick < DEBOUNCE_MS) return;
       leftTrenchLastClick = now;
 
-      leftCounter++;
-      form.dataset.leftCounter = String(leftCounter);
-      if (leftCounterEl) leftCounterEl.textContent = leftCounter.toString();
-      saveToLocalStorage("leftCounter", leftCounter);
+      // Read current value from form.dataset (source of truth) to avoid closure issues
+      const currentValue = Number(form.dataset.leftCounter || 0);
+      const newValue = currentValue + 1;
+      leftCounter = newValue;
+      form.dataset.leftCounter = String(newValue);
+      if (leftCounterEl) leftCounterEl.textContent = newValue.toString();
     });
   }
 
@@ -774,10 +775,12 @@ export function initializeDataCollection(): (() => void) | void {
       if (now - rightTrenchLastClick < DEBOUNCE_MS) return;
       rightTrenchLastClick = now;
 
-      rightCounter++;
-      form.dataset.rightCounter = String(rightCounter);
-      if (rightCounterEl) rightCounterEl.textContent = rightCounter.toString();
-      saveToLocalStorage("rightCounter", rightCounter);
+      // Read current value from form.dataset (source of truth) to avoid closure issues
+      const currentValue = Number(form.dataset.rightCounter || 0);
+      const newValue = currentValue + 1;
+      rightCounter = newValue;
+      form.dataset.rightCounter = String(newValue);
+      if (rightCounterEl) rightCounterEl.textContent = newValue.toString();
     });
   }
 
@@ -787,11 +790,13 @@ export function initializeDataCollection(): (() => void) | void {
       if (now - leftDecrementLastClick < DEBOUNCE_MS) return;
       leftDecrementLastClick = now;
 
-      if (leftCounter > 0) {
-        leftCounter--;
-        form.dataset.leftCounter = String(leftCounter);
-        if (leftCounterEl) leftCounterEl.textContent = leftCounter.toString();
-        saveToLocalStorage("leftCounter", leftCounter);
+      // Read current value from form.dataset (source of truth) to avoid closure issues
+      const currentValue = Number(form.dataset.leftCounter || 0);
+      if (currentValue > 0) {
+        const newValue = currentValue - 1;
+        leftCounter = newValue;
+        form.dataset.leftCounter = String(newValue);
+        if (leftCounterEl) leftCounterEl.textContent = newValue.toString();
       }
     });
   }
@@ -802,12 +807,14 @@ export function initializeDataCollection(): (() => void) | void {
       if (now - rightDecrementLastClick < DEBOUNCE_MS) return;
       rightDecrementLastClick = now;
 
-      if (rightCounter > 0) {
-        rightCounter--;
-        form.dataset.rightCounter = String(rightCounter);
+      // Read current value from form.dataset (source of truth) to avoid closure issues
+      const currentValue = Number(form.dataset.rightCounter || 0);
+      if (currentValue > 0) {
+        const newValue = currentValue - 1;
+        rightCounter = newValue;
+        form.dataset.rightCounter = String(newValue);
         if (rightCounterEl)
-          rightCounterEl.textContent = rightCounter.toString();
-        saveToLocalStorage("rightCounter", rightCounter);
+          rightCounterEl.textContent = newValue.toString();
       }
     });
   }
@@ -867,11 +874,13 @@ export function initializeDataCollection(): (() => void) | void {
       if (now - leftBumpLastClick < DEBOUNCE_MS) return;
       leftBumpLastClick = now;
 
-      leftBumpCounter++;
-      form.dataset.leftBumpCounter = String(leftBumpCounter);
+      // Read current value from form.dataset (source of truth) to avoid closure issues
+      const currentValue = Number(form.dataset.leftBumpCounter || 0);
+      const newValue = currentValue + 1;
+      leftBumpCounter = newValue;
+      form.dataset.leftBumpCounter = String(newValue);
       if (leftBumpCounterEl)
-        leftBumpCounterEl.textContent = leftBumpCounter.toString();
-      saveToLocalStorage("leftBumpCounter", leftBumpCounter);
+        leftBumpCounterEl.textContent = newValue.toString();
     });
   }
 
@@ -881,11 +890,13 @@ export function initializeDataCollection(): (() => void) | void {
       if (now - rightBumpLastClick < DEBOUNCE_MS) return;
       rightBumpLastClick = now;
 
-      rightBumpCounter++;
-      form.dataset.rightBumpCounter = String(rightBumpCounter);
+      // Read current value from form.dataset (source of truth) to avoid closure issues
+      const currentValue = Number(form.dataset.rightBumpCounter || 0);
+      const newValue = currentValue + 1;
+      rightBumpCounter = newValue;
+      form.dataset.rightBumpCounter = String(newValue);
       if (rightBumpCounterEl)
-        rightBumpCounterEl.textContent = rightBumpCounter.toString();
-      saveToLocalStorage("rightBumpCounter", rightBumpCounter);
+        rightBumpCounterEl.textContent = newValue.toString();
     });
   }
 
@@ -895,12 +906,14 @@ export function initializeDataCollection(): (() => void) | void {
       if (now - leftBumpDecrementLastClick < DEBOUNCE_MS) return;
       leftBumpDecrementLastClick = now;
 
-      if (leftBumpCounter > 0) {
-        leftBumpCounter--;
-        form.dataset.leftBumpCounter = String(leftBumpCounter);
+      // Read current value from form.dataset (source of truth) to avoid closure issues
+      const currentValue = Number(form.dataset.leftBumpCounter || 0);
+      if (currentValue > 0) {
+        const newValue = currentValue - 1;
+        leftBumpCounter = newValue;
+        form.dataset.leftBumpCounter = String(newValue);
         if (leftBumpCounterEl)
-          leftBumpCounterEl.textContent = leftBumpCounter.toString();
-        saveToLocalStorage("leftBumpCounter", leftBumpCounter);
+          leftBumpCounterEl.textContent = newValue.toString();
       }
     });
   }
@@ -911,12 +924,14 @@ export function initializeDataCollection(): (() => void) | void {
       if (now - rightBumpDecrementLastClick < DEBOUNCE_MS) return;
       rightBumpDecrementLastClick = now;
 
-      if (rightBumpCounter > 0) {
-        rightBumpCounter--;
-        form.dataset.rightBumpCounter = String(rightBumpCounter);
+      // Read current value from form.dataset (source of truth) to avoid closure issues
+      const currentValue = Number(form.dataset.rightBumpCounter || 0);
+      if (currentValue > 0) {
+        const newValue = currentValue - 1;
+        rightBumpCounter = newValue;
+        form.dataset.rightBumpCounter = String(newValue);
         if (rightBumpCounterEl)
-          rightBumpCounterEl.textContent = rightBumpCounter.toString();
-        saveToLocalStorage("rightBumpCounter", rightBumpCounter);
+          rightBumpCounterEl.textContent = newValue.toString();
       }
     });
   }
