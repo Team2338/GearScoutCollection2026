@@ -2,8 +2,7 @@
  * Multi-match storage service for offline data persistence
  */
 
-import type { IUser, IStoredMatch, IMultiMatchStorage, IMatch, IObjective, AllianceColor } from '../model/Models';
-import { Gamemode } from '../model/Models';
+import { AllianceColor, Gamemode, IMatch, IMultiMatchStorage, IObjective, IStoredMatch, IUser } from '../model/Models';
 import gearscoutService, { isAxiosError } from './gearscout-services';
 import { showError, showSuccess } from '../utils/notifications';
 import { STORAGE_KEYS } from '@/constants';
@@ -225,11 +224,13 @@ function convertStoredMatchToAPIFormat(userData: IUser, storedMatch: IStoredMatc
 		"40": 0,
 		"50": 0,
 	};
+	let totalAutoFuel = 0;
 	if (storedMatch.autoCycles) {
 		storedMatch.autoCycles.forEach((cycle) => {
 			if (cycle.estimateSize) {
 				autoEstimateSizeCounts[cycle.estimateSize] =
 					(autoEstimateSizeCounts[cycle.estimateSize] || 0) + 1;
+				totalAutoFuel += Number(cycle.estimateSize);
 			}
 		});
 	}
@@ -237,13 +238,16 @@ function convertStoredMatchToAPIFormat(userData: IUser, storedMatch: IStoredMatc
 	// the currently-being-edited value, not a completed cycle
 
 	Object.entries(autoEstimateSizeCounts).forEach(([size, count]) => {
-		if (count > 0) {
-			objectives.push({
-				gamemode: Gamemode.AUTO,
-				objective: `Cycle ${size}`,
-				count,
-			});
-		}
+		objectives.push({
+			gamemode: Gamemode.AUTO,
+			objective: `${size}_CYCLE_2026`,
+			count,
+		});
+	});
+	objectives.push({
+		gamemode: Gamemode.AUTO,
+		objective: 'HIGH_GOAL_2026',
+		count: totalAutoFuel
 	});
 
 	// TELEOP objectives
@@ -268,21 +272,26 @@ function convertStoredMatchToAPIFormat(userData: IUser, storedMatch: IStoredMatc
 		"40": 0,
 		"50": 0,
 	};
+	let totalTeleopFuel = 0;
 	storedMatch.cycles.forEach((cycle) => {
 		if (cycle.estimateSize) {
 			estimateSizeCounts[cycle.estimateSize] =
 				(estimateSizeCounts[cycle.estimateSize] || 0) + 1;
+			totalTeleopFuel += Number(cycle.estimateSize);
 		}
 	});
 
 	Object.entries(estimateSizeCounts).forEach(([size, count]) => {
-		if (count > 0) {
-			objectives.push({
-				gamemode: Gamemode.TELEOP,
-				objective: `Cycle ${size}`,
-				count,
-			});
-		}
+		objectives.push({
+			gamemode: Gamemode.TELEOP,
+			objective: `${size}_CYCLE_2026`,
+			count,
+		});
+	});
+	objectives.push({
+		gamemode: Gamemode.TELEOP,
+		objective: 'HIGH_GOAL_2026',
+		count: totalTeleopFuel
 	});
 
 	return {

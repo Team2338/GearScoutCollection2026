@@ -709,18 +709,10 @@ export function initializeDataCollection(): (() => void) | void {
   // Trench counter functionality
   const leftCounterEl = document.getElementById("left-counter");
   const rightCounterEl = document.getElementById("right-counter");
-  let leftTrenchBtn = document.querySelector(
-    ".left-trench",
-  ) as HTMLButtonElement | null;
-  let rightTrenchBtn = document.querySelector(
-    ".right-trench",
-  ) as HTMLButtonElement | null;
-  let leftDecrementBtn = document.querySelector(
-    ".left-decrement",
-  ) as HTMLButtonElement | null;
-  let rightDecrementBtn = document.querySelector(
-    ".right-decrement",
-  ) as HTMLButtonElement | null;
+  let leftTrenchBtn = document.querySelector(".left-trench") as HTMLButtonElement | null;
+  let rightTrenchBtn = document.querySelector(".right-trench") as HTMLButtonElement | null;
+  let leftDecrementBtn = document.querySelector(".left-decrement") as HTMLButtonElement | null;
+  let rightDecrementBtn = document.querySelector(".right-decrement") as HTMLButtonElement | null;
 
   // Clone buttons to remove all previous event listeners
   if (leftTrenchBtn) {
