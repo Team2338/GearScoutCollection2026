@@ -752,12 +752,9 @@ export function initializeDataCollection(): (() => void) | void {
       if (now - leftTrenchLastClick < DEBOUNCE_MS) return;
       leftTrenchLastClick = now;
 
-      // Read current value from form.dataset (source of truth) to avoid closure issues
-      const currentValue = Number(form.dataset.leftCounter || 0);
-      const newValue = currentValue + 1;
-      leftCounter = newValue;
-      form.dataset.leftCounter = String(newValue);
-      if (leftCounterEl) leftCounterEl.textContent = newValue.toString();
+      leftCounter++;
+      form.dataset.leftCounter = String(leftCounter);
+      if (leftCounterEl) leftCounterEl.textContent = leftCounter.toString();
     });
   }
 
@@ -767,12 +764,9 @@ export function initializeDataCollection(): (() => void) | void {
       if (now - rightTrenchLastClick < DEBOUNCE_MS) return;
       rightTrenchLastClick = now;
 
-      // Read current value from form.dataset (source of truth) to avoid closure issues
-      const currentValue = Number(form.dataset.rightCounter || 0);
-      const newValue = currentValue + 1;
-      rightCounter = newValue;
-      form.dataset.rightCounter = String(newValue);
-      if (rightCounterEl) rightCounterEl.textContent = newValue.toString();
+      rightCounter++;
+      form.dataset.rightCounter = String(rightCounter);
+      if (rightCounterEl) rightCounterEl.textContent = rightCounter.toString();
     });
   }
 
@@ -782,13 +776,10 @@ export function initializeDataCollection(): (() => void) | void {
       if (now - leftDecrementLastClick < DEBOUNCE_MS) return;
       leftDecrementLastClick = now;
 
-      // Read current value from form.dataset (source of truth) to avoid closure issues
-      const currentValue = Number(form.dataset.leftCounter || 0);
-      if (currentValue > 0) {
-        const newValue = currentValue - 1;
-        leftCounter = newValue;
-        form.dataset.leftCounter = String(newValue);
-        if (leftCounterEl) leftCounterEl.textContent = newValue.toString();
+      if (leftCounter > 0) {
+        leftCounter--;
+        form.dataset.leftCounter = String(leftCounter);
+        if (leftCounterEl) leftCounterEl.textContent = leftCounter.toString();
       }
     });
   }
@@ -799,14 +790,11 @@ export function initializeDataCollection(): (() => void) | void {
       if (now - rightDecrementLastClick < DEBOUNCE_MS) return;
       rightDecrementLastClick = now;
 
-      // Read current value from form.dataset (source of truth) to avoid closure issues
-      const currentValue = Number(form.dataset.rightCounter || 0);
-      if (currentValue > 0) {
-        const newValue = currentValue - 1;
-        rightCounter = newValue;
-        form.dataset.rightCounter = String(newValue);
+      if (rightCounter > 0) {
+        rightCounter--;
+        form.dataset.rightCounter = String(rightCounter);
         if (rightCounterEl)
-          rightCounterEl.textContent = newValue.toString();
+          rightCounterEl.textContent = rightCounter.toString();
       }
     });
   }
@@ -866,13 +854,10 @@ export function initializeDataCollection(): (() => void) | void {
       if (now - leftBumpLastClick < DEBOUNCE_MS) return;
       leftBumpLastClick = now;
 
-      // Read current value from form.dataset (source of truth) to avoid closure issues
-      const currentValue = Number(form.dataset.leftBumpCounter || 0);
-      const newValue = currentValue + 1;
-      leftBumpCounter = newValue;
-      form.dataset.leftBumpCounter = String(newValue);
+      leftBumpCounter++;
+      form.dataset.leftBumpCounter = String(leftBumpCounter);
       if (leftBumpCounterEl)
-        leftBumpCounterEl.textContent = newValue.toString();
+        leftBumpCounterEl.textContent = leftBumpCounter.toString();
     });
   }
 
@@ -882,13 +867,10 @@ export function initializeDataCollection(): (() => void) | void {
       if (now - rightBumpLastClick < DEBOUNCE_MS) return;
       rightBumpLastClick = now;
 
-      // Read current value from form.dataset (source of truth) to avoid closure issues
-      const currentValue = Number(form.dataset.rightBumpCounter || 0);
-      const newValue = currentValue + 1;
-      rightBumpCounter = newValue;
-      form.dataset.rightBumpCounter = String(newValue);
+      rightBumpCounter++;
+      form.dataset.rightBumpCounter = String(rightBumpCounter);
       if (rightBumpCounterEl)
-        rightBumpCounterEl.textContent = newValue.toString();
+        rightBumpCounterEl.textContent = rightBumpCounter.toString();
     });
   }
 
@@ -898,14 +880,11 @@ export function initializeDataCollection(): (() => void) | void {
       if (now - leftBumpDecrementLastClick < DEBOUNCE_MS) return;
       leftBumpDecrementLastClick = now;
 
-      // Read current value from form.dataset (source of truth) to avoid closure issues
-      const currentValue = Number(form.dataset.leftBumpCounter || 0);
-      if (currentValue > 0) {
-        const newValue = currentValue - 1;
-        leftBumpCounter = newValue;
-        form.dataset.leftBumpCounter = String(newValue);
+      if (leftBumpCounter > 0) {
+        leftBumpCounter--;
+        form.dataset.leftBumpCounter = String(leftBumpCounter);
         if (leftBumpCounterEl)
-          leftBumpCounterEl.textContent = newValue.toString();
+          leftBumpCounterEl.textContent = leftBumpCounter.toString();
       }
     });
   }
@@ -916,14 +895,11 @@ export function initializeDataCollection(): (() => void) | void {
       if (now - rightBumpDecrementLastClick < DEBOUNCE_MS) return;
       rightBumpDecrementLastClick = now;
 
-      // Read current value from form.dataset (source of truth) to avoid closure issues
-      const currentValue = Number(form.dataset.rightBumpCounter || 0);
-      if (currentValue > 0) {
-        const newValue = currentValue - 1;
-        rightBumpCounter = newValue;
-        form.dataset.rightBumpCounter = String(newValue);
+      if (rightBumpCounter > 0) {
+        rightBumpCounter--;
+        form.dataset.rightBumpCounter = String(rightBumpCounter);
         if (rightBumpCounterEl)
-          rightBumpCounterEl.textContent = newValue.toString();
+          rightBumpCounterEl.textContent = rightBumpCounter.toString();
       }
     });
   }
