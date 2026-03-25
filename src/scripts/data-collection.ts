@@ -209,6 +209,11 @@ function populateTeamDropdown(matchIndex: number): string | null {
   return null;
 }
 
+let leftCounter = 0;
+let rightCounter = 0;
+let leftBumpCounter = 0;
+let rightBumpCounter = 0;
+
 /**
  * Initialize the data collection form
  * @returns Cleanup function to remove event listeners
@@ -295,13 +300,6 @@ export function initializeDataCollection(): (() => void) | void {
   let estimateSizeAutoValue = getFromLocalStorage("estimateSizeAuto", "");
   let estimateSizeValue = getFromLocalStorage("estimateSize", "");
 
-  // Initialize counters to 0 on each page load for a fresh form session
-  // Do NOT restore from localStorage, as counters should always start fresh
-  let leftCounter = 0;
-  let rightCounter = 0;
-  let leftBumpCounter = 0;
-  let rightBumpCounter = 0;
-  
   // Store counter state on form element to avoid closure scope issues
   const setCounters = (counters: {
     leftCounter: number;
