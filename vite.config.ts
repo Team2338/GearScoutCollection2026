@@ -47,6 +47,6 @@ export default defineConfig({
     }
   },
   define: {
-    'import.meta.env.VITE_APP_VERSION': '2026.5'
+    'import.meta.env.VITE_APP_VERSION': '2026.5.1'
   }
 });
