@@ -213,42 +213,18 @@ function convertStoredMatchToAPIFormat(userData: IUser, storedMatch: IStoredMatc
 	const autoClimbCount = storedMatch.leaveValue === 'yes' ? 15 : 0;
 	objectives.push({ gamemode: Gamemode.AUTO, objective: 'CLIMB_2026', count: autoClimbCount });
 
-	// Auto cycles - included in estimate size objectives
-
-	// Auto estimate size - aggregate by actual cycle size (5, 10, 20, 30, 40, 50)
-	const autoEstimateSizeCounts: Record<string, number> = {
-		"5": 0,
-		"10": 0,
-		"20": 0,
-		"30": 0,
-		"40": 0,
-		"50": 0,
-	};
-	let totalAutoFuel = 0;
-	if (storedMatch.autoCycles) {
-		storedMatch.autoCycles.forEach((cycle) => {
+	// Auto cycles - send each cycle's estimate individually
+	if (storedMatch.autoCycles && storedMatch.autoCycles.length > 0) {
+		storedMatch.autoCycles.forEach((cycle, index) => {
 			if (cycle.estimateSize) {
-				autoEstimateSizeCounts[cycle.estimateSize] =
-					(autoEstimateSizeCounts[cycle.estimateSize] || 0) + 1;
-				totalAutoFuel += Number(cycle.estimateSize);
+				objectives.push({
+					gamemode: Gamemode.AUTO,
+					objective: 'HIGH_GOAL_2025',
+					count: Number(cycle.estimateSize)
+				});
 			}
 		});
 	}
-	// Note: estimateSizeAuto is NOT included here because it represents
-	// the currently-being-edited value, not a completed cycle
-
-	Object.entries(autoEstimateSizeCounts).forEach(([size, count]) => {
-		objectives.push({
-			gamemode: Gamemode.AUTO,
-			objective: `${size}_CYCLE_2026`,
-			count,
-		});
-	});
-	objectives.push({
-		gamemode: Gamemode.AUTO,
-		objective: 'HIGH_GOAL_2026',
-		count: totalAutoFuel
-	});
 
 	// TELEOP objectives
 	
@@ -263,36 +239,18 @@ function convertStoredMatchToAPIFormat(userData: IUser, storedMatch: IStoredMatc
 	}
 	objectives.push({ gamemode: Gamemode.TELEOP, objective: 'CLIMB_2026', count: teleopClimbCount });
 
-	// Teleop estimate size - aggregate by actual cycle size (5, 10, 20, 30, 40, 50)
-	const estimateSizeCounts: Record<string, number> = {
-		"5": 0,
-		"10": 0,
-		"20": 0,
-		"30": 0,
-		"40": 0,
-		"50": 0,
-	};
-	let totalTeleopFuel = 0;
-	storedMatch.cycles.forEach((cycle) => {
-		if (cycle.estimateSize) {
-			estimateSizeCounts[cycle.estimateSize] =
-				(estimateSizeCounts[cycle.estimateSize] || 0) + 1;
-			totalTeleopFuel += Number(cycle.estimateSize);
-		}
-	});
-
-	Object.entries(estimateSizeCounts).forEach(([size, count]) => {
-		objectives.push({
-			gamemode: Gamemode.TELEOP,
-			objective: `${size}_CYCLE_2026`,
-			count,
+	// Teleop cycles - send each cycle's estimate individually
+	if (storedMatch.cycles && storedMatch.cycles.length > 0) {
+		storedMatch.cycles.forEach((cycle, index) => {
+			if (cycle.estimateSize) {
+				objectives.push({
+					gamemode: Gamemode.TELEOP,
+					objective: 'HIGH_GOAL_2025',
+					count: Number(cycle.estimateSize)
+				});
+			}
 		});
-	});
-	objectives.push({
-		gamemode: Gamemode.TELEOP,
-		objective: 'HIGH_GOAL_2026',
-		count: totalTeleopFuel
-	});
+	}
 
 	return {
 		gameYear: 2026,

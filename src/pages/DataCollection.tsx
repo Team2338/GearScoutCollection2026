@@ -168,15 +168,18 @@ const DataCollection = () => {
                 <h4 className="sub-label estimate-size-label">Estimated Size</h4>
                 <div className="form-field estimate-size-field">
                   <div className="estimate-button-group" role="group" aria-label="Estimated cycle size for previous auto cycle">
-                    <button type="button" className="estimate-button estimate-button-previous" data-value="5" role="radio" aria-checked="false" aria-label="Size 5">5</button>
-                    <button type="button" className="estimate-button estimate-button-previous" data-value="10" role="radio" aria-checked="false" aria-label="Size 10">10</button>
-                    <button type="button" className="estimate-button estimate-button-previous" data-value="20" role="radio" aria-checked="false" aria-label="Size 20">20</button>
-                    <button type="button" className="estimate-button estimate-button-previous" data-value="30" role="radio" aria-checked="false" aria-label="Size 30">30</button>
-                    <button type="button" className="estimate-button estimate-button-previous" data-value="40" role="radio" aria-checked="false" aria-label="Size 40">40</button>
-                    <button type="button" className="estimate-button estimate-button-previous" data-value="50" role="radio" aria-checked="false" aria-label="Size 50">50</button>
+                    <button type="button" className="estimate-button estimate-button-previous" data-value="-10" role="radio" aria-checked="false" aria-label="Size negative 10">-10</button>
+                    <button type="button" className="estimate-button estimate-button-previous" data-value="-5" role="radio" aria-checked="false" aria-label="Size negative 5">-5</button>
+                    <button type="button" className="estimate-button estimate-button-previous" data-value="-3" role="radio" aria-checked="false" aria-label="Size negative 3">-3</button>
+                    <button type="button" className="estimate-button estimate-button-previous" data-value="-1" role="radio" aria-checked="false" aria-label="Size negative 1">-1</button>
+                    <button type="button" className="estimate-button estimate-button-previous" data-value="1" role="radio" aria-checked="false" aria-label="Size positive 1">+1</button>
+                    <button type="button" className="estimate-button estimate-button-previous" data-value="3" role="radio" aria-checked="false" aria-label="Size positive 3">+3</button>
+                    <button type="button" className="estimate-button estimate-button-previous" data-value="5" role="radio" aria-checked="false" aria-label="Size positive 5">+5</button>
+                    <button type="button" className="estimate-button estimate-button-previous" data-value="10" role="radio" aria-checked="false" aria-label="Size positive 10">+10</button>
                   </div>
                   <input type="hidden" id="estimate-size-previous-auto" name="estimateSizePreviousAuto" />
                 </div>
+                <div className="cycle-count" id="previous-auto-estimate-value">Past Value: 0</div>
               </div>
             </div>
 
@@ -186,15 +189,18 @@ const DataCollection = () => {
               <h4 className="sub-label estimate-size-label">Estimated Size</h4>
               <div className="form-field estimate-size-field">
                 <div className="estimate-button-group" role="group" aria-label="Estimated cycle size for current auto cycle">
-                  <button type="button" className="estimate-button" data-value="5" role="radio" aria-checked="false" aria-label="Size 5">5</button>
-                  <button type="button" className="estimate-button" data-value="10" role="radio" aria-checked="false" aria-label="Size 10">10</button>
-                  <button type="button" className="estimate-button" data-value="20" role="radio" aria-checked="false" aria-label="Size 20">20</button>
-                  <button type="button" className="estimate-button" data-value="30" role="radio" aria-checked="false" aria-label="Size 30">30</button>
-                  <button type="button" className="estimate-button" data-value="40" role="radio" aria-checked="false" aria-label="Size 40">40</button>
-                  <button type="button" className="estimate-button" data-value="50" role="radio" aria-checked="false" aria-label="Size 50">50</button>
+                  <button type="button" className="estimate-button" data-value="-10" role="radio" aria-checked="false" aria-label="Size negative 10">-10</button>
+                  <button type="button" className="estimate-button" data-value="-5" role="radio" aria-checked="false" aria-label="Size negative 5">-5</button>
+                  <button type="button" className="estimate-button" data-value="-3" role="radio" aria-checked="false" aria-label="Size negative 3">-3</button>
+                  <button type="button" className="estimate-button" data-value="-1" role="radio" aria-checked="false" aria-label="Size negative 1">-1</button>
+                  <button type="button" className="estimate-button" data-value="1" role="radio" aria-checked="false" aria-label="Size positive 1">+1</button>
+                  <button type="button" className="estimate-button" data-value="3" role="radio" aria-checked="false" aria-label="Size positive 3">+3</button>
+                  <button type="button" className="estimate-button" data-value="5" role="radio" aria-checked="false" aria-label="Size positive 5">+5</button>
+                  <button type="button" className="estimate-button" data-value="10" role="radio" aria-checked="false" aria-label="Size positive 10">+10</button>
                 </div>
                 <input type="hidden" id="estimate-size-auto" name="estimateSizeAuto" />
               </div>
+              <div className="cycle-count" id="auto-current-estimate">Current Value: 0</div>
             </div>
 
             <div className="cycle-button-area">
@@ -238,15 +244,18 @@ const DataCollection = () => {
                 <h4 className="sub-label estimate-size-label">Estimated Size</h4>
                 <div className="form-field estimate-size-field">
                   <div className="estimate-button-group" role="group" aria-label="Estimated cycle size for previous teleop cycle">
-                    <button type="button" className="estimate-button estimate-button-previous" data-value="5" role="radio" aria-checked="false" aria-label="Size 5">5</button>
-                    <button type="button" className="estimate-button estimate-button-previous" data-value="10" role="radio" aria-checked="false" aria-label="Size 10">10</button>
-                    <button type="button" className="estimate-button estimate-button-previous" data-value="20" role="radio" aria-checked="false" aria-label="Size 20">20</button>
-                    <button type="button" className="estimate-button estimate-button-previous" data-value="30" role="radio" aria-checked="false" aria-label="Size 30">30</button>
-                    <button type="button" className="estimate-button estimate-button-previous" data-value="40" role="radio" aria-checked="false" aria-label="Size 40">40</button>
-                    <button type="button" className="estimate-button estimate-button-previous" data-value="50" role="radio" aria-checked="false" aria-label="Size 50">50</button>
+                    <button type="button" className="estimate-button estimate-button-previous" data-value="-10" role="radio" aria-checked="false" aria-label="Size negative 10">-10</button>
+                    <button type="button" className="estimate-button estimate-button-previous" data-value="-5" role="radio" aria-checked="false" aria-label="Size negative 5">-5</button>
+                    <button type="button" className="estimate-button estimate-button-previous" data-value="-3" role="radio" aria-checked="false" aria-label="Size negative 3">-3</button>
+                    <button type="button" className="estimate-button estimate-button-previous" data-value="-1" role="radio" aria-checked="false" aria-label="Size negative 1">-1</button>
+                    <button type="button" className="estimate-button estimate-button-previous" data-value="1" role="radio" aria-checked="false" aria-label="Size positive 1">+1</button>
+                    <button type="button" className="estimate-button estimate-button-previous" data-value="3" role="radio" aria-checked="false" aria-label="Size positive 3">+3</button>
+                    <button type="button" className="estimate-button estimate-button-previous" data-value="5" role="radio" aria-checked="false" aria-label="Size positive 5">+5</button>
+                    <button type="button" className="estimate-button estimate-button-previous" data-value="10" role="radio" aria-checked="false" aria-label="Size positive 10">+10</button>
                   </div>
                   <input type="hidden" id="estimate-size-previous" name="estimateSizePrevious" />
                 </div>
+                <div className="cycle-count" id="previous-teleop-estimate-value">Past Value: 0</div>
               </div>
             </div>
 
@@ -256,15 +265,18 @@ const DataCollection = () => {
               <h4 className="sub-label estimate-size-label">Estimated Size</h4>
               <div className="form-field estimate-size-field">
                 <div className="estimate-button-group" role="group" aria-label="Estimated cycle size for current teleop cycle">
-                  <button type="button" className="estimate-button" data-value="5" role="radio" aria-checked="false" aria-label="Size 5">5</button>
-                  <button type="button" className="estimate-button" data-value="10" role="radio" aria-checked="false" aria-label="Size 10">10</button>
-                  <button type="button" className="estimate-button" data-value="20" role="radio" aria-checked="false" aria-label="Size 20">20</button>
-                  <button type="button" className="estimate-button" data-value="30" role="radio" aria-checked="false" aria-label="Size 30">30</button>
-                  <button type="button" className="estimate-button" data-value="40" role="radio" aria-checked="false" aria-label="Size 40">40</button>
-                  <button type="button" className="estimate-button" data-value="50" role="radio" aria-checked="false" aria-label="Size 50">50</button>
+                  <button type="button" className="estimate-button" data-value="-10" role="radio" aria-checked="false" aria-label="Size negative 10">-10</button>
+                  <button type="button" className="estimate-button" data-value="-5" role="radio" aria-checked="false" aria-label="Size negative 5">-5</button>
+                  <button type="button" className="estimate-button" data-value="-3" role="radio" aria-checked="false" aria-label="Size negative 3">-3</button>
+                  <button type="button" className="estimate-button" data-value="-1" role="radio" aria-checked="false" aria-label="Size negative 1">-1</button>
+                  <button type="button" className="estimate-button" data-value="1" role="radio" aria-checked="false" aria-label="Size positive 1">+1</button>
+                  <button type="button" className="estimate-button" data-value="3" role="radio" aria-checked="false" aria-label="Size positive 3">+3</button>
+                  <button type="button" className="estimate-button" data-value="5" role="radio" aria-checked="false" aria-label="Size positive 5">+5</button>
+                  <button type="button" className="estimate-button" data-value="10" role="radio" aria-checked="false" aria-label="Size positive 10">+10</button>
                 </div>
                 <input type="hidden" id="estimate-size" name="estimateSize" />
               </div>
+              <div className="cycle-count" id="teleop-current-estimate">Current Value: 0</div>
             </div>
             <div className="cycle-button-area">
               <button type="button" className="cycle-button" id="cycle-button">

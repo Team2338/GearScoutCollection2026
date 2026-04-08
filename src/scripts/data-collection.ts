@@ -247,6 +247,9 @@ export function initializeDataCollection(): (() => void) | void {
   localStorage.removeItem("rightCounter");
   localStorage.removeItem("leftBumpCounter");
   localStorage.removeItem("rightBumpCounter");
+  // Ensure estimate values do NOT persist across page refresh
+  localStorage.removeItem("estimateSize");
+  localStorage.removeItem("estimateSizeAuto");
 
   const submitButton = document.querySelector(
     ".submit-button",
@@ -272,6 +275,18 @@ export function initializeDataCollection(): (() => void) | void {
   const estimateSizePreviousAuto = document.getElementById(
     "estimate-size-previous-auto",
   ) as HTMLInputElement;
+  const autoCurrentEstimateEl = document.getElementById(
+    "auto-current-estimate",
+  );
+  const teleopCurrentEstimateEl = document.getElementById(
+    "teleop-current-estimate",
+  );
+  const previousAutoEstimateValueEl = document.getElementById(
+    "previous-auto-estimate-value",
+  );
+  const previousTeleopEstimateValueEl = document.getElementById(
+    "previous-teleop-estimate-value",
+  );
   const cycleButton = document.getElementById("cycle-button");
   const cycleCountEl = document.getElementById("cycle-count");
   const previousCycleCountEl = document.getElementById("previous-cycle-count");
@@ -299,6 +314,17 @@ export function initializeDataCollection(): (() => void) | void {
   let leaveValueTeleop = getFromLocalStorage("leaveValueTeleop", "none");
   let estimateSizeAutoValue = getFromLocalStorage("estimateSizeAuto", "");
   let estimateSizeValue = getFromLocalStorage("estimateSize", "");
+
+  const updateCurrentEstimateDisplays = () => {
+    if (autoCurrentEstimateEl) {
+      autoCurrentEstimateEl.textContent = `Current Value: ${Number(estimateSizeAutoValue || "0")}`;
+    }
+    if (teleopCurrentEstimateEl) {
+      teleopCurrentEstimateEl.textContent = `Current Value: ${Number(estimateSizeValue || "0")}`;
+    }
+  };
+
+  updateCurrentEstimateDisplays();
 
   // Store counter state on form element to avoid closure scope issues
   const setCounters = (counters: {
@@ -656,16 +682,17 @@ export function initializeDataCollection(): (() => void) | void {
 
     estimateSizeAutoButtons.forEach((button) => {
       button.addEventListener("click", () => {
-        estimateSizeAutoButtons.forEach((btn) => {
-          btn.classList.remove("selected");
-          btn.setAttribute("aria-checked", "false");
-        });
-        button.classList.add("selected");
-        button.setAttribute("aria-checked", "true");
-        estimateSizeAutoValue = button.getAttribute("data-value") ?? "";
+        const delta = Number(button.getAttribute("data-value") || "0");
+        const nextValue = Math.max(0, Number(estimateSizeAutoValue || "0") + delta);
+        estimateSizeAutoValue = String(nextValue);
         estimateSizeAuto.value = estimateSizeAutoValue;
         saveToLocalStorage("estimateSizeAuto", estimateSizeAutoValue);
-        estimateSizeAutoContainer?.classList.add("has-value");
+        if (nextValue > 0) {
+          estimateSizeAutoContainer?.classList.add("has-value");
+        } else {
+          estimateSizeAutoContainer?.classList.remove("has-value");
+        }
+        updateCurrentEstimateDisplays();
       });
     });
   }
@@ -690,16 +717,17 @@ export function initializeDataCollection(): (() => void) | void {
 
     estimateSizeButtons.forEach((button) => {
       button.addEventListener("click", () => {
-        estimateSizeButtons.forEach((btn) => {
-          btn.classList.remove("selected");
-          btn.setAttribute("aria-checked", "false");
-        });
-        button.classList.add("selected");
-        button.setAttribute("aria-checked", "true");
-        estimateSizeValue = button.getAttribute("data-value") ?? "";
+        const delta = Number(button.getAttribute("data-value") || "0");
+        const nextValue = Math.max(0, Number(estimateSizeValue || "0") + delta);
+        estimateSizeValue = String(nextValue);
         estimateSizeSelect.value = estimateSizeValue;
         saveToLocalStorage("estimateSize", estimateSizeValue);
-        estimateSizeContainer?.classList.add("has-value");
+        if (nextValue > 0) {
+          estimateSizeContainer?.classList.add("has-value");
+        } else {
+          estimateSizeContainer?.classList.remove("has-value");
+        }
+        updateCurrentEstimateDisplays();
       });
     });
   }
@@ -942,16 +970,23 @@ export function initializeDataCollection(): (() => void) | void {
       button.addEventListener("click", () => {
         if (cycles.length === 0) return;
 
+        const delta = Number(button.getAttribute("data-value") || "0");
+        const currentValue = Number(cycles[cycles.length - 1].estimateSize || "0");
+        const nextValue = Math.max(0, currentValue + delta);
+        
         estimateSizePreviousButtons.forEach((btn) => {
           btn.classList.remove("selected");
           btn.setAttribute("aria-checked", "false");
         });
         button.classList.add("selected");
         button.setAttribute("aria-checked", "true");
-        const selectedValue = button.getAttribute("data-value") ?? "";
-        estimateSizePrevious.value = selectedValue;
-        cycles[cycles.length - 1].estimateSize = selectedValue;
+        
+        cycles[cycles.length - 1].estimateSize = String(nextValue);
+        estimateSizePrevious.value = String(nextValue);
         saveToLocalStorage("cycles", JSON.stringify(cycles));
+        if (previousTeleopEstimateValueEl) {
+          previousTeleopEstimateValueEl.textContent = `Past Value: ${nextValue}`;
+        }
       });
     });
   }
@@ -969,16 +1004,23 @@ export function initializeDataCollection(): (() => void) | void {
       button.addEventListener("click", () => {
         if (autoCycles.length === 0) return;
 
+        const delta = Number(button.getAttribute("data-value") || "0");
+        const currentValue = Number(autoCycles[autoCycles.length - 1].estimateSize || "0");
+        const nextValue = Math.max(0, currentValue + delta);
+        
         estimateSizePreviousAutoButtons.forEach((btn) => {
           btn.classList.remove("selected");
           btn.setAttribute("aria-checked", "false");
         });
         button.classList.add("selected");
         button.setAttribute("aria-checked", "true");
-        const selectedValue = button.getAttribute("data-value") ?? "";
-        estimateSizePreviousAuto.value = selectedValue;
-        autoCycles[autoCycles.length - 1].estimateSize = selectedValue;
+        
+        autoCycles[autoCycles.length - 1].estimateSize = String(nextValue);
+        estimateSizePreviousAuto.value = String(nextValue);
         saveToLocalStorage("autoCycles", JSON.stringify(autoCycles));
+        if (previousAutoEstimateValueEl) {
+          previousAutoEstimateValueEl.textContent = `Past Value: ${nextValue}`;
+        }
       });
     });
   }
@@ -1014,12 +1056,21 @@ export function initializeDataCollection(): (() => void) | void {
             }
           });
           estimateSizePreviousSection?.classList.add("has-value");
+          if (previousTeleopEstimateValueEl) {
+            previousTeleopEstimateValueEl.textContent = `Past Value: ${lastCycle.estimateSize}`;
+          }
         } else {
           estimateSizePreviousSection?.classList.remove("has-value");
+          if (previousTeleopEstimateValueEl) {
+            previousTeleopEstimateValueEl.textContent = "Past Value: 0";
+          }
         }
       }
     } else {
       previousCycleSection.classList.add("hidden");
+      if (previousTeleopEstimateValueEl) {
+        previousTeleopEstimateValueEl.textContent = "Past Value: 0";
+      }
     }
   }
 
@@ -1055,12 +1106,21 @@ export function initializeDataCollection(): (() => void) | void {
             }
           });
           estimateSizePreviousAutoSection?.classList.add("has-value");
+          if (previousAutoEstimateValueEl) {
+            previousAutoEstimateValueEl.textContent = `Past Value: ${lastCycle.estimateSize}`;
+          }
         } else {
           estimateSizePreviousAutoSection?.classList.remove("has-value");
+          if (previousAutoEstimateValueEl) {
+            previousAutoEstimateValueEl.textContent = "Past Value: 0";
+          }
         }
       }
     } else {
       previousAutoCycleSection.classList.add("hidden");
+      if (previousAutoEstimateValueEl) {
+        previousAutoEstimateValueEl.textContent = "Past Value: 0";
+      }
     }
   }
 
@@ -1122,6 +1182,7 @@ export function initializeDataCollection(): (() => void) | void {
         estimateSizeAutoContainer?.classList.remove("has-value");
       }
       estimateSizeAutoValue = "";
+      updateCurrentEstimateDisplays();
 
       showSuccess(`Auto Cycle ${autoCycles.length} recorded!`);
     });
@@ -1161,6 +1222,7 @@ export function initializeDataCollection(): (() => void) | void {
       }
       estimateSizeValue = "";
       saveToLocalStorage("estimateSize", "");
+      updateCurrentEstimateDisplays();
 
       showSuccess(`Cycle ${cycles.length} recorded!`);
     });
@@ -1275,6 +1337,7 @@ export function initializeDataCollection(): (() => void) | void {
       estimateSizeContainer?.classList.remove("has-value");
     }
     estimateSizeValue = "";
+    updateCurrentEstimateDisplays();
 
     cycles = [];
     if (cycleCountEl) cycleCountEl.textContent = "Cycles: 0";
