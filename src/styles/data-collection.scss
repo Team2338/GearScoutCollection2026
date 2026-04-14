@@ -505,64 +505,7 @@ html {
       width: 100%;
     }
 
-    .previous-cycle-section,
-    .previous-auto-cycle-section {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      width: 100%;
-      max-width: 360px;
-      margin-top: 30px;
-      background-color: #001b2f;
-      border-radius: 8px;
-      margin-bottom: 30px;
-      padding-bottom: 20px;
-
-      &.hidden {
-        display: none;
-      }
-
-      .sub-label {
-        text-align: center;
-      }
-
-      .estimate-size-label {
-        color: $offwhite;
-        text-align: center;
-      }
-
-      .estimate-size-field {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin: 0 auto;
-
-        select {
-          margin: 0 auto;
-        }
-
-        label {
-          background-color: #001b2f;
-        }
-      }
-
-      .cycle-count {
-        text-align: center;
-        color: $grey;
-        font-size: 14px;
-        font-weight: 500;
-        letter-spacing: 0.5px;
-
-        @media (max-width: 768px) {
-          font-size: 15px;
-        }
-      }
-
-      .objective-label {
-        text-align: center;
-      }
-    }
-
+    
     .toggle-button-group {
       display: flex;
       flex-wrap: nowrap;
@@ -988,61 +931,6 @@ html {
         &:hover {
           border-color: $offwhite;
           background-color: rgba($offblue, 0.6);
-        }
-      }
-    }
-
-    // Duplicate .previous-cycle-section removed - consolidated above
-    // Duplicate .cycle-count removed - moved into .previous-cycle-section
-
-    .cycle-button-area {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      margin: 20px 0;
-      width: 100%;
-
-      .cycle-button {
-        border-radius: 4px;
-        height: 50px;
-        width: 200px;
-        padding: 0;
-        color: #fff;
-        border: 2px solid $orange;
-        background-color: $orange;
-        font-size: 18px;
-        font-weight: 600;
-        letter-spacing: 1px;
-        cursor: pointer;
-        transition: all 0.2s;
-
-        @media (max-width: 768px) {
-          width: 220px;
-          height: 52px;
-          font-size: 17px;
-        }
-
-        &:hover {
-          background-color: $offorange;
-          border-color: $offorange;
-          transform: scale(1.02);
-        }
-
-        &:active {
-          transform: scale(0.98);
-        }
-      }
-
-      .cycle-count {
-        color: $grey;
-        font-size: 14px;
-        font-weight: 500;
-        letter-spacing: 0.5px;
-
-        @media (max-width: 768px) {
-          font-size: 15px;
         }
       }
     }

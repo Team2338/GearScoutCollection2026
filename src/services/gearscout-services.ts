@@ -2,6 +2,7 @@ import axios from 'axios';
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import type { IMatch, IMatchLineup, IUser } from '@/model/Models';
 import { API, TIMING } from '@/constants';
+import { logger } from '@/utils/logger';
 
 // Constants
 const DEFAULT_API_BASE_URL = API.DEFAULT_BASE_URL;
@@ -54,12 +55,12 @@ class GearscoutService {
 		return this.service.post(url, match, config).catch(error => {
 			if (isAxiosError(error)) {
 				if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
-					console.error('[API] Request timeout - check your connection');
+					logger.error('[API] Request timeout - check your connection');
 					throw new Error('Request timeout. Please check your internet connection and try again.');
 				}
 				if (error.response) {
 					const status = error.response.status;
-					console.warn('[API] Response status:', status);
+					logger.warn('[API] Response status:', status);
 					
 					if (status === 401) {
 						throw new Error('Authentication failed. Please check your secret code and try logging in again.');
@@ -73,13 +74,13 @@ class GearscoutService {
 						throw new Error('Server error. Please try again in a few moments.');
 					}
 				} else if (error.request) {
-					console.error('[API] No response received from server');
+						logger.error('[API] No response received from server');
 					throw new Error('Cannot reach server. Please check your internet connection.');
 				}
 			}
 			
 			if (error instanceof Error) {
-				console.warn('[API] Submit match failed:', error.message);
+					logger.warn('[API] Submit match failed:', error.message);
 			}
 			throw error;
 		});

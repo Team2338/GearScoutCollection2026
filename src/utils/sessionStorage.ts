@@ -2,6 +2,8 @@
  * Session storage utilities for temporary data persistence
  */
 
+import { logger } from '@/utils/logger';
+
 /**
  * Save a value to sessionStorage
  * @param key - The storage key
@@ -16,7 +18,7 @@ export function saveToSessionStorage(
 		sessionStorage.setItem(key, stringValue);
 	} catch (error) {
 		if (error instanceof Error) {
-			console.warn('[Session Storage] Error saving:', error.message);
+			logger.warn('[Session Storage] Error saving:', error.message);
 		}
 	}
 }
@@ -35,7 +37,7 @@ export function getFromSessionStorage(
 		return sessionStorage.getItem(key) ?? defaultValue;
 	} catch (error) {
 		if (error instanceof Error) {
-			console.warn('[Session Storage] Error reading:', error.message);
+			logger.warn('[Session Storage] Error reading:', error.message);
 		}
 		return defaultValue;
 	}
@@ -59,7 +61,7 @@ export function getJsonFromSessionStorage<T>(
 		return JSON.parse(item) as T;
 	} catch (error) {
 			if (error instanceof Error) {
-				console.warn('[Session Storage] Error parsing JSON:', error.message);
+				logger.warn('[Session Storage] Error parsing JSON:', error.message);
 			}
 			return defaultValue;
 	}
@@ -74,7 +76,7 @@ export function removeFromSessionStorage(key: string): void {
 		sessionStorage.removeItem(key);
 	} catch (error) {
 		if (error instanceof Error) {
-			console.warn('[Session Storage] Error removing:', error.message);
+			logger.warn('[Session Storage] Error removing:', error.message);
 		}
 	}
 }
@@ -87,7 +89,7 @@ export function clearSessionStorage(): void {
 		sessionStorage.clear();
 	} catch (error) {
 		if (error instanceof Error) {
-			console.warn('[Session Storage] Error clearing:', error.message);
+			logger.warn('[Session Storage] Error clearing:', error.message);
 		}
 	}
 }

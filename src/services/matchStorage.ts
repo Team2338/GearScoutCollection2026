@@ -5,6 +5,7 @@
 import { AllianceColor, Gamemode, IMatch, IMultiMatchStorage, IObjective, IStoredMatch, IUser } from '../model/Models';
 import gearscoutService, { isAxiosError } from './gearscout-services';
 import { showError, showSuccess } from '../utils/notifications';
+import { logger } from '../utils/logger';
 import { STORAGE_KEYS } from '@/constants';
 
 const MULTI_MATCH_STORAGE_KEY = STORAGE_KEYS.MULTI_MATCH_DATA;
@@ -30,8 +31,8 @@ export function getMultiMatchStorage(userData: IUser): IMultiMatchStorage {
 		}
 	} catch (error) {
 		if (error instanceof Error) {
-			console.error('Error reading multi-match storage:', error.message);
-		}
+				logger.error('Error reading multi-match storage:', error.message);
+			}
 	}
 	
 	// Return new structure if nothing valid exists
@@ -57,8 +58,7 @@ export interface MatchDataToSave {
 	leaveValue: string;
 	estimateSizeAuto: string;
 	leaveValueTeleop: string;
-	autoCycles: Array<{ estimateSize: string }>;
-	cycles: Array<{ estimateSize: string }>;
+	estimateSize: string;
 }
 
 /**
@@ -90,19 +90,18 @@ export function saveMatchToStorage(userData: IUser, matchData: MatchDataToSave):
 		
 		// Always add as new entry (we've already removed any existing ones)
 		storage.matches.push(newMatch);
-		console.log(`[Match Storage] Saved Match #${matchNum} for Team ${robotNum}`);
-		
+		logger.info(`[Match Storage] Saved Match #${matchNum} for Team ${robotNum}`);
+
 		localStorage.setItem(MULTI_MATCH_STORAGE_KEY, JSON.stringify(storage));
-		console.log(`[Match Storage] Total: ${storage.matches.length} match(es)`);
 	} catch (error) {
 		if (error instanceof DOMException && error.name === 'QuotaExceededError') {
-			console.error('[Match Storage] Storage quota exceeded');
+			logger.error('[Match Storage] Storage quota exceeded');
 			showError('Storage full. Please submit pending matches to free up space.');
 			throw new Error('Storage quota exceeded');
 		} else if (error instanceof Error) {
-			console.error('[Match Storage] Error saving match:', error.message);
+			logger.error('[Match Storage] Error saving match:', error.message);
 		} else {
-			console.error('[Match Storage] Error saving match:', error);
+			logger.error('[Match Storage] Error saving match:', error);
 		}
 		throw error;
 	}
@@ -127,13 +126,13 @@ export function cleanInvalidMatches(userData: IUser): number {
 		
 		if (removedCount > 0) {
 			localStorage.setItem(MULTI_MATCH_STORAGE_KEY, JSON.stringify(storage));
-			console.log(`[Match Storage] Cleaned ${removedCount} invalid match(es) from storage`);
+			logger.info(`[Match Storage] Cleaned ${removedCount} invalid match(es) from storage`);
 		}
 		
 		return removedCount;
 	} catch (error) {
 		if (error instanceof Error) {
-			console.error('[Match Storage] Error cleaning invalid matches:', error.message);
+			logger.error('[Match Storage] Error cleaning invalid matches:', error.message);
 		}
 		return 0;
 	}
@@ -171,7 +170,7 @@ function markMatchesAsSubmitted(
 		localStorage.setItem(MULTI_MATCH_STORAGE_KEY, JSON.stringify(storage));
 	} catch (error) {
 		if (error instanceof Error) {
-			console.error('Error marking matches as submitted:', error.message);
+			logger.error('Error marking matches as submitted:', error.message);
 		}
 	}
 }
@@ -187,7 +186,7 @@ function clearSubmittedMatches(userData: IUser): void {
 		localStorage.setItem(MULTI_MATCH_STORAGE_KEY, JSON.stringify(storage));
 	} catch (error) {
 		if (error instanceof Error) {
-			console.error('Error clearing submitted matches:', error.message);
+			logger.error('Error clearing submitted matches:', error.message);
 		}
 	}
 }
@@ -213,16 +212,12 @@ function convertStoredMatchToAPIFormat(userData: IUser, storedMatch: IStoredMatc
 	const autoClimbCount = storedMatch.leaveValue === 'yes' ? 15 : 0;
 	objectives.push({ gamemode: Gamemode.AUTO, objective: 'CLIMB_2026', count: autoClimbCount });
 
-	// Auto cycles - send each cycle's estimate individually
-	if (storedMatch.autoCycles && storedMatch.autoCycles.length > 0) {
-		storedMatch.autoCycles.forEach((cycle, index) => {
-			if (cycle.estimateSize) {
-				objectives.push({
-					gamemode: Gamemode.AUTO,
-					objective: 'HIGH_GOAL_2025',
-					count: Number(cycle.estimateSize)
-				});
-			}
+	// Auto high goal estimate
+	if (storedMatch.estimateSizeAuto) {
+		objectives.push({
+			gamemode: Gamemode.AUTO,
+			objective: 'HIGH_GOAL_2026',
+			count: Number(storedMatch.estimateSizeAuto)
 		});
 	}
 
@@ -239,16 +234,12 @@ function convertStoredMatchToAPIFormat(userData: IUser, storedMatch: IStoredMatc
 	}
 	objectives.push({ gamemode: Gamemode.TELEOP, objective: 'CLIMB_2026', count: teleopClimbCount });
 
-	// Teleop cycles - send each cycle's estimate individually
-	if (storedMatch.cycles && storedMatch.cycles.length > 0) {
-		storedMatch.cycles.forEach((cycle, index) => {
-			if (cycle.estimateSize) {
-				objectives.push({
-					gamemode: Gamemode.TELEOP,
-					objective: 'HIGH_GOAL_2025',
-					count: Number(cycle.estimateSize)
-				});
-			}
+	// Teleop high goal estimate
+	if (storedMatch.estimateSize) {
+		objectives.push({
+			gamemode: Gamemode.TELEOP,
+			objective: 'HIGH_GOAL_2026',
+			count: Number(storedMatch.estimateSize)
 		});
 	}
 
@@ -274,10 +265,10 @@ export async function submitAllPendingMatches(userData: IUser): Promise<void> {
 	
 	const pendingMatches = getPendingMatches(userData);
 	
-	console.log(`[Match Submission] Starting submission: ${pendingMatches.length} pending match(es)`);
+	logger.info(`[Match Submission] Starting submission: ${pendingMatches.length} pending match(es)`);
 	
 	if (pendingMatches.length === 0) {
-		console.log('[Match Submission] No pending matches to submit');
+		logger.info('[Match Submission] No pending matches to submit');
 		return;
 	}
 	
@@ -285,22 +276,22 @@ export async function submitAllPendingMatches(userData: IUser): Promise<void> {
 	const validMatches = pendingMatches.filter(m => {
 		const isValid = m.matchNumber > 0 && m.robotNumber && m.robotNumber.trim() !== '';
 		if (!isValid) {
-			console.warn(`[Match Submission] Skipping invalid match: Match #${m.matchNumber}, Team ${m.robotNumber}`);
+			logger.warn(`[Match Submission] Skipping invalid match: Match #${m.matchNumber}, Team ${m.robotNumber}`);
 		}
 		return isValid;
 	});
 	
 	if (validMatches.length === 0) {
-		console.error('[Match Submission] No valid matches to submit (all have invalid data)');
+		logger.error('[Match Submission] No valid matches to submit (all have invalid data)');
 		showError('No valid matches found. Please check your data and try again.');
 		return;
 	}
 	
 	if (validMatches.length < pendingMatches.length) {
-		console.warn(`[Match Submission] Filtered out ${pendingMatches.length - validMatches.length} invalid match(es)`);
+		logger.warn(`[Match Submission] Filtered out ${pendingMatches.length - validMatches.length} invalid match(es)`);
 	}
 	
-	console.log(`[Match Submission] Attempting to submit ${validMatches.length} valid match(es)`);
+	logger.info(`[Match Submission] Attempting to submit ${validMatches.length} valid match(es)`);
 	
 	// Deduplicate matches before submitting (keep most recent based on timestamp)
 	const uniqueMatches = new Map<string, IStoredMatch>();
@@ -308,7 +299,7 @@ export async function submitAllPendingMatches(userData: IUser): Promise<void> {
 		const key = `${match.matchNumber}-${match.robotNumber}`;
 		const existing = uniqueMatches.get(key);
 		if (existing) {
-			console.warn(`[Match Submission] Duplicate detected: Match #${match.matchNumber}, Team ${match.robotNumber} (keeping most recent)`);
+			logger.warn(`[Match Submission] Duplicate detected: Match #${match.matchNumber}, Team ${match.robotNumber} (keeping most recent)`);
 			if (match.timestamp > existing.timestamp) {
 				uniqueMatches.set(key, match);
 			}
@@ -319,7 +310,7 @@ export async function submitAllPendingMatches(userData: IUser): Promise<void> {
 	
 	const matchesToSubmit = Array.from(uniqueMatches.values());
 	if (matchesToSubmit.length < validMatches.length) {
-		console.warn(`[Match Submission] Removed ${validMatches.length - matchesToSubmit.length} duplicate(s)`);
+		logger.warn(`[Match Submission] Removed ${validMatches.length - matchesToSubmit.length} duplicate(s)`);
 	}
 	
 	let successCount = 0;
@@ -328,7 +319,7 @@ export async function submitAllPendingMatches(userData: IUser): Promise<void> {
 	
 	for (const storedMatch of matchesToSubmit) {
 		try {
-			console.log(`[Match Submission] Submitting Match #${storedMatch.matchNumber}, Team ${storedMatch.robotNumber}...`);
+			logger.info(`[Match Submission] Submitting Match #${storedMatch.matchNumber}, Team ${storedMatch.robotNumber}...`);
 			const matchData = convertStoredMatchToAPIFormat(userData, storedMatch);
 			await gearscoutService.submitMatch(userData, matchData);
 			successCount++;
@@ -336,10 +327,10 @@ export async function submitAllPendingMatches(userData: IUser): Promise<void> {
 				matchNumber: storedMatch.matchNumber, 
 				robotNumber: storedMatch.robotNumber 
 			});
-			console.log(`[Match Submission] Successfully submitted Match #${storedMatch.matchNumber}`);
+			logger.info(`[Match Submission] Successfully submitted Match #${storedMatch.matchNumber}`);
 		} catch (error) {
 			failCount++;
-			console.error(`[Match Submission] Failed to submit Match #${storedMatch.matchNumber}:`, error);
+			logger.error(`[Match Submission] Failed to submit Match #${storedMatch.matchNumber}:`, error);
 			
 			// Check for authentication errors
 			if (isAxiosError(error) && error.response?.status === 401) {
@@ -354,7 +345,7 @@ export async function submitAllPendingMatches(userData: IUser): Promise<void> {
 	
 	// Mark successfully submitted matches
 	if (successfulMatches.length > 0) {
-		console.log(`✓ Marking ${successfulMatches.length} match(es) as submitted...`);
+		logger.info(`✓ Marking ${successfulMatches.length} match(es) as submitted...`);
 		markMatchesAsSubmitted(userData, successfulMatches);
 		clearSubmittedMatches(userData);
 		
@@ -370,13 +361,4 @@ export async function submitAllPendingMatches(userData: IUser): Promise<void> {
 		showError(`Failed to submit ${failCount} match(es). ${remainingCount} match(es) remain in local storage and will be submitted later.`);
 	}
 	
-	// Log final submission summary
-	const remainingMatches = getPendingMatches(userData);
-	console.log(`\n${'═'.repeat(50)}`);
-	console.log(`📊 Submission Summary`);
-	console.log(`${'═'.repeat(50)}`);
-	console.log(`✅ Success: ${successCount}`);
-	console.log(`❌ Failed: ${failCount}`);
-	console.log(`📦 Remaining: ${remainingMatches.length}`);
-	console.log(`${'═'.repeat(50)}\n`);
 }

@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { isValidUser } from '@/model/Models';
 import { getPendingMatches, submitAllPendingMatches } from '@/services/matchStorage';
 import { TIMING, STORAGE_KEYS } from '@/constants';
+import { logger } from '@/utils/logger';
 
 interface UsePendingMatchesReturn {
   /** Number of pending matches waiting to be submitted */
@@ -35,7 +36,7 @@ export function usePendingMatches(): UsePendingMatchesReturn {
     try {
       const parsed = JSON.parse(userDataStr);
       if (!isValidUser(parsed)) {
-        console.error('[Pending Matches] Invalid user data');
+        logger.error('[Pending Matches] Invalid user data');
         return;
       }
       await submitAllPendingMatches(parsed);
@@ -43,7 +44,7 @@ export function usePendingMatches(): UsePendingMatchesReturn {
       const pending = getPendingMatches(parsed);
       setPendingCount(pending.length);
     } catch (error) {
-      console.error('Error retrying submission:', error);
+      logger.error('Error retrying submission:', error);
     } finally {
       setIsRetrying(false);
     }
@@ -60,14 +61,14 @@ export function usePendingMatches(): UsePendingMatchesReturn {
       try {
         const parsed = JSON.parse(userDataStr);
         if (!isValidUser(parsed)) {
-          console.warn('[Pending Matches] Invalid user data');
+          logger.warn('[Pending Matches] Invalid user data');
           return;
         }
         const pending = getPendingMatches(parsed);
         setPendingCount(pending.length);
       } catch (error) {
         if (error instanceof Error) {
-          console.warn('[Pending Matches] Error reading:', error.message);
+          logger.warn('[Pending Matches] Error reading:', error.message);
         }
       }
     };

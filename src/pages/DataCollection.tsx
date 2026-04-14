@@ -160,35 +160,12 @@ const DataCollection = () => {
               </div>
             </div>
 
-            <div id="previous-auto-cycle-section" className="previous-cycle-section hidden">
-              <h3 className="objective-label">Previous Auto Cycle</h3>
-                <div className="cycle-count" id="previous-auto-cycle-count">Auto Cycle: 0</div>
-              
-              <div className="estimate-size-section">
-                <h4 className="sub-label estimate-size-label">Estimated Size</h4>
-                <div className="form-field estimate-size-field">
-                  <div className="estimate-button-group" role="group" aria-label="Estimated cycle size for previous auto cycle">
-                    <button type="button" className="estimate-button estimate-button-previous" data-value="-10" role="radio" aria-checked="false" aria-label="Size negative 10">-10</button>
-                    <button type="button" className="estimate-button estimate-button-previous" data-value="-5" role="radio" aria-checked="false" aria-label="Size negative 5">-5</button>
-                    <button type="button" className="estimate-button estimate-button-previous" data-value="-3" role="radio" aria-checked="false" aria-label="Size negative 3">-3</button>
-                    <button type="button" className="estimate-button estimate-button-previous" data-value="-1" role="radio" aria-checked="false" aria-label="Size negative 1">-1</button>
-                    <button type="button" className="estimate-button estimate-button-previous" data-value="1" role="radio" aria-checked="false" aria-label="Size positive 1">+1</button>
-                    <button type="button" className="estimate-button estimate-button-previous" data-value="3" role="radio" aria-checked="false" aria-label="Size positive 3">+3</button>
-                    <button type="button" className="estimate-button estimate-button-previous" data-value="5" role="radio" aria-checked="false" aria-label="Size positive 5">+5</button>
-                    <button type="button" className="estimate-button estimate-button-previous" data-value="10" role="radio" aria-checked="false" aria-label="Size positive 10">+10</button>
-                  </div>
-                  <input type="hidden" id="estimate-size-previous-auto" name="estimateSizePreviousAuto" />
-                </div>
-                <div className="cycle-count" id="previous-auto-estimate-value">Past Value: 0</div>
-              </div>
-            </div>
-
-            <h3 className="objective-label" id="auto-current-cycle-label">Current Auto Cycle</h3>
+            <h3 className="objective-label">Auto</h3>
 
             <div className="estimate-size-section">
               <h4 className="sub-label estimate-size-label">Estimated Size</h4>
               <div className="form-field estimate-size-field">
-                <div className="estimate-button-group" role="group" aria-label="Estimated cycle size for current auto cycle">
+                <div className="estimate-button-group" role="group" aria-label="Estimated high goal size for auto">
                   <button type="button" className="estimate-button" data-value="-10" role="radio" aria-checked="false" aria-label="Size negative 10">-10</button>
                   <button type="button" className="estimate-button" data-value="-5" role="radio" aria-checked="false" aria-label="Size negative 5">-5</button>
                   <button type="button" className="estimate-button" data-value="-3" role="radio" aria-checked="false" aria-label="Size negative 3">-3</button>
@@ -203,12 +180,7 @@ const DataCollection = () => {
               <div className="cycle-count" id="auto-current-estimate">Current Value: 0</div>
             </div>
 
-            <div className="cycle-button-area">
-              <button type="button" className="cycle-button" id="auto-cycle-button">
-                CYCLE
-              </button>
-              <div className="cycle-count" id="auto-cycle-count">Auto Cycles: 0</div>
-            </div>
+
 
             <h3 className="objective-label" id="auto-climb-label">Climb</h3>
             <div className="toggle-button-group" role="group" aria-labelledby="auto-climb-label">
@@ -236,35 +208,12 @@ const DataCollection = () => {
 
             <h2 className="section-title">Teleop</h2>
 
-            <div id="previous-cycle-section" className="previous-cycle-section hidden">
-              <h3 className="objective-label">Previous Cycle</h3>
-                <div className="cycle-count" id="previous-cycle-count">Cycle: 0</div>
-              
-              <div className="estimate-size-section">
-                <h4 className="sub-label estimate-size-label">Estimated Size</h4>
-                <div className="form-field estimate-size-field">
-                  <div className="estimate-button-group" role="group" aria-label="Estimated cycle size for previous teleop cycle">
-                    <button type="button" className="estimate-button estimate-button-previous" data-value="-10" role="radio" aria-checked="false" aria-label="Size negative 10">-10</button>
-                    <button type="button" className="estimate-button estimate-button-previous" data-value="-5" role="radio" aria-checked="false" aria-label="Size negative 5">-5</button>
-                    <button type="button" className="estimate-button estimate-button-previous" data-value="-3" role="radio" aria-checked="false" aria-label="Size negative 3">-3</button>
-                    <button type="button" className="estimate-button estimate-button-previous" data-value="-1" role="radio" aria-checked="false" aria-label="Size negative 1">-1</button>
-                    <button type="button" className="estimate-button estimate-button-previous" data-value="1" role="radio" aria-checked="false" aria-label="Size positive 1">+1</button>
-                    <button type="button" className="estimate-button estimate-button-previous" data-value="3" role="radio" aria-checked="false" aria-label="Size positive 3">+3</button>
-                    <button type="button" className="estimate-button estimate-button-previous" data-value="5" role="radio" aria-checked="false" aria-label="Size positive 5">+5</button>
-                    <button type="button" className="estimate-button estimate-button-previous" data-value="10" role="radio" aria-checked="false" aria-label="Size positive 10">+10</button>
-                  </div>
-                  <input type="hidden" id="estimate-size-previous" name="estimateSizePrevious" />
-                </div>
-                <div className="cycle-count" id="previous-teleop-estimate-value">Past Value: 0</div>
-              </div>
-            </div>
-
-            <h3 className="objective-label" id="current-cycle-label">Current Teleop Cycle</h3>
+            <h3 className="objective-label">Teleop</h3>
             
             <div className="estimate-size-section">
               <h4 className="sub-label estimate-size-label">Estimated Size</h4>
               <div className="form-field estimate-size-field">
-                <div className="estimate-button-group" role="group" aria-label="Estimated cycle size for current teleop cycle">
+                <div className="estimate-button-group" role="group" aria-label="Estimated high goal size for teleop">
                   <button type="button" className="estimate-button" data-value="-10" role="radio" aria-checked="false" aria-label="Size negative 10">-10</button>
                   <button type="button" className="estimate-button" data-value="-5" role="radio" aria-checked="false" aria-label="Size negative 5">-5</button>
                   <button type="button" className="estimate-button" data-value="-3" role="radio" aria-checked="false" aria-label="Size negative 3">-3</button>
@@ -277,12 +226,6 @@ const DataCollection = () => {
                 <input type="hidden" id="estimate-size" name="estimateSize" />
               </div>
               <div className="cycle-count" id="teleop-current-estimate">Current Value: 0</div>
-            </div>
-            <div className="cycle-button-area">
-              <button type="button" className="cycle-button" id="cycle-button">
-                CYCLE
-              </button>
-              <div className="cycle-count" id="cycle-count">Cycles: 0</div>
             </div>
             <h3 className="objective-label">Climb</h3>
             <div className="toggle-button-group climb-button-group">

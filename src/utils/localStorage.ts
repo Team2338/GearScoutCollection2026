@@ -3,6 +3,7 @@
  */
 
 import { FORM_DATA_KEYS } from '@/constants';
+import { logger } from '@/utils/logger';
 
 /**
  * Save a value to localStorage
@@ -18,10 +19,10 @@ export function saveToLocalStorage(
 		localStorage.setItem(key, String(value));
 	} catch (error) {
 		if (error instanceof DOMException && error.name === 'QuotaExceededError') {
-			console.error('[Local Storage] Quota exceeded');
+			logger.error('[Local Storage] Quota exceeded');
 			throw new Error('Storage full. Please submit pending matches.');
 		} else if (error instanceof Error) {
-			console.warn('[Local Storage] Error saving:', error.message);
+			logger.warn('[Local Storage] Error saving:', error.message);
 		}
 	}
 }
@@ -40,7 +41,7 @@ export function getFromLocalStorage(
 		return localStorage.getItem(key) ?? String(defaultValue);
 	} catch (error) {
 		if (error instanceof Error) {
-			console.warn('[Local Storage] Error reading:', error.message);
+			logger.warn('[Local Storage] Error reading:', error.message);
 		}
 		return String(defaultValue);
 	}
@@ -54,7 +55,7 @@ export function clearFormDataFromLocalStorage(): void {
 		FORM_DATA_KEYS.forEach(key => localStorage.removeItem(key));
 	} catch (error) {
 		if (error instanceof Error) {
-			console.warn('[Local Storage] Error clearing:', error.message);
+			logger.warn('[Local Storage] Error clearing:', error.message);
 		}
 	}
 }

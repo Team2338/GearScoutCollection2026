@@ -18,6 +18,7 @@ import {
   submitAllPendingMatches,
   cleanInvalidMatches,
 } from "@/services/matchStorage";
+import { logger } from '@/utils/logger';
 import {
   fetchSchedule,
   getSchedule,
@@ -219,19 +220,19 @@ let rightBumpCounter = 0;
  * @returns Cleanup function to remove event listeners
  */
 export function initializeDataCollection(): (() => void) | void {
-  console.log("[Data Collection] Initializing...");
+  logger.info("[Data Collection] Initializing...");
 
   const form = document.getElementById(
     "data-collection-form",
   ) as HTMLFormElement;
   if (!form) {
-    console.error("[Data Collection] Form element not found");
+    logger.error("[Data Collection] Form element not found");
     return;
   }
 
   // Prevent double initialization (React Strict Mode runs effects twice)
   if (form.dataset.initialized === "true") {
-    console.log("[Data Collection] Already initialized, skipping...");
+    logger.info("[Data Collection] Already initialized, skipping...");
     return () => {
       // Cleanup function even if already initialized
       form.dataset.initialized = "false";
@@ -269,42 +270,16 @@ export function initializeDataCollection(): (() => void) | void {
   const estimateSizeSelect = document.getElementById(
     "estimate-size",
   ) as HTMLInputElement;
-  const estimateSizePrevious = document.getElementById(
-    "estimate-size-previous",
-  ) as HTMLInputElement;
-  const estimateSizePreviousAuto = document.getElementById(
-    "estimate-size-previous-auto",
-  ) as HTMLInputElement;
   const autoCurrentEstimateEl = document.getElementById(
     "auto-current-estimate",
   );
   const teleopCurrentEstimateEl = document.getElementById(
     "teleop-current-estimate",
   );
-  const previousAutoEstimateValueEl = document.getElementById(
-    "previous-auto-estimate-value",
-  );
-  const previousTeleopEstimateValueEl = document.getElementById(
-    "previous-teleop-estimate-value",
-  );
-  const cycleButton = document.getElementById("cycle-button");
-  const cycleCountEl = document.getElementById("cycle-count");
-  const previousCycleCountEl = document.getElementById("previous-cycle-count");
-  const previousCycleSection = document.getElementById(
-    "previous-cycle-section",
-  );
-  const autoCycleButton = document.getElementById("auto-cycle-button");
-  const autoCycleCountEl = document.getElementById("auto-cycle-count");
-  const previousAutoCycleCountEl = document.getElementById(
-    "previous-auto-cycle-count",
-  );
-  const previousAutoCycleSection = document.getElementById(
-    "previous-auto-cycle-section",
-  );
 
   // Verify critical elements exist
   if (!matchNumberInput || !teamNumberInput) {
-    console.error("[Data Collection] Critical form elements not found");
+    logger.error("[Data Collection] Critical form elements not found");
     return;
   }
 
@@ -347,21 +322,7 @@ export function initializeDataCollection(): (() => void) | void {
     rightBumpCounter,
   });
 
-  // Cycle tracking arrays
-  let cycles: Array<{
-    estimateSize: string;
-  }> = [];
 
-  let autoCycles: Array<{
-    estimateSize: string;
-  }> = [];
-
-  // Clear cycles and auto cycles on page load (they should not persist across refreshes)
-  // Cycles are only meant to accumulate within a single form session
-  localStorage.removeItem("cycles");
-  localStorage.removeItem("autoCycles");
-  cycles = [];
-  autoCycles = [];
 
   // Get user data and event code
   const userDataStr = sessionStorage.getItem(STORAGE_KEYS.CURRENT_USER);
@@ -957,276 +918,7 @@ export function initializeDataCollection(): (() => void) | void {
     });
   });
 
-  // Previous Cycle Estimate Size button functionality
-  if (estimateSizePrevious) {
-    const estimateSizePreviousContainer =
-      estimateSizePrevious.parentElement as HTMLElement;
-    const estimateSizePreviousButtons =
-      estimateSizePreviousContainer?.querySelectorAll(
-        ".estimate-button-previous",
-      ) as NodeListOf<HTMLElement>;
 
-    estimateSizePreviousButtons.forEach((button) => {
-      button.addEventListener("click", () => {
-        if (cycles.length === 0) return;
-
-        const delta = Number(button.getAttribute("data-value") || "0");
-        const currentValue = Number(cycles[cycles.length - 1].estimateSize || "0");
-        const nextValue = Math.max(0, currentValue + delta);
-        
-        estimateSizePreviousButtons.forEach((btn) => {
-          btn.classList.remove("selected");
-          btn.setAttribute("aria-checked", "false");
-        });
-        button.classList.add("selected");
-        button.setAttribute("aria-checked", "true");
-        
-        cycles[cycles.length - 1].estimateSize = String(nextValue);
-        estimateSizePrevious.value = String(nextValue);
-        saveToLocalStorage("cycles", JSON.stringify(cycles));
-        if (previousTeleopEstimateValueEl) {
-          previousTeleopEstimateValueEl.textContent = `Past Value: ${nextValue}`;
-        }
-      });
-    });
-  }
-
-  // Previous Auto Cycle Estimate Size button functionality
-  if (estimateSizePreviousAuto) {
-    const estimateSizePreviousAutoContainer =
-      estimateSizePreviousAuto.parentElement as HTMLElement;
-    const estimateSizePreviousAutoButtons =
-      estimateSizePreviousAutoContainer?.querySelectorAll(
-        ".estimate-button-previous",
-      ) as NodeListOf<HTMLElement>;
-
-    estimateSizePreviousAutoButtons.forEach((button) => {
-      button.addEventListener("click", () => {
-        if (autoCycles.length === 0) return;
-
-        const delta = Number(button.getAttribute("data-value") || "0");
-        const currentValue = Number(autoCycles[autoCycles.length - 1].estimateSize || "0");
-        const nextValue = Math.max(0, currentValue + delta);
-        
-        estimateSizePreviousAutoButtons.forEach((btn) => {
-          btn.classList.remove("selected");
-          btn.setAttribute("aria-checked", "false");
-        });
-        button.classList.add("selected");
-        button.setAttribute("aria-checked", "true");
-        
-        autoCycles[autoCycles.length - 1].estimateSize = String(nextValue);
-        estimateSizePreviousAuto.value = String(nextValue);
-        saveToLocalStorage("autoCycles", JSON.stringify(autoCycles));
-        if (previousAutoEstimateValueEl) {
-          previousAutoEstimateValueEl.textContent = `Past Value: ${nextValue}`;
-        }
-      });
-    });
-  }
-
-  function updatePreviousCycleDisplay() {
-    if (!previousCycleSection) return;
-
-    if (cycles.length > 0) {
-      previousCycleSection.classList.remove("hidden");
-
-      const lastCycle = cycles[cycles.length - 1];
-
-      if (estimateSizePrevious) {
-        estimateSizePrevious.value = lastCycle.estimateSize || "";
-        const estimateSizePreviousSection = previousCycleSection.querySelector(
-          ".estimate-size-section",
-        ) as HTMLElement;
-        const estimateSizePreviousButtons =
-          estimateSizePreviousSection?.querySelectorAll(
-            ".estimate-button-previous",
-          ) as NodeListOf<HTMLElement>;
-
-        estimateSizePreviousButtons.forEach((btn) => {
-          btn.classList.remove("selected");
-          btn.setAttribute("aria-checked", "false");
-        });
-
-        if (lastCycle.estimateSize) {
-          estimateSizePreviousButtons.forEach((btn) => {
-            if (btn.getAttribute("data-value") === lastCycle.estimateSize) {
-              btn.classList.add("selected");
-              btn.setAttribute("aria-checked", "true");
-            }
-          });
-          estimateSizePreviousSection?.classList.add("has-value");
-          if (previousTeleopEstimateValueEl) {
-            previousTeleopEstimateValueEl.textContent = `Past Value: ${lastCycle.estimateSize}`;
-          }
-        } else {
-          estimateSizePreviousSection?.classList.remove("has-value");
-          if (previousTeleopEstimateValueEl) {
-            previousTeleopEstimateValueEl.textContent = "Past Value: 0";
-          }
-        }
-      }
-    } else {
-      previousCycleSection.classList.add("hidden");
-      if (previousTeleopEstimateValueEl) {
-        previousTeleopEstimateValueEl.textContent = "Past Value: 0";
-      }
-    }
-  }
-
-  function updatePreviousAutoCycleDisplay() {
-    if (!previousAutoCycleSection) return;
-
-    if (autoCycles.length > 0) {
-      previousAutoCycleSection.classList.remove("hidden");
-
-      const lastCycle = autoCycles[autoCycles.length - 1];
-
-      if (estimateSizePreviousAuto) {
-        estimateSizePreviousAuto.value = lastCycle.estimateSize || "";
-        const estimateSizePreviousAutoSection =
-          previousAutoCycleSection.querySelector(
-            ".estimate-size-section",
-          ) as HTMLElement;
-        const estimateSizePreviousAutoButtons =
-          estimateSizePreviousAutoSection?.querySelectorAll(
-            ".estimate-button-previous",
-          ) as NodeListOf<HTMLElement>;
-
-        estimateSizePreviousAutoButtons.forEach((btn) => {
-          btn.classList.remove("selected");
-          btn.setAttribute("aria-checked", "false");
-        });
-
-        if (lastCycle.estimateSize) {
-          estimateSizePreviousAutoButtons.forEach((btn) => {
-            if (btn.getAttribute("data-value") === lastCycle.estimateSize) {
-              btn.classList.add("selected");
-              btn.setAttribute("aria-checked", "true");
-            }
-          });
-          estimateSizePreviousAutoSection?.classList.add("has-value");
-          if (previousAutoEstimateValueEl) {
-            previousAutoEstimateValueEl.textContent = `Past Value: ${lastCycle.estimateSize}`;
-          }
-        } else {
-          estimateSizePreviousAutoSection?.classList.remove("has-value");
-          if (previousAutoEstimateValueEl) {
-            previousAutoEstimateValueEl.textContent = "Past Value: 0";
-          }
-        }
-      }
-    } else {
-      previousAutoCycleSection.classList.add("hidden");
-      if (previousAutoEstimateValueEl) {
-        previousAutoEstimateValueEl.textContent = "Past Value: 0";
-      }
-    }
-  }
-
-  // Update cycle count display on load
-  if (cycleCountEl)
-    cycleCountEl.textContent =
-      cycles.length > 0 ? `Cycles: ${cycles.length}` : "Cycles: 0";
-  if (previousCycleCountEl)
-    previousCycleCountEl.textContent =
-      cycles.length > 0 ? `Cycle: ${cycles.length}` : "Cycle: 0";
-
-  // Update auto cycle count display on load
-  if (autoCycleCountEl)
-    autoCycleCountEl.textContent =
-      autoCycles.length > 0
-        ? `Auto Cycles: ${autoCycles.length}`
-        : "Auto Cycles: 0";
-  if (previousAutoCycleCountEl)
-    previousAutoCycleCountEl.textContent =
-      autoCycles.length > 0
-        ? `Auto Cycle: ${autoCycles.length}`
-        : "Auto Cycle: 0";
-
-  // Initialize previous cycle display on load
-  updatePreviousCycleDisplay();
-  updatePreviousAutoCycleDisplay();
-
-  // Auto Cycle button functionality
-  if (autoCycleButton && autoCycleCountEl && previousAutoCycleCountEl) {
-    autoCycleButton.addEventListener("click", () => {
-      if (!estimateSizeAutoValue) {
-        showError("Please enter estimate size before cycling.");
-        return;
-      }
-
-      autoCycles.push({
-        estimateSize: estimateSizeAutoValue,
-      });
-
-      saveToLocalStorage("autoCycles", JSON.stringify(autoCycles));
-
-      autoCycleCountEl.textContent = `Auto Cycles: ${autoCycles.length}`;
-      previousAutoCycleCountEl.textContent = `Auto Cycle: ${autoCycles.length}`;
-
-      updatePreviousAutoCycleDisplay();
-
-      if (estimateSizeAuto) {
-        estimateSizeAuto.value = "";
-        const estimateSizeAutoContainer =
-          estimateSizeAuto.parentElement as HTMLElement;
-        const estimateSizeAutoButtons =
-          estimateSizeAutoContainer?.querySelectorAll(
-            ".estimate-button:not(.estimate-button-previous)",
-          ) as NodeListOf<HTMLElement>;
-        estimateSizeAutoButtons.forEach((btn) => {
-          btn.classList.remove("selected");
-          btn.setAttribute("aria-checked", "false");
-        });
-        estimateSizeAutoContainer?.classList.remove("has-value");
-      }
-      estimateSizeAutoValue = "";
-      updateCurrentEstimateDisplays();
-
-      showSuccess(`Auto Cycle ${autoCycles.length} recorded!`);
-    });
-  }
-
-  // Cycle button functionality
-  if (cycleButton && cycleCountEl && previousCycleCountEl) {
-    cycleButton.addEventListener("click", () => {
-      if (!estimateSizeValue) {
-        showError("Please enter estimate size before cycling.");
-        return;
-      }
-
-      cycles.push({
-        estimateSize: estimateSizeValue,
-      });
-
-      saveToLocalStorage("cycles", JSON.stringify(cycles));
-
-      cycleCountEl.textContent = `Cycles: ${cycles.length}`;
-      previousCycleCountEl.textContent = `Cycle: ${cycles.length}`;
-
-      updatePreviousCycleDisplay();
-
-      if (estimateSizeSelect) {
-        estimateSizeSelect.value = "";
-        const estimateSizeContainer =
-          estimateSizeSelect.parentElement as HTMLElement;
-        const estimateSizeButtons = estimateSizeContainer?.querySelectorAll(
-          ".estimate-button:not(.estimate-button-previous)",
-        ) as NodeListOf<HTMLElement>;
-        estimateSizeButtons.forEach((btn) => {
-          btn.classList.remove("selected");
-          btn.setAttribute("aria-checked", "false");
-        });
-        estimateSizeContainer?.classList.remove("has-value");
-      }
-      estimateSizeValue = "";
-      saveToLocalStorage("estimateSize", "");
-      updateCurrentEstimateDisplays();
-
-      showSuccess(`Cycle ${cycles.length} recorded!`);
-    });
-  }
 
   // Check if form is pre-filled with valid data on initialization
   // If all required fields have values, enable the submit button
@@ -1339,17 +1031,6 @@ export function initializeDataCollection(): (() => void) | void {
     estimateSizeValue = "";
     updateCurrentEstimateDisplays();
 
-    cycles = [];
-    if (cycleCountEl) cycleCountEl.textContent = "Cycles: 0";
-    if (previousCycleCountEl) previousCycleCountEl.textContent = "Cycle: 0";
-
-    autoCycles = [];
-    if (autoCycleCountEl) autoCycleCountEl.textContent = "Auto Cycles: 0";
-    if (previousAutoCycleCountEl)
-      previousAutoCycleCountEl.textContent = "Auto Cycle: 0";
-
-    updatePreviousCycleDisplay();
-    updatePreviousAutoCycleDisplay();
     formFields.forEach((field) => field.classList.remove("has-value"));
 
     // Update button state without showing errors
@@ -1445,8 +1126,7 @@ export function initializeDataCollection(): (() => void) | void {
           leaveValue,
           estimateSizeAuto: estimateSizeAutoValue,
           leaveValueTeleop,
-          autoCycles: [...autoCycles], // Deep copy
-          cycles: [...cycles], // Deep copy
+          estimateSize: estimateSizeValue,
         });
 
         showSuccess("Match data saved locally!");
@@ -1462,7 +1142,7 @@ export function initializeDataCollection(): (() => void) | void {
         await submitAllPendingMatches(userData);
       } catch (error) {
         if (error instanceof Error) {
-          console.warn(
+          logger.warn(
             "[Data Collection] Error processing match data:",
             error.message,
           );
@@ -1481,7 +1161,6 @@ export function initializeDataCollection(): (() => void) | void {
 
   // Return cleanup function
   return () => {
-    console.log("[Data Collection] Cleaning up...");
     form.dataset.initialized = "false";
   };
 }

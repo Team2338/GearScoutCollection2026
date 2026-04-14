@@ -4,6 +4,8 @@ interface IConfig {
 	onSuccess?: (sw?: ServiceWorker) => void;
 }
 
+import { logger } from './utils/logger';
+
 function isLocalHost(): boolean {
 	return (
 		window.location.hostname === 'localhost'
@@ -28,8 +30,8 @@ export const register = async (config: IConfig) => {
 
 				listenForUpdatedWorkerDownload(registration, config);
 				listenForWorkerActivation(config);
-			} catch (error) {
-				console.error('Service worker registration error', error);
+				} catch (error) {
+				logger.error('Service worker registration error', error);
 			}
 		}
 	});
@@ -45,13 +47,13 @@ function listenForUpdatedWorkerDownload(registration: ServiceWorkerRegistration,
 
 		installingWorker.onstatechange = () => {
 			if (installingWorker.state === 'installed') {
-				if (registration.active) {
+					if (registration.active) {
 					// There is one SW active and the next one just finished installing
-					console.log('A new service worker is awaiting activation');
+					logger.info('A new service worker is awaiting activation');
 					config.onUpdate?.(installingWorker);
 				} else {
 					// Otherwise, this SW will activate immediately (first-time SW install)
-					console.log('Content is cached for offline use');
+					logger.info('Content is cached for offline use');
 				}
 			}
 		};
@@ -71,7 +73,7 @@ export function unregister(): void {
 				registration.unregister();
 			})
 			.catch((error) => {
-				console.error(error.message);
+				logger.error(error.message);
 			});
 	}
 }

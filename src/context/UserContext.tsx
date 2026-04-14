@@ -7,6 +7,7 @@ import type { IUser } from '@/model/Models';
 import { isValidUser } from '@/model/Models';
 import { STORAGE_KEYS } from '@/constants';
 import { saveToSessionStorage, getJsonFromSessionStorage, removeFromSessionStorage } from '@/utils/sessionStorage';
+import { logger } from '@/utils/logger';
 
 interface UserContextValue {
 	/** Current authenticated user or null */
@@ -36,7 +37,7 @@ export function UserProvider({ children }: UserProviderProps): JSX.Element {
       const parsed = getJsonFromSessionStorage<IUser>(STORAGE_KEYS.CURRENT_USER);
       return (parsed && isValidUser(parsed)) ? parsed : null;
     } catch (error) {
-      console.error('Error loading user from storage:', error);
+      logger.error('Error loading user from storage:', error);
       return null;
     }
   });
