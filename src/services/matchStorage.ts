@@ -213,13 +213,11 @@ function convertStoredMatchToAPIFormat(userData: IUser, storedMatch: IStoredMatc
 	objectives.push({ gamemode: Gamemode.AUTO, objective: 'CLIMB_2026', count: autoClimbCount });
 
 	// Auto high goal estimate
-	if (storedMatch.estimateSizeAuto) {
-		objectives.push({
-			gamemode: Gamemode.AUTO,
-			objective: 'HIGH_GOAL_2026',
-			count: Number(storedMatch.estimateSizeAuto)
-		});
-	}
+	objectives.push({
+		gamemode: Gamemode.AUTO,
+		objective: 'HIGH_GOAL_2026',
+		count: Number(storedMatch.estimateSizeAuto)
+	});
 
 	// TELEOP objectives
 	
@@ -235,13 +233,11 @@ function convertStoredMatchToAPIFormat(userData: IUser, storedMatch: IStoredMatc
 	objectives.push({ gamemode: Gamemode.TELEOP, objective: 'CLIMB_2026', count: teleopClimbCount });
 
 	// Teleop high goal estimate
-	if (storedMatch.estimateSize) {
-		objectives.push({
-			gamemode: Gamemode.TELEOP,
-			objective: 'HIGH_GOAL_2026',
-			count: Number(storedMatch.estimateSize)
-		});
-	}
+	objectives.push({
+		gamemode: Gamemode.TELEOP,
+		objective: 'HIGH_GOAL_2026',
+		count: Number(storedMatch.estimateSize)
+	});
 
 	return {
 		gameYear: 2026,
