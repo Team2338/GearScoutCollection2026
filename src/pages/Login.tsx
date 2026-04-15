@@ -9,6 +9,7 @@ import { sanitizeInput, sanitizeEventCode } from '@/utils/sanitization';
 import { saveToLocalStorage } from '@/utils/localStorage';
 import { saveToSessionStorage } from '@/utils/sessionStorage';
 import { showSuccess, showError } from '@/utils/notifications';
+import { logger } from '@/utils/logger';
 import gearscoutService from '@/services/gearscout-services';
 import '@/styles/login.scss';
 
@@ -139,7 +140,7 @@ const Login = () => {
         showSuccess('Schedule loaded successfully!');
       } catch (error) {
         if (error instanceof Error) {
-          console.error('[Login] Failed to get schedule:', error.message);
+          logger.error('[Login] Failed to get schedule:', error.message);
           showError(`Failed to load schedule: ${error.message}`);
           return;
         }

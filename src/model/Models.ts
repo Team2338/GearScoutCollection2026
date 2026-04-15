@@ -106,12 +106,7 @@ export interface IStoredMatch {
 	leaveValue: string;
 	estimateSizeAuto: string;
 	leaveValueTeleop: string;
-	autoCycles: Array<{
-		estimateSize: string;
-	}>;
-	cycles: Array<{
-		estimateSize: string;
-	}>;
+	estimateSize: string;
 	timestamp: number;
 	submitted?: boolean;
 }

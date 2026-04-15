@@ -6,6 +6,7 @@ import type { IMatchLineup } from '@/model/Models';
 import gearscoutService from '@/services/gearscout-services';
 import { showError } from '@/utils/notifications';
 import { debounce } from '@/utils/debounce';
+import { logger } from '@/utils/logger';
 import { TIMING, API } from '@/constants';
 
 // Constants
@@ -83,7 +84,7 @@ async function fetchScheduleInternal(eventCode: string): Promise<void> {
 		currentEventCode = eventCode;
 	} catch (error) {
 		if (error instanceof Error) {
-			console.warn('[Schedule Service] Failed to fetch schedule:', error.message);
+			logger.warn('[Schedule Service] Failed to fetch schedule:', error.message);
 		}
 		schedule = null;
 		currentEventCode = '';
