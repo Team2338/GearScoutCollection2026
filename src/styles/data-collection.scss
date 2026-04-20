@@ -6,16 +6,12 @@ $offwhite: #faf9f6; // Auxiliary color for backgrounds
 
 // Extended Colors (Approved by mentors/media team)
 $offorange: #ff6f00; // Approved extended orange for hover states
-$offblue: #02355b; // Approved extended blue for hover states
 $owHighlight: #ffffff;
 $tHighlight: #f2f2f2;
 $offBlack: #1d1c1b;
-$brightBlue: #1976d2;
 $cardBg: #0a3855;
 $errorRed: #f44336;
 $successGreen: #4caf50;
-$redAlliance: rgb(170, 51, 51);
-$blueAlliance: rgb(34, 85, 204);
 
 body {
   width: 100%;
@@ -201,7 +197,7 @@ html {
 
     .analytics-button {
       padding: 9.5px 15px;
-      background-color: $brightBlue;
+      background-color: $orange;
       color: white;
       text-decoration: none;
       border-radius: 4px;
@@ -212,7 +208,7 @@ html {
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 
       &:hover {
-        background-color: #4da6ff;
+        background-color: $offorange;
       }
     }
   }
@@ -450,12 +446,12 @@ html {
 
           // Alliance headers
           &.alliance-header-red {
-            color: #aa3333;
+            color: $orange;
             font-weight: 600;
           }
 
           &.alliance-header-blue {
-            color: #2255cc;
+            color: $orange;
             font-weight: 600;
           }
         }
@@ -538,7 +534,7 @@ html {
 
         &:hover {
           border-color: $offwhite;
-          background-color: rgba($offblue, 0.6);
+          background-color: rgba($orange, 0.12);
         }
 
         &.selected {
@@ -791,23 +787,15 @@ html {
           }
 
           &:hover {
-            border-color: $offwhite;
-            background-color: rgba($offblue, 0.6);
+            border-color: $orange;
+            background-color: rgba($orange, 0.12);
           }
 
           &.selected {
             color: #fff;
             border: 1px solid transparent;
-
-            &.red {
-              background-color: $redAlliance;
-              border-color: $redAlliance;
-            }
-
-            &.blue {
-              background-color: $blueAlliance;
-              border-color: $blueAlliance;
-            }
+            background-color: $orange;
+            border-color: $orange;
           }
 
           &:disabled {
@@ -867,16 +855,16 @@ html {
         &.left-bump,
         &.left-trench-teleop,
         &.left-bump-teleop {
-          background-color: $redAlliance;
-          border-color: $redAlliance;
+          background-color: $orange;
+          border-color: $orange;
         }
 
         &.right-trench,
         &.right-bump,
         &.right-trench-teleop,
         &.right-bump-teleop {
-          background-color: $blueAlliance;
-          border-color: $blueAlliance;
+          background-color: $orange;
+          border-color: $orange;
         }
       }
 
@@ -929,8 +917,8 @@ html {
         }
 
         &:hover {
-          border-color: $offwhite;
-          background-color: rgba($offblue, 0.6);
+          border-color: $orange;
+          background-color: rgba($orange, 0.12);
         }
       }
     }

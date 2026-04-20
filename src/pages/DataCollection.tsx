@@ -121,12 +121,12 @@ const DataCollection = () => {
             <div className="trench-container">
               <div className="trench-buttons">
                 <button type="button" className="trench-button left-trench">
-                  RED TRENCH
+                  DEPOT TRENCH
                 </button>
                 <span className="counter" id="left-counter">0</span>
                 <span className="counter" id="right-counter">0</span>
                 <button type="button" className="trench-button right-trench">
-                  BLUE TRENCH
+                  OUTPOST TRENCH
                 </button>
               </div>
               <div className="trench-decrements">
@@ -142,12 +142,12 @@ const DataCollection = () => {
             <div className="trench-container">
               <div className="trench-buttons">
                 <button type="button" className="trench-button left-bump">
-                  RED BUMP
+                  DEPOT BUMP
                 </button>
                 <span className="counter" id="left-bump-counter">0</span>
                 <span className="counter" id="right-bump-counter">0</span>
                 <button type="button" className="trench-button right-bump">
-                  BLUE BUMP
+                  OUTPOST BUMP
                 </button>
               </div>
               <div className="trench-decrements">
