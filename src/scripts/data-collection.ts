@@ -289,17 +289,23 @@ export function initializeDataCollection(): (() => void) | void {
   let leaveValueTeleop = getFromLocalStorage("leaveValueTeleop", "none");
   let estimateSizeAutoValue = getFromLocalStorage("estimateSizeAuto", "");
   let estimateSizeValue = getFromLocalStorage("estimateSize", "");
+  form.dataset.estimateSizeAutoValue = estimateSizeAutoValue;
+  form.dataset.estimateSizeValue = estimateSizeValue;
 
-  const updateCurrentEstimateDisplays = () => {
+  const updateAutoEstimateDisplay = () => {
     if (autoCurrentEstimateEl) {
       autoCurrentEstimateEl.textContent = `Current Value: ${Number(estimateSizeAutoValue || "0")}`;
     }
+  };
+
+  const updateTeleopEstimateDisplay = () => {
     if (teleopCurrentEstimateEl) {
       teleopCurrentEstimateEl.textContent = `Current Value: ${Number(estimateSizeValue || "0")}`;
     }
   };
 
-  updateCurrentEstimateDisplays();
+  updateAutoEstimateDisplay();
+  updateTeleopEstimateDisplay();
 
   // Store counter state on form element to avoid closure scope issues
   const setCounters = (counters: {
@@ -312,6 +318,22 @@ export function initializeDataCollection(): (() => void) | void {
     form.dataset.rightCounter = String(counters.rightCounter);
     form.dataset.leftBumpCounter = String(counters.leftBumpCounter);
     form.dataset.rightBumpCounter = String(counters.rightBumpCounter);
+  };
+
+  const getCounterValue = (
+    key: "leftCounter" | "rightCounter" | "leftBumpCounter" | "rightBumpCounter",
+    fallback: number,
+  ): number => {
+    const rawValue = form.dataset[key];
+    const parsedValue = Number(rawValue ?? fallback);
+    return Number.isFinite(parsedValue) ? parsedValue : fallback;
+  };
+
+  const getEstimateValue = (
+    key: "estimateSizeAutoValue" | "estimateSizeValue",
+    fallback: string,
+  ): string => {
+    return form.dataset[key] ?? fallback;
   };
 
   // Initialize form.dataset with current values
@@ -627,7 +649,16 @@ export function initializeDataCollection(): (() => void) | void {
   if (estimateSizeAuto) {
     const estimateSizeAutoContainer =
       estimateSizeAuto.parentElement as HTMLElement;
-    const estimateSizeAutoButtons = estimateSizeAutoContainer?.querySelectorAll(
+    let estimateSizeAutoButtons = estimateSizeAutoContainer?.querySelectorAll(
+      ".estimate-button:not(.estimate-button-previous)",
+    ) as NodeListOf<HTMLElement>;
+
+    estimateSizeAutoButtons.forEach((button) => {
+      const newButton = button.cloneNode(true) as HTMLButtonElement;
+      button.replaceWith(newButton);
+    });
+
+    estimateSizeAutoButtons = estimateSizeAutoContainer?.querySelectorAll(
       ".estimate-button:not(.estimate-button-previous)",
     ) as NodeListOf<HTMLElement>;
 
@@ -644,8 +675,13 @@ export function initializeDataCollection(): (() => void) | void {
     estimateSizeAutoButtons.forEach((button) => {
       button.addEventListener("click", () => {
         const delta = Number(button.getAttribute("data-value") || "0");
-        const nextValue = Math.max(0, Number(estimateSizeAutoValue || "0") + delta);
+        const currentValue = getEstimateValue(
+          "estimateSizeAutoValue",
+          estimateSizeAutoValue,
+        );
+        const nextValue = Math.max(0, Number(currentValue || "0") + delta);
         estimateSizeAutoValue = String(nextValue);
+        form.dataset.estimateSizeAutoValue = estimateSizeAutoValue;
         estimateSizeAuto.value = estimateSizeAutoValue;
         saveToLocalStorage("estimateSizeAuto", estimateSizeAutoValue);
         if (nextValue > 0) {
@@ -653,7 +689,7 @@ export function initializeDataCollection(): (() => void) | void {
         } else {
           estimateSizeAutoContainer?.classList.remove("has-value");
         }
-        updateCurrentEstimateDisplays();
+        updateAutoEstimateDisplay();
       });
     });
   }
@@ -662,7 +698,16 @@ export function initializeDataCollection(): (() => void) | void {
   if (estimateSizeSelect) {
     const estimateSizeContainer =
       estimateSizeSelect.parentElement as HTMLElement;
-    const estimateSizeButtons = estimateSizeContainer?.querySelectorAll(
+    let estimateSizeButtons = estimateSizeContainer?.querySelectorAll(
+      ".estimate-button:not(.estimate-button-previous)",
+    ) as NodeListOf<HTMLElement>;
+
+    estimateSizeButtons.forEach((button) => {
+      const newButton = button.cloneNode(true) as HTMLButtonElement;
+      button.replaceWith(newButton);
+    });
+
+    estimateSizeButtons = estimateSizeContainer?.querySelectorAll(
       ".estimate-button:not(.estimate-button-previous)",
     ) as NodeListOf<HTMLElement>;
 
@@ -679,8 +724,13 @@ export function initializeDataCollection(): (() => void) | void {
     estimateSizeButtons.forEach((button) => {
       button.addEventListener("click", () => {
         const delta = Number(button.getAttribute("data-value") || "0");
-        const nextValue = Math.max(0, Number(estimateSizeValue || "0") + delta);
+        const currentValue = getEstimateValue(
+          "estimateSizeValue",
+          estimateSizeValue,
+        );
+        const nextValue = Math.max(0, Number(currentValue || "0") + delta);
         estimateSizeValue = String(nextValue);
+        form.dataset.estimateSizeValue = estimateSizeValue;
         estimateSizeSelect.value = estimateSizeValue;
         saveToLocalStorage("estimateSize", estimateSizeValue);
         if (nextValue > 0) {
@@ -688,7 +738,7 @@ export function initializeDataCollection(): (() => void) | void {
         } else {
           estimateSizeContainer?.classList.remove("has-value");
         }
-        updateCurrentEstimateDisplays();
+        updateTeleopEstimateDisplay();
       });
     });
   }
@@ -739,7 +789,7 @@ export function initializeDataCollection(): (() => void) | void {
       if (now - leftTrenchLastClick < DEBOUNCE_MS) return;
       leftTrenchLastClick = now;
 
-      leftCounter++;
+      leftCounter = getCounterValue("leftCounter", leftCounter) + 1;
       form.dataset.leftCounter = String(leftCounter);
       if (leftCounterEl) leftCounterEl.textContent = leftCounter.toString();
     });
@@ -751,7 +801,7 @@ export function initializeDataCollection(): (() => void) | void {
       if (now - rightTrenchLastClick < DEBOUNCE_MS) return;
       rightTrenchLastClick = now;
 
-      rightCounter++;
+      rightCounter = getCounterValue("rightCounter", rightCounter) + 1;
       form.dataset.rightCounter = String(rightCounter);
       if (rightCounterEl) rightCounterEl.textContent = rightCounter.toString();
     });
@@ -763,6 +813,7 @@ export function initializeDataCollection(): (() => void) | void {
       if (now - leftDecrementLastClick < DEBOUNCE_MS) return;
       leftDecrementLastClick = now;
 
+      leftCounter = getCounterValue("leftCounter", leftCounter);
       if (leftCounter > 0) {
         leftCounter--;
         form.dataset.leftCounter = String(leftCounter);
@@ -777,6 +828,7 @@ export function initializeDataCollection(): (() => void) | void {
       if (now - rightDecrementLastClick < DEBOUNCE_MS) return;
       rightDecrementLastClick = now;
 
+      rightCounter = getCounterValue("rightCounter", rightCounter);
       if (rightCounter > 0) {
         rightCounter--;
         form.dataset.rightCounter = String(rightCounter);
@@ -841,7 +893,7 @@ export function initializeDataCollection(): (() => void) | void {
       if (now - leftBumpLastClick < DEBOUNCE_MS) return;
       leftBumpLastClick = now;
 
-      leftBumpCounter++;
+      leftBumpCounter = getCounterValue("leftBumpCounter", leftBumpCounter) + 1;
       form.dataset.leftBumpCounter = String(leftBumpCounter);
       if (leftBumpCounterEl)
         leftBumpCounterEl.textContent = leftBumpCounter.toString();
@@ -854,7 +906,7 @@ export function initializeDataCollection(): (() => void) | void {
       if (now - rightBumpLastClick < DEBOUNCE_MS) return;
       rightBumpLastClick = now;
 
-      rightBumpCounter++;
+      rightBumpCounter = getCounterValue("rightBumpCounter", rightBumpCounter) + 1;
       form.dataset.rightBumpCounter = String(rightBumpCounter);
       if (rightBumpCounterEl)
         rightBumpCounterEl.textContent = rightBumpCounter.toString();
@@ -867,6 +919,7 @@ export function initializeDataCollection(): (() => void) | void {
       if (now - leftBumpDecrementLastClick < DEBOUNCE_MS) return;
       leftBumpDecrementLastClick = now;
 
+      leftBumpCounter = getCounterValue("leftBumpCounter", leftBumpCounter);
       if (leftBumpCounter > 0) {
         leftBumpCounter--;
         form.dataset.leftBumpCounter = String(leftBumpCounter);
@@ -882,6 +935,7 @@ export function initializeDataCollection(): (() => void) | void {
       if (now - rightBumpDecrementLastClick < DEBOUNCE_MS) return;
       rightBumpDecrementLastClick = now;
 
+      rightBumpCounter = getCounterValue("rightBumpCounter", rightBumpCounter);
       if (rightBumpCounter > 0) {
         rightBumpCounter--;
         form.dataset.rightBumpCounter = String(rightBumpCounter);
@@ -1014,6 +1068,7 @@ export function initializeDataCollection(): (() => void) | void {
       estimateSizeAutoContainer?.classList.remove("has-value");
     }
     estimateSizeAutoValue = "";
+    form.dataset.estimateSizeAutoValue = "";
 
     if (estimateSizeSelect) {
       estimateSizeSelect.value = "";
@@ -1029,7 +1084,9 @@ export function initializeDataCollection(): (() => void) | void {
       estimateSizeContainer?.classList.remove("has-value");
     }
     estimateSizeValue = "";
-    updateCurrentEstimateDisplays();
+    form.dataset.estimateSizeValue = "";
+    updateAutoEstimateDisplay();
+    updateTeleopEstimateDisplay();
 
     formFields.forEach((field) => field.classList.remove("has-value"));
 
@@ -1115,14 +1172,21 @@ export function initializeDataCollection(): (() => void) | void {
         }
 
         // Save match data to local storage first
+        const currentCounters = {
+          leftCounter: getCounterValue("leftCounter", leftCounter),
+          rightCounter: getCounterValue("rightCounter", rightCounter),
+          leftBumpCounter: getCounterValue("leftBumpCounter", leftBumpCounter),
+          rightBumpCounter: getCounterValue("rightBumpCounter", rightBumpCounter),
+        };
+
         saveMatchToStorage(userData, {
           matchNumber,
           robotNumber,
           allianceColor,
-          leftCounter,
-          rightCounter,
-          leftBumpCounter,
-          rightBumpCounter,
+          leftCounter: currentCounters.leftCounter,
+          rightCounter: currentCounters.rightCounter,
+          leftBumpCounter: currentCounters.leftBumpCounter,
+          rightBumpCounter: currentCounters.rightBumpCounter,
           leaveValue,
           estimateSizeAuto: estimateSizeAutoValue,
           leaveValueTeleop,

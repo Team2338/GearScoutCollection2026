@@ -791,11 +791,45 @@ html {
             background-color: rgba($orange, 0.12);
           }
 
+          &.red {
+            color: #ffd6d2;
+            background-color: rgba(244, 67, 54, 0.18);
+            border-color: rgba(244, 67, 54, 0.8);
+
+            &:hover {
+              background-color: rgba(244, 67, 54, 0.28);
+              border-color: #f44336;
+            }
+          }
+
+          &.blue {
+            color: #d4e8ff;
+            background-color: rgba(33, 150, 243, 0.18);
+            border-color: rgba(33, 150, 243, 0.8);
+
+            &:hover {
+              background-color: rgba(33, 150, 243, 0.28);
+              border-color: #2196f3;
+            }
+          }
+
           &.selected {
             color: #fff;
             border: 1px solid transparent;
             background-color: $orange;
             border-color: $orange;
+          }
+
+          &.red.selected {
+            background-color: #f44336;
+            border-color: #f44336;
+            box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.25);
+          }
+
+          &.blue.selected {
+            background-color: #2196f3;
+            border-color: #2196f3;
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.25);
           }
 
           &:disabled {
