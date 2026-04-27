@@ -202,10 +202,10 @@ function convertStoredMatchToAPIFormat(userData: IUser, storedMatch: IStoredMatc
 	
 	// AUTO objectives
 	objectives.push(
-		{ gamemode: Gamemode.AUTO, objective: 'DEPOT_TRENCH_2026', count: storedMatch.leftCounter },
-		{ gamemode: Gamemode.AUTO, objective: 'OUTPOST_TRENCH_2026', count: storedMatch.rightCounter },
-		{ gamemode: Gamemode.AUTO, objective: 'DEPOT_BUMP_2026', count: storedMatch.leftBumpCounter },
-		{ gamemode: Gamemode.AUTO, objective: 'OUTPOST_BUMP_2026', count: storedMatch.rightBumpCounter }
+		{ gamemode: Gamemode.AUTO, objective: 'RED_TRENCH_2026', count: storedMatch.leftCounter },
+		{ gamemode: Gamemode.AUTO, objective: 'BLUE_TRENCH_2026', count: storedMatch.rightCounter },
+		{ gamemode: Gamemode.AUTO, objective: 'RED_BUMP_2026', count: storedMatch.leftBumpCounter },
+		{ gamemode: Gamemode.AUTO, objective: 'BLUE_BUMP_2026', count: storedMatch.rightBumpCounter }
 	);
 
 	// Auto climb - always report, convert to point values

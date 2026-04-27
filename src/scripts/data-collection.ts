@@ -329,6 +329,19 @@ export function initializeDataCollection(): (() => void) | void {
     return Number.isFinite(parsedValue) ? parsedValue : fallback;
   };
 
+  const getCounterValueFromDisplay = (
+    element: HTMLElement | null,
+    fallback: number,
+  ): number => {
+    const rawValue = element?.textContent?.trim();
+    if (!rawValue) {
+      return fallback;
+    }
+
+    const parsedValue = Number(rawValue);
+    return Number.isFinite(parsedValue) ? parsedValue : fallback;
+  };
+
   const getEstimateValue = (
     key: "estimateSizeAutoValue" | "estimateSizeValue",
     fallback: string,
@@ -1107,6 +1120,12 @@ export function initializeDataCollection(): (() => void) | void {
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
 
+      // Global form lock prevents duplicate submit handlers from processing
+      // the same event when Strict Mode causes double initialization.
+      if (form.dataset.submitInProgress === "true") {
+        return;
+      }
+
       // Prevent concurrent submissions
       if (isSubmitting) {
         return;
@@ -1118,6 +1137,7 @@ export function initializeDataCollection(): (() => void) | void {
 
       // Mark as submitting and disable submit button
       isSubmitting = true;
+      form.dataset.submitInProgress = "true";
 
       if (submitButton) {
         submitButton.disabled = true;
@@ -1172,12 +1192,32 @@ export function initializeDataCollection(): (() => void) | void {
         }
 
         // Save match data to local storage first
+        // Read directly from the rendered counters so submitted values match what the user sees.
         const currentCounters = {
-          leftCounter: getCounterValue("leftCounter", leftCounter),
-          rightCounter: getCounterValue("rightCounter", rightCounter),
-          leftBumpCounter: getCounterValue("leftBumpCounter", leftBumpCounter),
-          rightBumpCounter: getCounterValue("rightBumpCounter", rightBumpCounter),
+          leftCounter: getCounterValueFromDisplay(
+            leftCounterEl,
+            getCounterValue("leftCounter", leftCounter),
+          ),
+          rightCounter: getCounterValueFromDisplay(
+            rightCounterEl,
+            getCounterValue("rightCounter", rightCounter),
+          ),
+          leftBumpCounter: getCounterValueFromDisplay(
+            leftBumpCounterEl,
+            getCounterValue("leftBumpCounter", leftBumpCounter),
+          ),
+          rightBumpCounter: getCounterValueFromDisplay(
+            rightBumpCounterEl,
+            getCounterValue("rightBumpCounter", rightBumpCounter),
+          ),
         };
+
+        const currentEstimateSizeAuto =
+          estimateSizeAuto?.value?.trim() ??
+          getEstimateValue("estimateSizeAutoValue", estimateSizeAutoValue);
+        const currentEstimateSizeTeleop =
+          estimateSizeSelect?.value?.trim() ??
+          getEstimateValue("estimateSizeValue", estimateSizeValue);
 
         saveMatchToStorage(userData, {
           matchNumber,
@@ -1188,9 +1228,9 @@ export function initializeDataCollection(): (() => void) | void {
           leftBumpCounter: currentCounters.leftBumpCounter,
           rightBumpCounter: currentCounters.rightBumpCounter,
           leaveValue,
-          estimateSizeAuto: estimateSizeAutoValue,
+          estimateSizeAuto: currentEstimateSizeAuto,
           leaveValueTeleop,
-          estimateSize: estimateSizeValue,
+          estimateSize: currentEstimateSizeTeleop,
         });
 
         showSuccess("Match data saved locally!");
@@ -1214,6 +1254,7 @@ export function initializeDataCollection(): (() => void) | void {
         showError("Failed to save match data. Please try again.");
       } finally {
         isSubmitting = false;
+        form.dataset.submitInProgress = "false";
 
         if (submitButton) {
           submitButton.textContent = "Submit";
