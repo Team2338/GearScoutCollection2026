@@ -47,11 +47,8 @@ export function sanitizeNumericInput(
 /**
  * Sanitize event code to ensure it follows expected format
  * @param input - The raw event code
- * @returns Sanitized event code (lowercase alphanumeric)
+ * @returns Sanitized event code
  */
 export function sanitizeEventCode(input: string): string {
-	return input
-		.trim()
-		.toLowerCase()
-		.replace(/[^a-z0-9]/g, ''); // Only allow alphanumeric
+	return input.trim()
 }
